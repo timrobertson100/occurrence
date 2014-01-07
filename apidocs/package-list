@@ -1,7 +1,2 @@
-org.gbif.occurrencestore.processor
-org.gbif.occurrencestore.processor.guice
-org.gbif.occurrencestore.processor.identifiers
-org.gbif.occurrencestore.processor.interpreting
-org.gbif.occurrencestore.processor.messaging
-org.gbif.occurrencestore.processor.parsing
-org.gbif.occurrencestore.processor.zookeeper
+org.gbif.occurrencestore.deleter
+org.gbif.occurrencestore.deleter.messaging
