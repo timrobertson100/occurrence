@@ -1,1 +1,4 @@
-org.gbif.occurrencestore.interpreters
+org.gbif.occurrencestore.processor
+org.gbif.occurrencestore.processor.guice
+org.gbif.occurrencestore.processor.parsing
+org.gbif.occurrencestore.processor.zookeeper
