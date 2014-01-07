@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.processor.parsing;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import org.gbif.occurrence.model.RawOccurrenceRecord;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.gbif.occurrence.parsing.xml.XmlFragmentParser;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.gbif.occurrencestore.persistence.api.Fragment;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.occurrencestore.persistence.api.VerbatimOccurrence;<a name="line.6"></a>
+<span class="sourceLineNo">007</span><a name="line.7"></a>
+<span class="sourceLineNo">008</span>import java.util.concurrent.TimeUnit;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import javax.annotation.Nullable;<a name="line.9"></a>
+<span class="sourceLineNo">010</span><a name="line.10"></a>
+<span class="sourceLineNo">011</span>import com.yammer.metrics.Metrics;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import com.yammer.metrics.core.Timer;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import com.yammer.metrics.core.TimerContext;<a name="line.13"></a>
+<span class="sourceLineNo">014</span><a name="line.14"></a>
+<span class="sourceLineNo">015</span>/**<a name="line.15"></a>
+<span class="sourceLineNo">016</span> * A thin wrapper around the XmlFragmentParser from the occurrence-parser project, and the local JsonFragmentParser, in<a name="line.16"></a>
+<span class="sourceLineNo">017</span> * order to produce VerbatimOccurrence objects from Fragments.<a name="line.17"></a>
+<span class="sourceLineNo">018</span> */<a name="line.18"></a>
+<span class="sourceLineNo">019</span>public class FragmentParser {<a name="line.19"></a>
+<span class="sourceLineNo">020</span><a name="line.20"></a>
+<span class="sourceLineNo">021</span>  private static final Timer xmlParsingTimer =<a name="line.21"></a>
+<span class="sourceLineNo">022</span>    Metrics.newTimer(FragmentParser.class, "verb xml parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.22"></a>
+<span class="sourceLineNo">023</span>  private static final Timer jsonParsingTimer =<a name="line.23"></a>
+<span class="sourceLineNo">024</span>    Metrics.newTimer(FragmentParser.class, "verb json parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>  // should not be instantiated<a name="line.26"></a>
+<span class="sourceLineNo">027</span>  private FragmentParser() {<a name="line.27"></a>
+<span class="sourceLineNo">028</span>  }<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>  /**<a name="line.30"></a>
+<span class="sourceLineNo">031</span>   * Parse the given fragment into a VerbatimOccurrence object.<a name="line.31"></a>
+<span class="sourceLineNo">032</span>   * TODO: there is a lot of hacking here that should be refactored out with general rework of parsing project<a name="line.32"></a>
+<span class="sourceLineNo">033</span>   *<a name="line.33"></a>
+<span class="sourceLineNo">034</span>   * @param fragment containing parsing to be parsed<a name="line.34"></a>
+<span class="sourceLineNo">035</span>   *<a name="line.35"></a>
+<span class="sourceLineNo">036</span>   * @return a VerbatimOccurrence or null if the fragment could not be parsed<a name="line.36"></a>
+<span class="sourceLineNo">037</span>   */<a name="line.37"></a>
+<span class="sourceLineNo">038</span>  @Nullable<a name="line.38"></a>
+<span class="sourceLineNo">039</span>  public static VerbatimOccurrence parse(Fragment fragment) {<a name="line.39"></a>
+<span class="sourceLineNo">040</span>    VerbatimOccurrence verbatim = null;<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>    switch (fragment.getFragmentType()) {<a name="line.42"></a>
+<span class="sourceLineNo">043</span>      case XML:<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        final TimerContext xmlContext = xmlParsingTimer.time();<a name="line.44"></a>
+<span class="sourceLineNo">045</span>        try {<a name="line.45"></a>
+<span class="sourceLineNo">046</span>          RawOccurrenceRecord ror =<a name="line.46"></a>
+<span class="sourceLineNo">047</span>            XmlFragmentParser.parseRecord(fragment.getData(), fragment.getXmlSchema(), fragment.getUnitQualifier());<a name="line.47"></a>
+<span class="sourceLineNo">048</span>          verbatim = buildVerbatim(ror, fragment);<a name="line.48"></a>
+<span class="sourceLineNo">049</span>        } finally {<a name="line.49"></a>
+<span class="sourceLineNo">050</span>          xmlContext.stop();<a name="line.50"></a>
+<span class="sourceLineNo">051</span>        }<a name="line.51"></a>
+<span class="sourceLineNo">052</span>        break;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>      case JSON:<a name="line.53"></a>
+<span class="sourceLineNo">054</span>        final TimerContext jsonContext = jsonParsingTimer.time();<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        try {<a name="line.55"></a>
+<span class="sourceLineNo">056</span>          verbatim = JsonFragmentParser.parseRecord(fragment);<a name="line.56"></a>
+<span class="sourceLineNo">057</span>        } finally {<a name="line.57"></a>
+<span class="sourceLineNo">058</span>          jsonContext.stop();<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        }<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        break;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    }<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    if (verbatim != null) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>      verbatim.setProtocol(fragment.getProtocol());<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    return verbatim;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>  }<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>  // TODO: identifier records<a name="line.70"></a>
+<span class="sourceLineNo">071</span>  private static VerbatimOccurrence buildVerbatim(RawOccurrenceRecord ror, Fragment frag) {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    VerbatimOccurrence v = VerbatimOccurrence.builder().key(frag.getKey()).datasetKey(frag.getDatasetKey())<a name="line.72"></a>
+<span class="sourceLineNo">073</span>      .altitudePrecision(ror.getAltitudePrecision()).author(ror.getAuthor()).basisOfRecord(ror.getBasisOfRecord())<a name="line.73"></a>
+<span class="sourceLineNo">074</span>      .catalogNumber(ror.getCatalogueNumber()).collectionCode(ror.getCollectionCode())<a name="line.74"></a>
+<span class="sourceLineNo">075</span>      .collectorName(ror.getCollectorName()).continentOrOcean(ror.getContinentOrOcean()).country(ror.getCountry())<a name="line.75"></a>
+<span class="sourceLineNo">076</span>      .county(ror.getCounty()).dataProviderId(ror.getDataProviderId()).dataResourceId(ror.getDataResourceId())<a name="line.76"></a>
+<span class="sourceLineNo">077</span>      .dateIdentified(ror.getDateIdentified()).day(ror.getDay()).dayIdentified(ror.getDayIdentified())<a name="line.77"></a>
+<span class="sourceLineNo">078</span>      .dateIdentified(ror.getDateIdentified()).depthPrecision(ror.getDepthPrecision()).family(ror.getFamily())<a name="line.78"></a>
+<span class="sourceLineNo">079</span>      .genus(ror.getGenus()).identifierName(ror.getIdentifierName()).institutionCode(ror.getInstitutionCode())<a name="line.79"></a>
+<span class="sourceLineNo">080</span>      .kingdom(ror.getKingdom()).klass(ror.getKlass()).latitude(ror.getLatitude()).longitude(ror.getLongitude())<a name="line.80"></a>
+<span class="sourceLineNo">081</span>      .latLongPrecision(ror.getLatLongPrecision()).locality(ror.getLocality()).maxAltitude(ror.getMaxAltitude())<a name="line.81"></a>
+<span class="sourceLineNo">082</span>      .maxDepth(ror.getMaxDepth()).minAltitude(ror.getMinAltitude()).minDepth(ror.getMinDepth())<a name="line.82"></a>
+<span class="sourceLineNo">083</span>      .modified(ror.getModified()).month(ror.getMonth()).monthIdentified(ror.getMonthIdentified())<a name="line.83"></a>
+<span class="sourceLineNo">084</span>      .occurrenceDate(ror.getOccurrenceDate()).order(ror.getOrder()).phylum(ror.getPhylum()).rank(ror.getRank())<a name="line.84"></a>
+<span class="sourceLineNo">085</span>      .resourceAccessPointId(ror.getResourceAccessPointId()).scientificName(ror.getScientificName())<a name="line.85"></a>
+<span class="sourceLineNo">086</span>      .species(ror.getSpecies()).stateOrProvince(ror.getStateOrProvince()).subspecies(ror.getSubspecies())<a name="line.86"></a>
+<span class="sourceLineNo">087</span>      .unitQualifier(ror.getUnitQualifier()).year(ror.getYear()).yearIdentified(ror.getYearIdentified()).build();<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    return v;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>  }<a name="line.90"></a>
+<span class="sourceLineNo">091</span>}<a name="line.91"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

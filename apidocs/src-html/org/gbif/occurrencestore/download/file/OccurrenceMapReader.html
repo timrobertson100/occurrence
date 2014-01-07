@@ -1,0 +1,255 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.download.file;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import org.gbif.api.exception.ServiceUnavailableException;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.gbif.occurrence.download.util.DownloadUtils;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.gbif.occurrencestore.common.model.constants.FieldName;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.occurrencestore.util.BasisOfRecordConverter;<a name="line.6"></a>
+<span class="sourceLineNo">007</span><a name="line.7"></a>
+<span class="sourceLineNo">008</span>import java.io.IOException;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import java.text.SimpleDateFormat;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import java.util.Date;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import java.util.Map;<a name="line.11"></a>
+<span class="sourceLineNo">012</span><a name="line.12"></a>
+<span class="sourceLineNo">013</span>import javax.annotation.Nonnull;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import javax.annotation.Nullable;<a name="line.14"></a>
+<span class="sourceLineNo">015</span><a name="line.15"></a>
+<span class="sourceLineNo">016</span>import com.google.common.base.Preconditions;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import com.google.common.collect.Maps;<a name="line.17"></a>
+<span class="sourceLineNo">018</span>import com.google.common.io.Closer;<a name="line.18"></a>
+<span class="sourceLineNo">019</span>import com.google.inject.Inject;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import com.google.inject.name.Named;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import org.apache.hadoop.hbase.client.Get;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import org.apache.hadoop.hbase.client.HTableInterface;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import org.apache.hadoop.hbase.client.HTablePool;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import org.apache.hadoop.hbase.client.Result;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import org.apache.hadoop.hbase.util.Bytes;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import org.slf4j.Logger;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import org.slf4j.LoggerFactory;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static org.gbif.occurrence.download.util.HiveFieldUtil.getHiveField;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static org.gbif.occurrencestore.persistence.OccurrenceResultReader.getDate;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static org.gbif.occurrencestore.persistence.OccurrenceResultReader.getDouble;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import static org.gbif.occurrencestore.persistence.OccurrenceResultReader.getInteger;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static org.gbif.occurrencestore.persistence.OccurrenceResultReader.getString;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import static org.gbif.occurrencestore.persistence.OccurrenceResultReader.getUuid;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * Reads a occurrence record from HBase and return it in a Map&lt;String,Object&gt;.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> */<a name="line.38"></a>
+<span class="sourceLineNo">039</span>public class OccurrenceMapReader {<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>  private static final Logger LOG = LoggerFactory.getLogger(OccurrenceMapReader.class);<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>  private final String occurrenceTableName;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>  private final HTablePool tablePool;<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>  private static final BasisOfRecordConverter BOR_CONVERTER = new BasisOfRecordConverter();<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>  @Inject<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  public OccurrenceMapReader(@Named("occurrence_table_name") String occurrenceTableName, HTablePool tablePool) {<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    this.occurrenceTableName = occurrenceTableName;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    this.tablePool = tablePool;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  }<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>  /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>   * Creates a Map that contains an occurrence record.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>   * The key values are taken from the enumeration FieldName.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>   * <a name="line.58"></a>
+<span class="sourceLineNo">059</span>   * @return A Map, or an empty map if the result row parameter is null or empty.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>   */<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  public static Map&lt;String, Object&gt; buildOccurrence(@Nullable Result row) {<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    if (row != null &amp;&amp; !row.isEmpty()) {<a name="line.62"></a>
+<span class="sourceLineNo">063</span>      Map&lt;String, Object&gt; occ = Maps.newHashMap();<a name="line.63"></a>
+<span class="sourceLineNo">064</span>      Integer key = Bytes.toInt(row.getRow());<a name="line.64"></a>
+<span class="sourceLineNo">065</span>      occ.put(getHiveField(FieldName.ID), key);<a name="line.65"></a>
+<span class="sourceLineNo">066</span>      occ.put(getHiveField(FieldName.DATASET_KEY), getUuid(row, FieldName.DATASET_KEY));<a name="line.66"></a>
+<span class="sourceLineNo">067</span>      occ.put(getHiveField(FieldName.INSTITUTION_CODE), getCleanString(row, FieldName.INSTITUTION_CODE));<a name="line.67"></a>
+<span class="sourceLineNo">068</span>      occ.put(getHiveField(FieldName.COLLECTION_CODE), getCleanString(row, FieldName.COLLECTION_CODE));<a name="line.68"></a>
+<span class="sourceLineNo">069</span>      occ.put(getHiveField(FieldName.CATALOG_NUMBER), getCleanString(row, FieldName.CATALOG_NUMBER));<a name="line.69"></a>
+<span class="sourceLineNo">070</span>      occ.put(getHiveField(FieldName.I_BASIS_OF_RECORD),<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        BOR_CONVERTER.toEnum(getInteger(row, FieldName.I_BASIS_OF_RECORD)));<a name="line.71"></a>
+<span class="sourceLineNo">072</span>      occ.put(getHiveField(FieldName.I_SCIENTIFIC_NAME), getString(row, FieldName.I_SCIENTIFIC_NAME));<a name="line.72"></a>
+<span class="sourceLineNo">073</span>      occ.put(getHiveField(FieldName.AUTHOR), getCleanString(row, FieldName.AUTHOR));<a name="line.73"></a>
+<span class="sourceLineNo">074</span>      occ.put(getHiveField(FieldName.I_NUB_ID), getInteger(row, FieldName.I_NUB_ID));<a name="line.74"></a>
+<span class="sourceLineNo">075</span>      occ.put(getHiveField(FieldName.I_KINGDOM), getString(row, FieldName.I_KINGDOM));<a name="line.75"></a>
+<span class="sourceLineNo">076</span>      occ.put(getHiveField(FieldName.I_PHYLUM), getString(row, FieldName.I_PHYLUM));<a name="line.76"></a>
+<span class="sourceLineNo">077</span>      occ.put(getHiveField(FieldName.I_CLASS), getString(row, FieldName.I_CLASS));<a name="line.77"></a>
+<span class="sourceLineNo">078</span>      occ.put(getHiveField(FieldName.I_ORDER), getString(row, FieldName.I_ORDER));<a name="line.78"></a>
+<span class="sourceLineNo">079</span>      occ.put(getHiveField(FieldName.I_FAMILY), getString(row, FieldName.I_FAMILY));<a name="line.79"></a>
+<span class="sourceLineNo">080</span>      occ.put(getHiveField(FieldName.I_GENUS), getString(row, FieldName.I_GENUS));<a name="line.80"></a>
+<span class="sourceLineNo">081</span>      occ.put(getHiveField(FieldName.I_SPECIES), getString(row, FieldName.I_SPECIES));<a name="line.81"></a>
+<span class="sourceLineNo">082</span>      occ.put(getHiveField(FieldName.I_KINGDOM_ID), getInteger(row, FieldName.I_KINGDOM_ID));<a name="line.82"></a>
+<span class="sourceLineNo">083</span>      occ.put(getHiveField(FieldName.I_PHYLUM_ID), getInteger(row, FieldName.I_PHYLUM_ID));<a name="line.83"></a>
+<span class="sourceLineNo">084</span>      occ.put(getHiveField(FieldName.I_CLASS_ID), getInteger(row, FieldName.I_CLASS_ID));<a name="line.84"></a>
+<span class="sourceLineNo">085</span>      occ.put(getHiveField(FieldName.I_ORDER_ID), getInteger(row, FieldName.I_ORDER_ID));<a name="line.85"></a>
+<span class="sourceLineNo">086</span>      occ.put(getHiveField(FieldName.I_FAMILY_ID), getInteger(row, FieldName.I_FAMILY_ID));<a name="line.86"></a>
+<span class="sourceLineNo">087</span>      occ.put(getHiveField(FieldName.I_GENUS_ID), getInteger(row, FieldName.I_GENUS_ID));<a name="line.87"></a>
+<span class="sourceLineNo">088</span>      occ.put(getHiveField(FieldName.I_SPECIES_ID), getInteger(row, FieldName.I_SPECIES_ID));<a name="line.88"></a>
+<span class="sourceLineNo">089</span>      occ.put(getHiveField(FieldName.I_ISO_COUNTRY_CODE), getString(row, FieldName.I_ISO_COUNTRY_CODE));<a name="line.89"></a>
+<span class="sourceLineNo">090</span>      occ.put(getHiveField(FieldName.HOST_COUNTRY), getString(row, FieldName.HOST_COUNTRY));<a name="line.90"></a>
+<span class="sourceLineNo">091</span>      occ.put(getHiveField(FieldName.OWNING_ORG_KEY), getUuid(row, FieldName.OWNING_ORG_KEY));<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      occ.put(getHiveField(FieldName.I_LATITUDE), getDouble(row, FieldName.I_LATITUDE));<a name="line.92"></a>
+<span class="sourceLineNo">093</span>      occ.put(getHiveField(FieldName.I_LONGITUDE), getDouble(row, FieldName.I_LONGITUDE));<a name="line.93"></a>
+<span class="sourceLineNo">094</span>      occ.put(getHiveField(FieldName.I_YEAR), getInteger(row, FieldName.I_YEAR));<a name="line.94"></a>
+<span class="sourceLineNo">095</span>      occ.put(getHiveField(FieldName.I_MONTH), getInteger(row, FieldName.I_MONTH));<a name="line.95"></a>
+<span class="sourceLineNo">096</span>      occ.put(getHiveField(FieldName.I_OCCURRENCE_DATE), toISO8601Date(getDate(row, FieldName.I_OCCURRENCE_DATE)));<a name="line.96"></a>
+<span class="sourceLineNo">097</span>      occ.put(getHiveField(FieldName.I_ALTITUDE), getInteger(row, FieldName.I_ALTITUDE));<a name="line.97"></a>
+<span class="sourceLineNo">098</span>      occ.put(getHiveField(FieldName.I_DEPTH), getInteger(row, FieldName.I_DEPTH));<a name="line.98"></a>
+<span class="sourceLineNo">099</span>      occ.put(getHiveField(FieldName.SCIENTIFIC_NAME), getCleanString(row, FieldName.SCIENTIFIC_NAME));<a name="line.99"></a>
+<span class="sourceLineNo">100</span>      occ.put(getHiveField(FieldName.RANK), getCleanString(row, FieldName.RANK));<a name="line.100"></a>
+<span class="sourceLineNo">101</span>      occ.put(getHiveField(FieldName.KINGDOM), getCleanString(row, FieldName.KINGDOM));<a name="line.101"></a>
+<span class="sourceLineNo">102</span>      occ.put(getHiveField(FieldName.PHYLUM), getCleanString(row, FieldName.PHYLUM));<a name="line.102"></a>
+<span class="sourceLineNo">103</span>      occ.put(getHiveField(FieldName.CLASS), getCleanString(row, FieldName.CLASS));<a name="line.103"></a>
+<span class="sourceLineNo">104</span>      occ.put(getHiveField(FieldName.ORDER), getCleanString(row, FieldName.ORDER));<a name="line.104"></a>
+<span class="sourceLineNo">105</span>      occ.put(getHiveField(FieldName.FAMILY), getCleanString(row, FieldName.FAMILY));<a name="line.105"></a>
+<span class="sourceLineNo">106</span>      occ.put(getHiveField(FieldName.GENUS), getCleanString(row, FieldName.GENUS));<a name="line.106"></a>
+<span class="sourceLineNo">107</span>      occ.put(getHiveField(FieldName.SPECIES), getCleanString(row, FieldName.SPECIES));<a name="line.107"></a>
+<span class="sourceLineNo">108</span>      occ.put(getHiveField(FieldName.SUBSPECIES), getCleanString(row, FieldName.SUBSPECIES));<a name="line.108"></a>
+<span class="sourceLineNo">109</span>      occ.put(getHiveField(FieldName.LATITUDE), getCleanString(row, FieldName.LATITUDE));<a name="line.109"></a>
+<span class="sourceLineNo">110</span>      occ.put(getHiveField(FieldName.LONGITUDE), getCleanString(row, FieldName.LONGITUDE));<a name="line.110"></a>
+<span class="sourceLineNo">111</span>      occ.put(getHiveField(FieldName.LAT_LNG_PRECISION), getCleanString(row, FieldName.LAT_LNG_PRECISION));<a name="line.111"></a>
+<span class="sourceLineNo">112</span>      occ.put(getHiveField(FieldName.MAX_ALTITUDE), getCleanString(row, FieldName.MAX_ALTITUDE));<a name="line.112"></a>
+<span class="sourceLineNo">113</span>      occ.put(getHiveField(FieldName.MIN_ALTITUDE), getCleanString(row, FieldName.MIN_ALTITUDE));<a name="line.113"></a>
+<span class="sourceLineNo">114</span>      occ.put(getHiveField(FieldName.ALTITUDE_PRECISION), getCleanString(row, FieldName.ALTITUDE_PRECISION));<a name="line.114"></a>
+<span class="sourceLineNo">115</span>      occ.put(getHiveField(FieldName.MIN_DEPTH), getCleanString(row, FieldName.MIN_DEPTH));<a name="line.115"></a>
+<span class="sourceLineNo">116</span>      occ.put(getHiveField(FieldName.MAX_DEPTH), getCleanString(row, FieldName.MAX_DEPTH));<a name="line.116"></a>
+<span class="sourceLineNo">117</span>      occ.put(getHiveField(FieldName.DEPTH_PRECISION), getCleanString(row, FieldName.DEPTH_PRECISION));<a name="line.117"></a>
+<span class="sourceLineNo">118</span>      occ.put(getHiveField(FieldName.CONTINENT_OCEAN), getCleanString(row, FieldName.CONTINENT_OCEAN));<a name="line.118"></a>
+<span class="sourceLineNo">119</span>      occ.put(getHiveField(FieldName.STATE_PROVINCE), getCleanString(row, FieldName.STATE_PROVINCE));<a name="line.119"></a>
+<span class="sourceLineNo">120</span>      occ.put(getHiveField(FieldName.COUNTY), getCleanString(row, FieldName.COUNTY));<a name="line.120"></a>
+<span class="sourceLineNo">121</span>      occ.put(getHiveField(FieldName.COUNTRY), getCleanString(row, FieldName.COUNTRY));<a name="line.121"></a>
+<span class="sourceLineNo">122</span>      occ.put(getHiveField(FieldName.COLLECTOR_NAME), getCleanString(row, FieldName.COLLECTOR_NAME));<a name="line.122"></a>
+<span class="sourceLineNo">123</span>      occ.put(getHiveField(FieldName.LOCALITY), getCleanString(row, FieldName.LOCALITY));<a name="line.123"></a>
+<span class="sourceLineNo">124</span>      occ.put(getHiveField(FieldName.YEAR), getCleanString(row, FieldName.YEAR));<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      occ.put(getHiveField(FieldName.MONTH), getCleanString(row, FieldName.MONTH));<a name="line.125"></a>
+<span class="sourceLineNo">126</span>      occ.put(getHiveField(FieldName.DAY), getCleanString(row, FieldName.DAY));<a name="line.126"></a>
+<span class="sourceLineNo">127</span>      occ.put(getHiveField(FieldName.BASIS_OF_RECORD), getCleanString(row, FieldName.BASIS_OF_RECORD));<a name="line.127"></a>
+<span class="sourceLineNo">128</span>      occ.put(getHiveField(FieldName.IDENTIFIER_NAME), getCleanString(row, FieldName.IDENTIFIER_NAME));<a name="line.128"></a>
+<span class="sourceLineNo">129</span>      occ.put(getHiveField(FieldName.IDENTIFICATION_DATE), toISO8601Date(getDate(row, FieldName.IDENTIFICATION_DATE)));<a name="line.129"></a>
+<span class="sourceLineNo">130</span>      occ.put(getHiveField(FieldName.PROTOCOL), getString(row, FieldName.PROTOCOL));<a name="line.130"></a>
+<span class="sourceLineNo">131</span>      occ.put(getHiveField(FieldName.CREATED), toISO8601Date(getDate(row, FieldName.CREATED)));<a name="line.131"></a>
+<span class="sourceLineNo">132</span>      occ.put(getHiveField(FieldName.MODIFIED), toISO8601Date(getDate(row, FieldName.MODIFIED)));<a name="line.132"></a>
+<span class="sourceLineNo">133</span>      return occ;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    return null;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>  }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>  /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>   * Cleans specials characters from a string value.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>   * Removes tabs, line breaks and new lines.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>   */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>  public static String getCleanString(Result row, FieldName column) {<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    String value = getString(row, column);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    return value != null ? value.replaceAll(DownloadUtils.DELIMETERS_MATCH, " ") : value;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>  }<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>  /**<a name="line.147"></a>
+<span class="sourceLineNo">148</span>   * Converts a date object into a String in IS0 8601 format.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>   */<a name="line.149"></a>
+<span class="sourceLineNo">150</span>  public static String toISO8601Date(Date date) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    if (date != null) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>      return new SimpleDateFormat(DownloadUtils.ISO_8601_FORMAT).format(date);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    return null;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>  }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>  /**<a name="line.157"></a>
+<span class="sourceLineNo">158</span>   * Reads an occurrence record from HBase into Map.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>   * The occurrence record<a name="line.159"></a>
+<span class="sourceLineNo">160</span>   */<a name="line.160"></a>
+<span class="sourceLineNo">161</span>  public Map&lt;String, Object&gt; get(@Nonnull Integer key) throws IOException {<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    Preconditions.checkNotNull(key, "Ocurrence key can't be null");<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    Map&lt;String, Object&gt; occurrence = null;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    HTableInterface table = null;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    Closer closer = Closer.create();<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    try {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>      table = tablePool.getTable(occurrenceTableName);<a name="line.167"></a>
+<span class="sourceLineNo">168</span>      closer.register(table);<a name="line.168"></a>
+<span class="sourceLineNo">169</span>      Get get = new Get(Bytes.toBytes(key));<a name="line.169"></a>
+<span class="sourceLineNo">170</span>      Result result = table.get(get);<a name="line.170"></a>
+<span class="sourceLineNo">171</span>      if (result == null || result.isEmpty()) {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        LOG.debug("Couldn't find occurrence for key [{}], returning null", key);<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        return null;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>      }<a name="line.174"></a>
+<span class="sourceLineNo">175</span>      occurrence = buildOccurrence(result);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    } catch (IOException e) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>      throw new ServiceUnavailableException("Could not read from HBase", e);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    } finally {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>      closer.close();<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    return occurrence;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>  }<a name="line.182"></a>
+<span class="sourceLineNo">183</span>}<a name="line.183"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
