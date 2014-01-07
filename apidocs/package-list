@@ -1,3 +1,8 @@
-org.gbif.occurrencestore.common.model
-org.gbif.occurrencestore.common.model.constants
-org.gbif.occurrencestore.util
+org.gbif.occurrencestore.persistence
+org.gbif.occurrencestore.persistence.api
+org.gbif.occurrencestore.persistence.constants
+org.gbif.occurrencestore.persistence.guice
+org.gbif.occurrencestore.persistence.hbase
+org.gbif.occurrencestore.persistence.keygen
+org.gbif.occurrencestore.persistence.util
+org.gbif.occurrencestore.persistence.zookeeper
