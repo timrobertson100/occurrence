@@ -1,0 +1,412 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.processor;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import org.gbif.api.exception.ServiceUnavailableException;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.gbif.api.model.crawler.DwcaValidationReport;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.gbif.api.model.occurrence.OccurrencePersistenceStatus;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.api.vocabulary.EndpointType;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.gbif.api.vocabulary.OccurrenceSchemaType;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.gbif.common.messaging.api.Message;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.gbif.common.messaging.api.MessagePublisher;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.gbif.common.messaging.api.messages.FragmentPersistedMessage;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import org.gbif.occurrence.parsing.xml.IdentifierExtractionResult;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import org.gbif.occurrence.parsing.xml.XmlFragmentParser;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import org.gbif.occurrencestore.common.model.UniqueIdentifier;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import org.gbif.occurrencestore.persistence.api.Fragment;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import org.gbif.occurrencestore.persistence.api.FragmentCreationResult;<a name="line.15"></a>
+<span class="sourceLineNo">016</span>import org.gbif.occurrencestore.persistence.api.FragmentPersistenceService;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import org.gbif.occurrencestore.persistence.api.KeyLookupResult;<a name="line.17"></a>
+<span class="sourceLineNo">018</span>import org.gbif.occurrencestore.persistence.api.OccurrenceKeyPersistenceService;<a name="line.18"></a>
+<span class="sourceLineNo">019</span>import org.gbif.occurrencestore.processor.identifiers.IdentifierStrategy;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import org.gbif.occurrencestore.processor.parsing.JsonFragmentParser;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import org.gbif.occurrencestore.processor.zookeeper.ZookeeperConnector;<a name="line.21"></a>
+<span class="sourceLineNo">022</span><a name="line.22"></a>
+<span class="sourceLineNo">023</span>import java.io.IOException;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.nio.charset.Charset;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import java.util.Arrays;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import java.util.Date;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.Set;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.UUID;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.concurrent.TimeUnit;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.annotation.Nullable;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.validation.ValidationException;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>import com.google.common.collect.Sets;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import com.google.inject.Inject;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import com.google.inject.Singleton;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import com.yammer.metrics.Metrics;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import com.yammer.metrics.core.Meter;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import com.yammer.metrics.core.Timer;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import com.yammer.metrics.core.TimerContext;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import org.apache.commons.codec.digest.DigestUtils;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import org.slf4j.Logger;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import org.slf4j.LoggerFactory;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import org.slf4j.MDC;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>import static com.google.common.base.Preconditions.checkNotNull;<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>/**<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * Responsible for producing and persisting Fragment objects given crawling response snippets, and sending a message<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * reporting successful persistence. Also updates ZooKeeper with running counts of success/failure.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> */<a name="line.50"></a>
+<span class="sourceLineNo">051</span>@Singleton<a name="line.51"></a>
+<span class="sourceLineNo">052</span>public class FragmentProcessor {<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>  private static final int MAX_NULL_FRAG_RETRIES = 3;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  private static final long NULL_FRAG_RETRY_WAIT = 500;<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>  private final FragmentPersistenceService fragmentPersister;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  private final OccurrenceKeyPersistenceService occurrenceKeyPersister;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  private final MessagePublisher messagePublisher;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  private final ZookeeperConnector zookeeperConnector;<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>  private final Meter fragmentsProcessed =<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    Metrics.newMeter(FragmentProcessor.class, "frags", "frags", TimeUnit.SECONDS);<a name="line.63"></a>
+<span class="sourceLineNo">064</span>  private final Timer persistenceTimer =<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    Metrics.newTimer(FragmentProcessor.class, "frag persist time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.65"></a>
+<span class="sourceLineNo">066</span>  private final Timer findTimer =<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    Metrics.newTimer(FragmentProcessor.class, "frag find time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.67"></a>
+<span class="sourceLineNo">068</span>  private final Timer xmlParsingTimer =<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    Metrics.newTimer(FragmentProcessor.class, "xml parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.69"></a>
+<span class="sourceLineNo">070</span>  private final Timer jsonParsingTimer =<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    Metrics.newTimer(FragmentProcessor.class, "json parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>  private final Timer msgTimer =<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    Metrics.newTimer(FragmentProcessor.class, "msg send time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);<a name="line.73"></a>
+<span class="sourceLineNo">074</span>  private final Meter msgsSent = Metrics.newMeter(FragmentProcessor.class, "msgs", "msgs", TimeUnit.SECONDS);<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>  private static final Logger LOG = LoggerFactory.getLogger(FragmentProcessor.class);<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>  @Inject<a name="line.78"></a>
+<span class="sourceLineNo">079</span>  public FragmentProcessor(FragmentPersistenceService fragmentPersister,<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    OccurrenceKeyPersistenceService occurrenceKeyPersister, MessagePublisher messagePublisher,<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    ZookeeperConnector zookeeperConnector) {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    this.fragmentPersister = checkNotNull(fragmentPersister, "fragmentPersister can't be null");<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    this.occurrenceKeyPersister = checkNotNull(occurrenceKeyPersister, "occurrenceKeyPersister can't be null");<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    this.messagePublisher = checkNotNull(messagePublisher, "messagePublisher can't be null");<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    this.zookeeperConnector = checkNotNull(zookeeperConnector, "zookeeperConnector can't be null");<a name="line.85"></a>
+<span class="sourceLineNo">086</span>  }<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>  /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>   * Takes the given response/dwca fragment and parses it into Fragment object(s) and then persists it/them.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>   * Responsible for identifying duplicates of existing Fragments and assigning ids to new Fragments. The only case<a name="line.90"></a>
+<span class="sourceLineNo">091</span>   * where multiple Fragments are returned from this message is ABCD 2.06 snippets that are differentiated with<a name="line.91"></a>
+<span class="sourceLineNo">092</span>   * UnitQualifiers.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>   *<a name="line.93"></a>
+<span class="sourceLineNo">094</span>   * @param datasetKey       the dataset to which this fragment belongs<a name="line.94"></a>
+<span class="sourceLineNo">095</span>   * @param data             a snippet of xml or json from a crawler response, representing a single "record"<a name="line.95"></a>
+<span class="sourceLineNo">096</span>   * @param schema           the crawler response type (e.g. ABCD_2_06, DWC_1_4) or DWCA for DwC-A as JSON<a name="line.96"></a>
+<span class="sourceLineNo">097</span>   * @param protocol         the endpoint type of this occurrence's dataset (e.g. DIGIR, BIOCASE, DWC_ARCHIVE)<a name="line.97"></a>
+<span class="sourceLineNo">098</span>   * @param crawlId          the crawl attempt that produced the snippet<a name="line.98"></a>
+<span class="sourceLineNo">099</span>   * @param validationReport the DwcaValidationReport if this fragment came from a DwC-A, null otherwise<a name="line.99"></a>
+<span class="sourceLineNo">100</span>   */<a name="line.100"></a>
+<span class="sourceLineNo">101</span>  public void buildFragments(UUID datasetKey, byte[] data, OccurrenceSchemaType schema, EndpointType protocol,<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    Integer crawlId, @Nullable DwcaValidationReport validationReport) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    checkNotNull(datasetKey, "datasetKey can't be null");<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    checkNotNull(data, "data can't be null");<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    checkNotNull(crawlId, "crawlId can't be null");<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    checkNotNull(schema, "xmlSchema can't be null");<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    checkNotNull(protocol, "protocol can't be null");<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    if (schema == OccurrenceSchemaType.DWCA) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>      checkNotNull(validationReport, "validationReport can't be null if schema is DWCA");<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>    MDC.put("datasetUuid", datasetKey.toString());<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    MDC.put("attempt", crawlId.toString());<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>    boolean isXml = schema != OccurrenceSchemaType.DWCA;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    IdentifierStrategy idStrategy = new IdentifierStrategy(schema, validationReport);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    LOG.debug("For dataset [{}] of type [{}] useTriplet is [{}] and useOccurrenceId is [{}]",<a name="line.117"></a>
+<span class="sourceLineNo">118</span>      new Object[] {datasetKey, schema, idStrategy.isTripletsValid(), idStrategy.isOccurrenceIdsValid()});<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    // update zookeeper - fragment received but not yet processed<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    zookeeperConnector.addCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED);<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    Set&lt;IdentifierExtractionResult&gt; extractionResults;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    if (isXml) {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      final TimerContext context = xmlParsingTimer.time();<a name="line.125"></a>
+<span class="sourceLineNo">126</span>      try {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        extractionResults = XmlFragmentParser.extractIdentifiers(datasetKey, data, schema, idStrategy.isTripletsValid(),<a name="line.127"></a>
+<span class="sourceLineNo">128</span>          idStrategy.isOccurrenceIdsValid());<a name="line.128"></a>
+<span class="sourceLineNo">129</span>      } finally {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        context.stop();<a name="line.130"></a>
+<span class="sourceLineNo">131</span>      }<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    } else {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>      final TimerContext context = jsonParsingTimer.time();<a name="line.133"></a>
+<span class="sourceLineNo">134</span>      try {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        extractionResults = Sets.newHashSet();<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        IdentifierExtractionResult result = JsonFragmentParser<a name="line.136"></a>
+<span class="sourceLineNo">137</span>          .extractIdentifiers(datasetKey, data, idStrategy.isTripletsValid(), idStrategy.isOccurrenceIdsValid());<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        if (result != null) {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>          extractionResults.add(result);<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        }<a name="line.140"></a>
+<span class="sourceLineNo">141</span>      } finally {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        context.stop();<a name="line.142"></a>
+<span class="sourceLineNo">143</span>      }<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    }<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    if (extractionResults.isEmpty()) {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>      LOG.debug(<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        "Given snippet for dataset [{}] does not contain enough information to uniquely identify it - can not parse or "<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        + "persist it", datasetKey.toString());<a name="line.149"></a>
+<span class="sourceLineNo">150</span>      LOG.debug("Raw snippet that couldn't be uniquely identified: [\n{}\n]",<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        new String(data, Charset.forName("UTF-8")));<a name="line.151"></a>
+<span class="sourceLineNo">152</span>      zookeeperConnector.addCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    } else {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>      for (IdentifierExtractionResult extractionResult : extractionResults) {<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        processSingleFragment(extractionResult.getUniqueIdentifiers(), isXml, data, schema, protocol, crawlId,<a name="line.155"></a>
+<span class="sourceLineNo">156</span>          extractionResult.getUnitQualifier());<a name="line.156"></a>
+<span class="sourceLineNo">157</span>      }<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    }<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    // update zookeeper with a single increment for this snippet (not for each Fragment)<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    LOG.debug("Updating zookeeper for FragmentProcessed");<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    zookeeperConnector.addCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_PROCESSED);<a name="line.162"></a>
+<span class="sourceLineNo">163</span>  }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>  /**<a name="line.165"></a>
+<span class="sourceLineNo">166</span>   * Process a single record into a single Fragment and persist it, generating a new key for it if necessary.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>   */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>  private void processSingleFragment(Set&lt;UniqueIdentifier&gt; uniqueIds, boolean isXml, byte[] data,<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    OccurrenceSchemaType schema, EndpointType protocol, Integer crawlId, String unitQualifier) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    UUID datasetKey = uniqueIds.iterator().next().getDatasetKey();<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    // check for an existing key for these uniqueIds<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    KeyLookupResult keyResult = null;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    final TimerContext fetchContext = findTimer.time();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    try {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>      keyResult = occurrenceKeyPersister.findKey(uniqueIds);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    } catch (ServiceUnavailableException e) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>      failForServiceUnavailable(datasetKey, e);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>      return;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    } finally {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>      fetchContext.stop();<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    }<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>    Fragment fragment;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    OccurrencePersistenceStatus status;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    if (keyResult == null) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>      // this is a new record, prepare to insert a new Fragment<a name="line.188"></a>
+<span class="sourceLineNo">189</span>      fragment = new Fragment(datasetKey);<a name="line.189"></a>
+<span class="sourceLineNo">190</span>      status = OccurrencePersistenceStatus.NEW;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    } else {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>      // this is an existing record - fetch fragment from hbase and see if we need to do an update<a name="line.192"></a>
+<span class="sourceLineNo">193</span>      int key = keyResult.getKey();<a name="line.193"></a>
+<span class="sourceLineNo">194</span>      int attempts = 0;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>      do {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        attempts++;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        LOG.debug("Attempt [{}] to fetch fragment for key [{}]", attempts, key);<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        try {<a name="line.198"></a>
+<span class="sourceLineNo">199</span>          fragment = fragmentPersister.get(key);<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        } catch (ValidationException v) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>          LOG.warn("The fragment for key [{}] is invalid. Ignoring this update.", v);<a name="line.201"></a>
+<span class="sourceLineNo">202</span>          updateZookeeper(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR);<a name="line.202"></a>
+<span class="sourceLineNo">203</span>          return;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        } catch (ServiceUnavailableException e) {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>          failForServiceUnavailable(datasetKey, e);<a name="line.205"></a>
+<span class="sourceLineNo">206</span>          return;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        if (fragment == null) {<a name="line.208"></a>
+<span class="sourceLineNo">209</span>          /* this means either<a name="line.209"></a>
+<span class="sourceLineNo">210</span>              1) the key we're trying was only just assigned and the owner hasn't written their fragment yet, or<a name="line.210"></a>
+<span class="sourceLineNo">211</span>              2) our index is out of sync - it has an index entry pointing to nothing, so delete the index<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                entry(ies) and proceed as if this is an insert<a name="line.212"></a>
+<span class="sourceLineNo">213</span>             So we retry a few times to get clear of 1), and then act on 2).<a name="line.213"></a>
+<span class="sourceLineNo">214</span>          */<a name="line.214"></a>
+<span class="sourceLineNo">215</span>          LOG.debug("Fragment for key [{}] was null, sleeping and trying again", key);<a name="line.215"></a>
+<span class="sourceLineNo">216</span>          try {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            Thread.sleep(NULL_FRAG_RETRY_WAIT);<a name="line.217"></a>
+<span class="sourceLineNo">218</span>          } catch (InterruptedException e) {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            LOG.info("Woken up from sleep while waiting to retry fragment get", e);<a name="line.219"></a>
+<span class="sourceLineNo">220</span>          }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        }<a name="line.221"></a>
+<span class="sourceLineNo">222</span>      } while (fragment == null &amp;&amp; attempts &lt;= MAX_NULL_FRAG_RETRIES);<a name="line.222"></a>
+<span class="sourceLineNo">223</span><a name="line.223"></a>
+<span class="sourceLineNo">224</span>      if (fragment == null) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        // we're in case 2) from above<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        LOG.info("Could not retrieve Fragment with key [{}] even though it exists in lookup table - deleting lookup "<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                 + "and inserting Fragment as NEW.", key);<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        try {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>          occurrenceKeyPersister.deleteKeyByUniqueIdentifiers(uniqueIds);<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        } catch (ServiceUnavailableException e) {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>          failForServiceUnavailable(datasetKey, e);<a name="line.231"></a>
+<span class="sourceLineNo">232</span>          return;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        }<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        fragment = new Fragment(datasetKey);<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        status = OccurrencePersistenceStatus.NEW;<a name="line.235"></a>
+<span class="sourceLineNo">236</span>      } else {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        status = OccurrencePersistenceStatus.UPDATED;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>      }<a name="line.238"></a>
+<span class="sourceLineNo">239</span>    }<a name="line.239"></a>
+<span class="sourceLineNo">240</span><a name="line.240"></a>
+<span class="sourceLineNo">241</span>    // check hashes to see if this is an existing and unchanged record<a name="line.241"></a>
+<span class="sourceLineNo">242</span>    byte[] newHash = DigestUtils.md5(data);<a name="line.242"></a>
+<span class="sourceLineNo">243</span>    if (status == OccurrencePersistenceStatus.UPDATED &amp;&amp; Arrays.equals(newHash, fragment.getDataHash())) {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>      // the new record and existing record don't differ<a name="line.244"></a>
+<span class="sourceLineNo">245</span>      status = OccurrencePersistenceStatus.UNCHANGED;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    } else {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>      // this is an UPDATE or NEW, but not UNCHANGED<a name="line.247"></a>
+<span class="sourceLineNo">248</span>      fragment.setData(data);<a name="line.248"></a>
+<span class="sourceLineNo">249</span>      fragment.setXmlSchema(schema);<a name="line.249"></a>
+<span class="sourceLineNo">250</span>      fragment.setProtocol(protocol);<a name="line.250"></a>
+<span class="sourceLineNo">251</span>      fragment.setDataHash(newHash);<a name="line.251"></a>
+<span class="sourceLineNo">252</span>      fragment.setHarvestedDate(new Date());<a name="line.252"></a>
+<span class="sourceLineNo">253</span>      fragment.setCrawlId(crawlId);<a name="line.253"></a>
+<span class="sourceLineNo">254</span>      fragment.setUnitQualifier(unitQualifier);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>      if (isXml) {<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        fragment.setFragmentType(Fragment.FragmentType.XML);<a name="line.256"></a>
+<span class="sourceLineNo">257</span>      } else {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>        fragment.setFragmentType(Fragment.FragmentType.JSON);<a name="line.258"></a>
+<span class="sourceLineNo">259</span>      }<a name="line.259"></a>
+<span class="sourceLineNo">260</span>    }<a name="line.260"></a>
+<span class="sourceLineNo">261</span><a name="line.261"></a>
+<span class="sourceLineNo">262</span>    // update these in every case (including UNCHANGED)<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    fragment.setHarvestedDate(new Date());<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    fragment.setCrawlId(crawlId);<a name="line.264"></a>
+<span class="sourceLineNo">265</span><a name="line.265"></a>
+<span class="sourceLineNo">266</span>    //    if (LOG.isDebugEnabled()) {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>    //      if (status != OccurrencePersistenceStatus.NEW) {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    StringBuilder uniques = new StringBuilder(64);<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    for (UniqueIdentifier uniqueIdentifier : uniqueIds) {<a name="line.270"></a>
+<span class="sourceLineNo">271</span>      if (uniques.length() &gt; 0) {<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        uniques.append(" ||| ");<a name="line.272"></a>
+<span class="sourceLineNo">273</span>      }<a name="line.273"></a>
+<span class="sourceLineNo">274</span>      uniques.append(uniqueIdentifier.getUniqueString());<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    }<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    LOG.debug("Persisting fragment of status [{}] for key [{}] uniqueIds [{}]", status.toString(),<a name="line.276"></a>
+<span class="sourceLineNo">277</span>      fragment.getKey() == null ? "null" : fragment.getKey().toString(), uniques.toString());<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    //      }<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    //    }<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>    final TimerContext context = persistenceTimer.time();<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    try {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>      if (status == OccurrencePersistenceStatus.NEW) {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        FragmentCreationResult creationResult = fragmentPersister.insert(fragment, uniqueIds);<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        if (!creationResult.isKeyCreated()) {<a name="line.285"></a>
+<span class="sourceLineNo">286</span>          // we lost a race to generate the key for these uniqueIds, and now this is an update<a name="line.286"></a>
+<span class="sourceLineNo">287</span>          status = OccurrencePersistenceStatus.UPDATED;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>          LOG.info(<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            "Fragment creation did not generate new key - lost race and now using existing [{}] as status [UPDATE]",<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            fragment.getKey());<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        }<a name="line.291"></a>
+<span class="sourceLineNo">292</span>      } else {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        fragmentPersister.update(fragment);<a name="line.293"></a>
+<span class="sourceLineNo">294</span>      }<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    } catch (ServiceUnavailableException e) {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>      failForServiceUnavailable(datasetKey, e);<a name="line.296"></a>
+<span class="sourceLineNo">297</span>      return;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>    } finally {<a name="line.298"></a>
+<span class="sourceLineNo">299</span>      context.stop();<a name="line.299"></a>
+<span class="sourceLineNo">300</span>    }<a name="line.300"></a>
+<span class="sourceLineNo">301</span><a name="line.301"></a>
+<span class="sourceLineNo">302</span>    ZookeeperConnector.CounterName counterToUpdate = null;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>    switch (status) {<a name="line.303"></a>
+<span class="sourceLineNo">304</span>      case UNCHANGED:<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        counterToUpdate = ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UNCHANGED;<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        break;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>      case NEW:<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        counterToUpdate = ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_NEW;<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        break;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>      case UPDATED:<a name="line.310"></a>
+<span class="sourceLineNo">311</span>        counterToUpdate = ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UPDATED;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        break;<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    }<a name="line.313"></a>
+<span class="sourceLineNo">314</span>    updateZookeeper(fragment.getDatasetKey(), counterToUpdate);<a name="line.314"></a>
+<span class="sourceLineNo">315</span><a name="line.315"></a>
+<span class="sourceLineNo">316</span>    Message fragMsg = new FragmentPersistedMessage(fragment.getDatasetKey(), crawlId, status, fragment.getKey());<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    final TimerContext msgContext = msgTimer.time();<a name="line.317"></a>
+<span class="sourceLineNo">318</span>    try {<a name="line.318"></a>
+<span class="sourceLineNo">319</span>      LOG.debug("Sending FragmentPersistedMessage for key [{}]", fragment.getKey());<a name="line.319"></a>
+<span class="sourceLineNo">320</span>      messagePublisher.send(fragMsg);<a name="line.320"></a>
+<span class="sourceLineNo">321</span>      msgsSent.mark();<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    } catch (IOException e) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>      LOG.warn("Could not send FragmentPersistedMessage for successful persist of status [{}]", status, e);<a name="line.323"></a>
+<span class="sourceLineNo">324</span>    } finally {<a name="line.324"></a>
+<span class="sourceLineNo">325</span>      msgContext.stop();<a name="line.325"></a>
+<span class="sourceLineNo">326</span>    }<a name="line.326"></a>
+<span class="sourceLineNo">327</span><a name="line.327"></a>
+<span class="sourceLineNo">328</span>    fragmentsProcessed.mark();<a name="line.328"></a>
+<span class="sourceLineNo">329</span>  }<a name="line.329"></a>
+<span class="sourceLineNo">330</span><a name="line.330"></a>
+<span class="sourceLineNo">331</span>  private void failForServiceUnavailable(UUID datasetKey, Throwable e) {<a name="line.331"></a>
+<span class="sourceLineNo">332</span>    LOG.warn("Caught service unavailable from HBase: this fragment for dataset [{}] won't be processed", datasetKey, e);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>    updateZookeeper(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR);<a name="line.333"></a>
+<span class="sourceLineNo">334</span>  }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>  private void updateZookeeper(UUID datasetKey, ZookeeperConnector.CounterName counterName) {<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    LOG.debug("Updating zookeeper for RawOccurrencePersisted");<a name="line.337"></a>
+<span class="sourceLineNo">338</span>    zookeeperConnector.addCounter(datasetKey, counterName);<a name="line.338"></a>
+<span class="sourceLineNo">339</span>  }<a name="line.339"></a>
+<span class="sourceLineNo">340</span>}<a name="line.340"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

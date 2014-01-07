@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.processor.parsing;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import org.gbif.api.vocabulary.OccurrenceSchemaType;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.gbif.dwc.terms.DwcTerm;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.gbif.occurrence.parsing.xml.IdentifierExtractionResult;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.occurrencestore.common.model.HolyTriplet;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.gbif.occurrencestore.common.model.PublisherProvidedUniqueIdentifier;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.gbif.occurrencestore.common.model.UniqueIdentifier;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.gbif.occurrencestore.persistence.api.Fragment;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.gbif.occurrencestore.persistence.api.VerbatimOccurrence;<a name="line.10"></a>
+<span class="sourceLineNo">011</span><a name="line.11"></a>
+<span class="sourceLineNo">012</span>import java.io.ByteArrayInputStream;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import java.io.IOException;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import java.util.Map;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import java.util.Set;<a name="line.15"></a>
+<span class="sourceLineNo">016</span>import java.util.UUID;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import javax.annotation.Nullable;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import com.google.common.collect.Sets;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import org.codehaus.jackson.map.ObjectMapper;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import org.slf4j.Logger;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import org.slf4j.LoggerFactory;<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static com.google.common.base.Preconditions.checkArgument;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static com.google.common.base.Preconditions.checkNotNull;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>/**<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * Parses JSON-encoded fragments.<a name="line.28"></a>
+<span class="sourceLineNo">029</span> */<a name="line.29"></a>
+<span class="sourceLineNo">030</span>public class JsonFragmentParser {<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>  private static final Logger LOG = LoggerFactory.getLogger(JsonFragmentParser.class);<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>  // should not be instantiated<a name="line.34"></a>
+<span class="sourceLineNo">035</span>  private JsonFragmentParser() {<a name="line.35"></a>
+<span class="sourceLineNo">036</span>  }<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>  /**<a name="line.38"></a>
+<span class="sourceLineNo">039</span>   * Expects a fragment encoded in JSON (so, DwCA) and parses it into a VerbatimOccurrence.<a name="line.39"></a>
+<span class="sourceLineNo">040</span>   *<a name="line.40"></a>
+<span class="sourceLineNo">041</span>   * @param fragment of type JSON from a DwCA<a name="line.41"></a>
+<span class="sourceLineNo">042</span>   *<a name="line.42"></a>
+<span class="sourceLineNo">043</span>   * @return a VerbatimOccurrence parsed from the fragment's JSON<a name="line.43"></a>
+<span class="sourceLineNo">044</span>   */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  @Nullable<a name="line.45"></a>
+<span class="sourceLineNo">046</span>  public static VerbatimOccurrence parseRecord(Fragment fragment) {<a name="line.46"></a>
+<span class="sourceLineNo">047</span>    checkNotNull(fragment, "fragment can't be null");<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    checkArgument(fragment.getFragmentType() == Fragment.FragmentType.JSON, "fragment must be of type JSON");<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>    VerbatimOccurrence verbatim = null;<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>    // jackson untyped bind of data to object<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    ObjectMapper mapper = new ObjectMapper();<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    try {<a name="line.54"></a>
+<span class="sourceLineNo">055</span>      Map&lt;String, Object&gt; jsonMap = mapper.readValue(new ByteArrayInputStream(fragment.getData()), Map.class);<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>      String verbatimLatitude = (String) jsonMap.get(DwcTerm.verbatimLatitude.simpleName());<a name="line.57"></a>
+<span class="sourceLineNo">058</span>      String verbatimLongitude = (String) jsonMap.get(DwcTerm.verbatimLongitude.simpleName());<a name="line.58"></a>
+<span class="sourceLineNo">059</span>      String decimalLatitude = (String) jsonMap.get(DwcTerm.decimalLatitude.simpleName());<a name="line.59"></a>
+<span class="sourceLineNo">060</span>      String decimalLongitude = (String) jsonMap.get(DwcTerm.decimalLongitude.simpleName());<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>      String continent = (String) jsonMap.get(DwcTerm.continent.simpleName());<a name="line.62"></a>
+<span class="sourceLineNo">063</span>      String waterBody = (String) jsonMap.get(DwcTerm.waterBody.simpleName());<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>      String country = (String) jsonMap.get(DwcTerm.country.simpleName());<a name="line.65"></a>
+<span class="sourceLineNo">066</span>      String countryCode = (String) jsonMap.get(DwcTerm.countryCode.simpleName());<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>      verbatim = VerbatimOccurrence.builder().key(fragment.getKey()).datasetKey(fragment.getDatasetKey())<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        .unitQualifier(fragment.getUnitQualifier())<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        .institutionCode((String) jsonMap.get(DwcTerm.institutionCode.simpleName()))<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        .collectionCode((String) jsonMap.get(DwcTerm.collectionCode.simpleName()))<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        .catalogNumber((String) jsonMap.get(DwcTerm.catalogNumber.simpleName()))<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        .scientificName((String) jsonMap.get(DwcTerm.scientificName.simpleName()))<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        .author((String) jsonMap.get(DwcTerm.scientificNameAuthorship.simpleName()))<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        .rank((String) jsonMap.get(DwcTerm.taxonRank.simpleName()))<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        .kingdom((String) jsonMap.get(DwcTerm.kingdom.simpleName()))<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        .phylum((String) jsonMap.get(DwcTerm.phylum.simpleName()))<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        .klass((String) jsonMap.get(DwcTerm.class_.simpleName()))<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        .order((String) jsonMap.get(DwcTerm.order.simpleName()))<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        .family((String) jsonMap.get(DwcTerm.family.simpleName()))<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        .genus((String) jsonMap.get(DwcTerm.genus.simpleName()))<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        .species((String) jsonMap.get(DwcTerm.specificEpithet.simpleName()))<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        .subspecies((String) jsonMap.get(DwcTerm.infraspecificEpithet.simpleName()))<a name="line.83"></a>
+<span class="sourceLineNo">084</span>          // prefer the decimal versions if both exist<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        .latitude(decimalLatitude == null ? verbatimLatitude : decimalLatitude)<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        .longitude(decimalLongitude == null ? verbatimLongitude : decimalLongitude)<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        .latLongPrecision((String) jsonMap.get(DwcTerm.coordinatePrecision.simpleName()))<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        .maxAltitude((String) jsonMap.get(DwcTerm.maximumElevationInMeters.simpleName()))<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        .minAltitude((String) jsonMap.get(DwcTerm.minimumElevationInMeters.simpleName()))<a name="line.89"></a>
+<span class="sourceLineNo">090</span>          // no altitude precision<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        .maxDepth((String) jsonMap.get(DwcTerm.maximumDepthInMeters.simpleName()))<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        .minDepth((String) jsonMap.get(DwcTerm.minimumDepthInMeters.simpleName()))<a name="line.92"></a>
+<span class="sourceLineNo">093</span>          // no depth precision<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        .continentOrOcean(continent == null ? waterBody : continent)<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        .country(countryCode == null ? country : countryCode)<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        .stateOrProvince((String) jsonMap.get(DwcTerm.stateProvince.simpleName()))<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        .county((String) jsonMap.get(DwcTerm.county.simpleName()))<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        .collectorName((String) jsonMap.get(DwcTerm.recordedBy.simpleName()))<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        .locality((String) jsonMap.get(DwcTerm.locality.simpleName()))<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        .year((String) jsonMap.get(DwcTerm.year.simpleName())).month((String) jsonMap.get(DwcTerm.month.simpleName()))<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        .day((String) jsonMap.get(DwcTerm.day.simpleName()))<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        .occurrenceDate((String) jsonMap.get(DwcTerm.eventDate.simpleName()))<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        .basisOfRecord((String) jsonMap.get(DwcTerm.basisOfRecord.simpleName()))<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        .identifierName((String) jsonMap.get(DwcTerm.identifiedBy.simpleName()))<a name="line.104"></a>
+<span class="sourceLineNo">105</span>          // no day-, month- or year-identified in DwcTerm<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        .dateIdentified((String) jsonMap.get(DwcTerm.dateIdentified.simpleName())).modified(System.currentTimeMillis())<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        .build();<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    } catch (IOException e) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>      LOG.warn("Unable to parse JSON data, returning null VerbatimOccurrence", e);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>    return verbatim;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>  }<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>  /**<a name="line.115"></a>
+<span class="sourceLineNo">116</span>   * Extracts the unique identifiers from this json snippet.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>   *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>   * @param datasetKey      the UUID of the dataset<a name="line.118"></a>
+<span class="sourceLineNo">119</span>   * @param jsonData        the raw byte array of the snippet's json<a name="line.119"></a>
+<span class="sourceLineNo">120</span>   * @param useOccurrenceId @return a set of<a name="line.120"></a>
+<span class="sourceLineNo">121</span>   */<a name="line.121"></a>
+<span class="sourceLineNo">122</span>  @Nullable<a name="line.122"></a>
+<span class="sourceLineNo">123</span>  public static IdentifierExtractionResult extractIdentifiers(UUID datasetKey, byte[] jsonData, boolean useTriplet,<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    boolean useOccurrenceId) {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    checkNotNull(datasetKey, "datasetKey can't be null");<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    checkNotNull(jsonData, "jsonData can't be null");<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    IdentifierExtractionResult result = null;<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    // jackson untyped bind of data to object<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    ObjectMapper mapper = new ObjectMapper();<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    try {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>      Map&lt;String, Object&gt; jsonMap = mapper.readValue(new ByteArrayInputStream(jsonData), Map.class);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>      Set&lt;UniqueIdentifier&gt; uniqueIds = Sets.newHashSet();<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>      // look for triplet<a name="line.136"></a>
+<span class="sourceLineNo">137</span>      if (useTriplet) {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        String ic = (String) jsonMap.get(DwcTerm.institutionCode.simpleName());<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        String cc = (String) jsonMap.get(DwcTerm.collectionCode.simpleName());<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        String cn = (String) jsonMap.get(DwcTerm.catalogNumber.simpleName());<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>        HolyTriplet holyTriplet = null;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        try {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>          holyTriplet = new HolyTriplet(datasetKey, ic, cc, cn, null);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        } catch (IllegalArgumentException e) {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>          // some of the triplet was null or empty, so it's not valid - that's highly suspicious, but could be ok...<a name="line.146"></a>
+<span class="sourceLineNo">147</span>          LOG.info("No holy triplet for json snippet in dataset [{}] and schema [{}], got error [{}]",<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            new String[] {datasetKey.toString(), OccurrenceSchemaType.DWCA.toString(), e.getMessage()});<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        }<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        if (holyTriplet != null) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>          uniqueIds.add(holyTriplet);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        }<a name="line.152"></a>
+<span class="sourceLineNo">153</span>      }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>      // look for occurrence id<a name="line.155"></a>
+<span class="sourceLineNo">156</span>      if (useOccurrenceId) {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        String occId = (String) jsonMap.get(DwcTerm.occurrenceID.simpleName());<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        if (occId != null) {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>          uniqueIds.add(new PublisherProvidedUniqueIdentifier(datasetKey, occId));<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        }<a name="line.160"></a>
+<span class="sourceLineNo">161</span>      }<a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>      if (!uniqueIds.isEmpty()) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        result = new IdentifierExtractionResult(uniqueIds, null);<a name="line.164"></a>
+<span class="sourceLineNo">165</span>      }<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    } catch (IOException e) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>      LOG.warn("Unable to parse JSON data, returning null IdentifierExtractionResult", e);<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    return result;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>  }<a name="line.171"></a>
+<span class="sourceLineNo">172</span>}<a name="line.172"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
