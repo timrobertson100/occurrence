@@ -1,3 +1,4 @@
-org.gbif.occurrencestore.download.ws.client
-org.gbif.occurrencestore.download.ws.client.guice
-org.gbif.occurrencestore.download.ws.client.util
+org.gbif.occurrencestore.download.file
+org.gbif.occurrencestore.download.oozie
+org.gbif.occurrencestore.download.util
+org.gbif.occurrencestore.hive.udf
