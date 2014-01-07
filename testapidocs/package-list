@@ -1,5 +1,1 @@
-org.gbif.occurrence
-org.gbif.occurrence.parsing.dwca
-org.gbif.occurrence.parsing.response_file
-org.gbif.occurrence.parsing.xml
-org.gbif.occurrence.util
+org.gbif.occurrencestore.interpreters
