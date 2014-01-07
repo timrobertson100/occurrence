@@ -1,1 +1,2 @@
-org.gbif.occurrence.download.util
+org.gbif.occurrencestore.download.service
+org.gbif.occurrencestore.download.ws.resources
