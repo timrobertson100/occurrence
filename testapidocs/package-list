@@ -1,1 +1,2 @@
-org.gbif.occurrencestore.deleter
+org.gbif.occurrencestore.search
+org.gbif.occurrencestore.search.writers
