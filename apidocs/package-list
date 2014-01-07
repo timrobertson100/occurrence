@@ -1,8 +1,9 @@
-org.gbif.occurrencestore.persistence
-org.gbif.occurrencestore.persistence.api
-org.gbif.occurrencestore.persistence.constants
-org.gbif.occurrencestore.persistence.guice
-org.gbif.occurrencestore.persistence.hbase
-org.gbif.occurrencestore.persistence.keygen
-org.gbif.occurrencestore.persistence.util
-org.gbif.occurrencestore.persistence.zookeeper
+org.gbif.occurrence
+org.gbif.occurrence.constants
+org.gbif.occurrence.model
+org.gbif.occurrence.parsing
+org.gbif.occurrence.parsing.dwca
+org.gbif.occurrence.parsing.response_file
+org.gbif.occurrence.parsing.xml
+org.gbif.occurrence.parsing.xml.rules
+org.gbif.occurrence.util
