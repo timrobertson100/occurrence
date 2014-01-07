@@ -1,3 +1,1 @@
-org.gbif.occurrence.ws.client
-org.gbif.occurrence.ws.client.guice
-org.gbif.occurrence.ws.client.mock
+org.gbif.occurrence.download.util

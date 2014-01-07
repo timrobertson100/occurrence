@@ -1,2 +1,1 @@
-org.gbif.occurrence.ws.client
-org.gbif.occurrence.ws.client.guice
+org.gbif.occurrence.download.util
