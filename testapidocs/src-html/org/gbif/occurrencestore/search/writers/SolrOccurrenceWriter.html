@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> *<a name="line.2"></a>
+<span class="sourceLineNo">003</span> */<a name="line.3"></a>
+<span class="sourceLineNo">004</span>package org.gbif.occurrencestore.search.writers;<a name="line.4"></a>
+<span class="sourceLineNo">005</span><a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.api.model.occurrence.Occurrence;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.gbif.dwc.terms.DwcTerm;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.gbif.occurrencestore.util.BasisOfRecordConverter;<a name="line.8"></a>
+<span class="sourceLineNo">009</span><a name="line.9"></a>
+<span class="sourceLineNo">010</span>import java.util.HashSet;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import java.util.Set;<a name="line.11"></a>
+<span class="sourceLineNo">012</span><a name="line.12"></a>
+<span class="sourceLineNo">013</span>import com.google.common.base.Joiner;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import com.google.common.base.Predicate;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import com.google.common.collect.Range;<a name="line.15"></a>
+<span class="sourceLineNo">016</span>import org.apache.solr.client.solrj.SolrServer;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import org.apache.solr.common.SolrInputDocument;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import static org.gbif.common.search.util.QueryUtils.toDateQueryFormat;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.ALTITUDE;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.BASIS_OF_RECORD;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.CATALOG_NUMBER;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.COLLECTION_CODE;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.COLLECTOR_NAME;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.COORDINATE;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.COUNTRY;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.DATASET_KEY;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.DATE;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.DEPTH;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.GEOREFERENCED;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.INSTITUTION_CODE;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.KEY;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.MONTH;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.PUBLISHING_COUNTRY;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.TAXON_KEY;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import static org.gbif.occurrencestore.search.solr.OccurrenceSolrField.YEAR;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * Utility class that stores an Occurrence record into a Solr index.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> */<a name="line.41"></a>
+<span class="sourceLineNo">042</span>public class SolrOccurrenceWriter implements Predicate&lt;Occurrence&gt; {<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>  // Joins coordinates with ','<a name="line.45"></a>
+<span class="sourceLineNo">046</span>  private static final Joiner COORD_JOINER = Joiner.on(',').useForNull("");<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>  // Allowed latitude range<a name="line.48"></a>
+<span class="sourceLineNo">049</span>  private static final Range&lt;Double&gt; LAT_RANGE = Range.closed(-90.0, 90.0);<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>  // Allowed longitude range<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  private static final Range&lt;Double&gt; LNG_RANGE = Range.closed(-180.0, 180.0);<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>  // Basis of record converter<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  private static final BasisOfRecordConverter BOR_CONVERTER = new BasisOfRecordConverter();<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>  // SolrServer that stores the occurrence records<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  private final SolrServer solrServer;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>  /**<a name="line.60"></a>
+<span class="sourceLineNo">061</span>   * Default constructor.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>   */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>  public SolrOccurrenceWriter(SolrServer solrServer) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    this.solrServer = solrServer;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>  }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>  /**<a name="line.68"></a>
+<span class="sourceLineNo">069</span>   * Validate if the latitude and longitude values are not null and have correct values: latitude:[-90.0,90.0] and<a name="line.69"></a>
+<span class="sourceLineNo">070</span>   * longitude[-180.0,180.0].<a name="line.70"></a>
+<span class="sourceLineNo">071</span>   */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>  private static boolean isValidCoordinate(Double latitude, Double longitude) {<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    if (latitude != null &amp;&amp; longitude != null) {<a name="line.73"></a>
+<span class="sourceLineNo">074</span>      return LAT_RANGE.contains(latitude) &amp;&amp; LNG_RANGE.contains(longitude);<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    }<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    return false;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>  }<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>  /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>   * Processes the occurrence object.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>   */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>  @Override<a name="line.83"></a>
+<span class="sourceLineNo">084</span>  public boolean apply(Occurrence input) {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    try {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>      solrServer.add(buildOccSolrDocument(input));<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    } catch (Exception e) {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>      return false;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    }<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    return true;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>  }<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>  /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>   * Populates the Solr document using the occurrence object.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>   */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>  private SolrInputDocument buildOccSolrDocument(Occurrence occurrence) {<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    SolrInputDocument doc = new SolrInputDocument();<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    final Double latitude = occurrence.getLatitude();<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    final Double longitude = occurrence.getLongitude();<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    // TODO: geospatial issue has changed a lot<a name="line.100"></a>
+<span class="sourceLineNo">101</span>//    final Integer geospatialIssue = occurrence.getGeospatialIssue();<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>    doc.setField(KEY.getFieldName(), occurrence.getKey());<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    doc.setField(YEAR.getFieldName(), occurrence.getYear());<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    doc.setField(MONTH.getFieldName(), occurrence.getMonth());<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    doc.setField(BASIS_OF_RECORD.getFieldName(), BOR_CONVERTER.fromEnum(occurrence.getBasisOfRecord()));<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    doc.setField(CATALOG_NUMBER.getFieldName(), occurrence.getField(DwcTerm.catalogNumber));<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    doc.setField(COLLECTOR_NAME.getFieldName(), occurrence.getField(DwcTerm.recordedBy));<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    doc.setField(COUNTRY.getFieldName(), occurrence.getCountry() == null ? null : occurrence.getCountry()<a name="line.109"></a>
+<span class="sourceLineNo">110</span>      .getIso2LetterCode());<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    doc.setField(PUBLISHING_COUNTRY.getFieldName(), occurrence.getPublishingCountry() == null ? null : occurrence<a name="line.111"></a>
+<span class="sourceLineNo">112</span>      .getPublishingCountry().getIso2LetterCode());<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    doc.setField(DATASET_KEY.getFieldName(), occurrence.getDatasetKey().toString());<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    Set&lt;Integer&gt; taxonKey = buildTaxonKey(occurrence);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    if (!taxonKey.isEmpty()) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>      doc.setField(TAXON_KEY.getFieldName(), taxonKey);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    }<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    doc.setField(ALTITUDE.getFieldName(), occurrence.getAltitude());<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    doc.setField(DEPTH.getFieldName(), occurrence.getDepth());<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    doc.setField(INSTITUTION_CODE.getFieldName(), occurrence.getField(DwcTerm.institutionCode));<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    doc.setField(COLLECTION_CODE.getFieldName(), occurrence.getField(DwcTerm.collectionCode));<a name="line.121"></a>
+<span class="sourceLineNo">122</span>//    doc.setField(GEOSPATIAL_ISSUE.getFieldName(), geospatialIssue != null &amp;&amp; geospatialIssue &gt; 0);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    doc.setField(GEOREFERENCED.getFieldName(), latitude != null &amp;&amp; longitude != null);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    doc.setField(DATE.getFieldName(),<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      occurrence.getEventDate() != null ? toDateQueryFormat(occurrence.getEventDate()) : null);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    if (isValidCoordinate(latitude, longitude)) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>      doc.setField(COORDINATE.getFieldName(), COORD_JOINER.join(latitude, longitude));<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    } else {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>      doc.setField(COORDINATE.getFieldName(), null);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    return doc;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>  }<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>  /**<a name="line.134"></a>
+<span class="sourceLineNo">135</span>   * Return a set of integer that contains the taxon key values.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>   */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>  private Set&lt;Integer&gt; buildTaxonKey(Occurrence occurrence) {<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    Set&lt;Integer&gt; taxonKey = new HashSet&lt;Integer&gt;();<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    if (occurrence.getTaxonKey() != null) {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>      taxonKey.add(occurrence.getTaxonKey());<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    }<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>    if (occurrence.getKingdomKey() != null) {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>      taxonKey.add(occurrence.getKingdomKey());<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    }<a name="line.147"></a>
+<span class="sourceLineNo">148</span><a name="line.148"></a>
+<span class="sourceLineNo">149</span>    if (occurrence.getPhylumKey() != null) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>      taxonKey.add(occurrence.getPhylumKey());<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    if (occurrence.getClassKey() != null) {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>      taxonKey.add(occurrence.getClassKey());<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    if (occurrence.getOrderKey() != null) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>      taxonKey.add(occurrence.getOrderKey());<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    }<a name="line.159"></a>
+<span class="sourceLineNo">160</span><a name="line.160"></a>
+<span class="sourceLineNo">161</span>    if (occurrence.getFamilyKey() != null) {<a name="line.161"></a>
+<span class="sourceLineNo">162</span>      taxonKey.add(occurrence.getFamilyKey());<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    if (occurrence.getGenusKey() != null) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>      taxonKey.add(occurrence.getGenusKey());<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    if (occurrence.getSpeciesKey() != null) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>      taxonKey.add(occurrence.getSpeciesKey());<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    }<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    return taxonKey;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>  }<a name="line.174"></a>
+<span class="sourceLineNo">175</span>}<a name="line.175"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

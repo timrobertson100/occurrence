@@ -73,7 +73,7 @@
 <a class="jxr_linenumber" name="63" href="#63">63</a>  <em class="jxr_javadoccomment">   * @param columnValue value to match</em>
 <a class="jxr_linenumber" name="64" href="#64">64</a>  <em class="jxr_javadoccomment">   * @param columnName column on which to match values</em>
 <a class="jxr_linenumber" name="65" href="#65">65</a>  <em class="jxr_javadoccomment">   */</em>
-<a class="jxr_linenumber" name="66" href="#66">66</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> deleteByColumn(byte[] columnValue, FieldName columnName) {
+<a class="jxr_linenumber" name="66" href="#66">66</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> deleteByColumn(byte[] columnValue, <a href="../../../../org/gbif/occurrencestore/common/model/constants/FieldName.html">FieldName</a> columnName) {
 <a class="jxr_linenumber" name="67" href="#67">67</a>      LOG.debug(<span class="jxr_string">"Starting delete by column for [{}]"</span>, columnName);
 <a class="jxr_linenumber" name="68" href="#68">68</a>      <strong class="jxr_keyword">int</strong> deleteCount = 0;
 <a class="jxr_linenumber" name="69" href="#69">69</a>      Iterator&lt;Integer&gt; keyIterator = occurrenceService.getKeysByColumn(columnValue, columnName);

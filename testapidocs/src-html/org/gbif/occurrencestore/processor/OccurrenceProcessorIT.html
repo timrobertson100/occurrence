@@ -1,0 +1,302 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.processor;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import org.gbif.api.model.occurrence.Occurrence;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.gbif.api.vocabulary.BasisOfRecord;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.gbif.api.vocabulary.Country;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.gbif.api.vocabulary.EndpointType;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.gbif.api.vocabulary.OccurrenceSchemaType;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.gbif.common.messaging.ConnectionParameters;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.gbif.common.messaging.DefaultMessagePublisher;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.gbif.common.messaging.MessageListener;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import org.gbif.common.messaging.api.MessagePublisher;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import org.gbif.occurrencestore.persistence.api.FragmentPersistenceService;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import org.gbif.occurrencestore.persistence.api.OccurrenceKeyPersistenceService;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import org.gbif.occurrencestore.persistence.api.OccurrencePersistenceService;<a name="line.15"></a>
+<span class="sourceLineNo">016</span>import org.gbif.occurrencestore.persistence.api.VerbatimOccurrencePersistenceService;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import org.gbif.occurrencestore.processor.interpreting.VerbatimOccurrenceInterpreter;<a name="line.17"></a>
+<span class="sourceLineNo">018</span>import org.gbif.occurrencestore.processor.messaging.FragmentPersistedListener;<a name="line.18"></a>
+<span class="sourceLineNo">019</span>import org.gbif.occurrencestore.processor.messaging.OccurrenceFragmentedListener;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import org.gbif.occurrencestore.processor.messaging.VerbatimPersistedListener;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import org.gbif.occurrencestore.processor.zookeeper.ZookeeperConnector;<a name="line.21"></a>
+<span class="sourceLineNo">022</span><a name="line.22"></a>
+<span class="sourceLineNo">023</span>import java.io.IOException;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.util.Calendar;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import java.util.UUID;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import java.util.concurrent.TimeUnit;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import com.google.common.io.Resources;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import com.netflix.curator.framework.CuratorFramework;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import com.netflix.curator.framework.CuratorFrameworkFactory;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import com.netflix.curator.retry.RetryNTimes;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import com.netflix.curator.test.TestingServer;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import org.apache.commons.io.Charsets;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import org.junit.After;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import org.junit.Before;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import org.junit.BeforeClass;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import org.junit.Ignore;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import org.junit.Test;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>import static org.junit.Assert.assertEquals;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import static org.junit.Assert.assertNotNull;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>@Ignore("requires live webservices and messaging")<a name="line.43"></a>
+<span class="sourceLineNo">044</span>public class OccurrenceProcessorIT {<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>  private final OccurrenceKeyPersistenceService occurrenceKeyService = new OccurrenceKeyPersistenceServiceMock();<a name="line.46"></a>
+<span class="sourceLineNo">047</span>  private final FragmentPersistenceService fragmentPersister = new FragmentPersistenceServiceMock(occurrenceKeyService);<a name="line.47"></a>
+<span class="sourceLineNo">048</span>  private FragmentProcessor fragmentProcessor;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>  private VerbatimProcessor verbatimProcessor;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  private InterpretedProcessor interpretedProcessor;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>  private OccurrenceFragmentedListener occurrenceFragmentedListener;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  private FragmentPersistedListener fragmentPersistedListener;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  private VerbatimPersistedListener verbatimPersistedListener;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>  private final VerbatimOccurrencePersistenceService verbatimPersister = new VerbatimOccurrenceServiceMock();<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  private final OccurrencePersistenceService occurrenceService =<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    new OccurrencePersistenceServiceMock(fragmentPersister);<a name="line.56"></a>
+<span class="sourceLineNo">057</span>  private MessageListener messageListener;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  private MessagePublisher messagePublisher;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  private VerbatimOccurrenceInterpreter verbatimInterpreter;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  private TestingServer zkServer;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  private CuratorFramework curator;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>  private ZookeeperConnector zookeeperConnector;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>  private static String abcd206Single;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>  private static String abcd206Multi;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>  private static String dwc14;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>  private static String dwc14_modified;<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>  private static final String BGBM_KEY = "57254bd0-8256-11d8-b7ed-b8a03c50a862";<a name="line.69"></a>
+<span class="sourceLineNo">070</span>  private static final String BOGART_DATASET_KEY = "85697f04-f762-11e1-a439-00145eb45e9a";<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>  private static final String MAINZ_MUSEUM_KEY = "33aecde5-7e13-4272-9cb7-f4f3b0eb820c";<a name="line.72"></a>
+<span class="sourceLineNo">073</span>  private static final String MAINZ_ZOO_DATASET_KEY = "7e2989f0-f762-11e1-a439-00145eb45e9a";<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>  @BeforeClass<a name="line.75"></a>
+<span class="sourceLineNo">076</span>  public static void preClass() throws IOException {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    abcd206Single = Resources.toString(Resources.getResource("abcd206_single.xml"), Charsets.UTF_8);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    abcd206Multi = Resources.toString(Resources.getResource("abcd206_multi.xml"), Charsets.UTF_8);<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    dwc14 = Resources.toString(Resources.getResource("dwc14.xml"), Charsets.UTF_8);<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    dwc14_modified = Resources.toString(Resources.getResource("dwc14_modified.xml"), Charsets.UTF_8);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>  }<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>  @Before<a name="line.83"></a>
+<span class="sourceLineNo">084</span>  public void setUp() throws Exception {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    ConnectionParameters connectionParams = new ConnectionParameters("localhost", 5672, "guest", "guest", "/");<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    messagePublisher =<a name="line.86"></a>
+<span class="sourceLineNo">087</span>      new DefaultMessagePublisher(connectionParams);<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    messageListener = new MessageListener(connectionParams);<a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>    zkServer = new TestingServer();<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    curator = CuratorFrameworkFactory.builder().connectString(zkServer.getConnectString()).namespace("crawlertest")<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      .retryPolicy(new RetryNTimes(1, 1000)).build();<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    curator.start();<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    zookeeperConnector = new ZookeeperConnector(curator);<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    long now = System.currentTimeMillis();<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    fragmentProcessor =<a name="line.97"></a>
+<span class="sourceLineNo">098</span>      new FragmentProcessor(fragmentPersister, occurrenceKeyService, messagePublisher, zookeeperConnector);<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    occurrenceFragmentedListener = new OccurrenceFragmentedListener(fragmentProcessor);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    messageListener.listen("occ_frag_test_" + now, 1, occurrenceFragmentedListener);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    verbatimProcessor =<a name="line.101"></a>
+<span class="sourceLineNo">102</span>      new VerbatimProcessor(fragmentPersister, verbatimPersister, messagePublisher, zookeeperConnector);<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    fragmentPersistedListener = new FragmentPersistedListener(verbatimProcessor);<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    messageListener.listen("frag_persisted_test_" + now, 1, fragmentPersistedListener);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    verbatimInterpreter = new VerbatimOccurrenceInterpreter(occurrenceService, zookeeperConnector);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    interpretedProcessor = new InterpretedProcessor(fragmentPersister, verbatimInterpreter, verbatimPersister, messagePublisher, zookeeperConnector);<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    verbatimPersistedListener = new VerbatimPersistedListener(interpretedProcessor);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    messageListener.listen("verb_persisted_test_" + now, 1, verbatimPersistedListener);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>  }<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>  @After<a name="line.111"></a>
+<span class="sourceLineNo">112</span>  public void tearDown() throws IOException {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    messageListener.close();<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    zkServer.stop();<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    curator.close();<a name="line.115"></a>
+<span class="sourceLineNo">116</span>  }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>  // TODO: test endtoend using new parse and interp msgs, both will be updates<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>  @Test<a name="line.120"></a>
+<span class="sourceLineNo">121</span>  public void testEndToEnd() throws IOException, InterruptedException {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    UUID datasetKey = UUID.fromString(BOGART_DATASET_KEY);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    OccurrenceSchemaType xmlSchema = OccurrenceSchemaType.ABCD_2_0_6;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    Integer crawlId = 1;<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    OccurrenceFragmentedMessage msg =<a name="line.125"></a>
+<span class="sourceLineNo">126</span>      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), xmlSchema, EndpointType.BIOCASE,<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        null);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    messagePublisher.send(msg);<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    TimeUnit.MILLISECONDS.sleep(15000);<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    Occurrence got = occurrenceService.get(1);<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    assertNotNull(got);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>//    assertEquals("BGBM", got.getInstitutionCode());<a name="line.134"></a>
+<span class="sourceLineNo">135</span>//    assertEquals("AlgaTerra", got.getCollectionCode());<a name="line.135"></a>
+<span class="sourceLineNo">136</span>//    assertEquals("5834", got.getCatalogNumber());<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    assertEquals(datasetKey, got.getDatasetKey());<a name="line.137"></a>
+<span class="sourceLineNo">138</span>//    assertNull(got.getUnitQualifier());<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>    assertEquals("Tetraedron caudatum (Corda) Hansgirg", got.getScientificName());<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    assertEquals(52.423798, got.getLatitude().doubleValue(), 0.00001);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    assertEquals(13.191434, got.getLongitude().doubleValue(), 0.00001);<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    assertEquals(450, got.getAltitude().intValue());<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    assertEquals(Country.fromIsoCode("DE"), got.getCountry());<a name="line.144"></a>
+<span class="sourceLineNo">145</span>//    assertEquals("Kusber, W.-H.", got.getCollectorName());<a name="line.145"></a>
+<span class="sourceLineNo">146</span>//    assertEquals("Nikolassee, Berlin", got.getLocality());<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    Calendar c = Calendar.getInstance();<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    c.set(1987, 3, 13);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    c.set(Calendar.HOUR_OF_DAY, 0);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    c.set(Calendar.MINUTE, 0);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    c.set(Calendar.SECOND, 0);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    c.set(Calendar.MILLISECOND, 0);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>//    assertEquals(c.getTimeInMillis(), got.getOccurrenceDate().getTime());<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    assertEquals(BasisOfRecord.valueOf("OBSERVATION"), got.getBasisOfRecord());<a name="line.154"></a>
+<span class="sourceLineNo">155</span>//    assertEquals("Kusber, W.-H.", got.getIdentifierName());<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>//    assertEquals(BGBM_KEY, got.getOwningOrgKey().toString());<a name="line.157"></a>
+<span class="sourceLineNo">158</span>//    assertEquals(Country.GERMANY, got.getHostCountry());<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    assertEquals(EndpointType.BIOCASE, got.getProtocol());<a name="line.159"></a>
+<span class="sourceLineNo">160</span>  }<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>  @Test<a name="line.162"></a>
+<span class="sourceLineNo">163</span>  public void testEndToEndZkCounts() throws IOException, InterruptedException {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    UUID datasetKey = UUID.randomUUID();<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    // one abcd206<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    OccurrenceSchemaType schemaType = OccurrenceSchemaType.ABCD_2_0_6;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    Integer crawlId = 1;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    OccurrenceFragmentedMessage msg =<a name="line.169"></a>
+<span class="sourceLineNo">170</span>      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), schemaType, EndpointType.BIOCASE,<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        null);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    messagePublisher.send(msg);<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    // two in one abcd 2<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    schemaType = OccurrenceSchemaType.ABCD_2_0_6;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    crawlId = 1;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    msg =<a name="line.177"></a>
+<span class="sourceLineNo">178</span>      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Multi.getBytes(), schemaType, EndpointType.BIOCASE,<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        null);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    messagePublisher.send(msg);<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>    // one dwc 1.4<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    schemaType = OccurrenceSchemaType.DWC_1_4;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    crawlId = 1;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    msg =<a name="line.185"></a>
+<span class="sourceLineNo">186</span>      new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14.getBytes(), schemaType, EndpointType.BIOCASE, null);<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    messagePublisher.send(msg);<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>    // dupe of dwc 1.4<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    messagePublisher.send(msg);<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    // update of dwc 1.4<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    schemaType = OccurrenceSchemaType.DWC_1_4;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    crawlId = 1;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    msg =<a name="line.195"></a>
+<span class="sourceLineNo">196</span>      new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14_modified.getBytes(), schemaType, EndpointType.DIGIR,<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        null);<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    messagePublisher.send(msg);<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>    TimeUnit.MILLISECONDS.sleep(6000);<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    assertEquals(5l,<a name="line.202"></a>
+<span class="sourceLineNo">203</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED).longValue());<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    assertEquals(5l,<a name="line.204"></a>
+<span class="sourceLineNo">205</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_PROCESSED).longValue());<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    assertEquals(0l,<a name="line.206"></a>
+<span class="sourceLineNo">207</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR)<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        .longValue());<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    assertEquals(1l,<a name="line.209"></a>
+<span class="sourceLineNo">210</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UNCHANGED)<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        .longValue());<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    assertEquals(1l,<a name="line.212"></a>
+<span class="sourceLineNo">213</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UPDATED)<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        .longValue());<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    assertEquals(4l,<a name="line.215"></a>
+<span class="sourceLineNo">216</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_NEW)<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        .longValue());<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    assertEquals(0l,<a name="line.218"></a>
+<span class="sourceLineNo">219</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_ERROR)<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        .longValue());<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    assertEquals(5l,<a name="line.221"></a>
+<span class="sourceLineNo">222</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_SUCCESS)<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        .longValue());<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    assertEquals(0l,<a name="line.224"></a>
+<span class="sourceLineNo">225</span>      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_ERROR)<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        .longValue());<a name="line.226"></a>
+<span class="sourceLineNo">227</span>    assertEquals(5l, zookeeperConnector<a name="line.227"></a>
+<span class="sourceLineNo">228</span>      .readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_SUCCESS).longValue());<a name="line.228"></a>
+<span class="sourceLineNo">229</span>  }<a name="line.229"></a>
+<span class="sourceLineNo">230</span>}<a name="line.230"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
