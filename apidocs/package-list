@@ -1,2 +1,3 @@
-org.gbif.occurrencestore.deleter
-org.gbif.occurrencestore.deleter.messaging
+org.gbif.occurrencestore.search
+org.gbif.occurrencestore.search.guice
+org.gbif.occurrencestore.search.solr
