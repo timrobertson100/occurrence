@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package org.gbif.occurrencestore.persistence.keygen;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import java.util.List;<a name="line.3"></a>
+<span class="sourceLineNo">004</span>import java.util.UUID;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import java.util.concurrent.TimeUnit;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import java.util.concurrent.atomic.AtomicInteger;<a name="line.6"></a>
+<span class="sourceLineNo">007</span><a name="line.7"></a>
+<span class="sourceLineNo">008</span>import com.google.common.collect.ImmutableSet;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import com.google.common.collect.Lists;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.apache.hadoop.hbase.HBaseConfiguration;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import org.apache.hadoop.hbase.client.HTablePool;<a name="line.11"></a>
+<span class="sourceLineNo">012</span><a name="line.12"></a>
+<span class="sourceLineNo">013</span>/**<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * Note not a real JUnit test, but an extremely expensive performance test that should use the real cluster.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> */<a name="line.15"></a>
+<span class="sourceLineNo">016</span>public class HBaseLockingKeyServiceThroughputTest {<a name="line.16"></a>
+<span class="sourceLineNo">017</span><a name="line.17"></a>
+<span class="sourceLineNo">018</span>  private static final String LOOKUP_TABLE_NAME = "keygen_test_occurrence_lookup";<a name="line.18"></a>
+<span class="sourceLineNo">019</span>  private static final String COUNTER_TABLE_NAME = "keygen_test_occurrence_counter";<a name="line.19"></a>
+<span class="sourceLineNo">020</span>  private static final String OCCURRENCE_TABLE_NAME = "keygen_test_occurrence";<a name="line.20"></a>
+<span class="sourceLineNo">021</span><a name="line.21"></a>
+<span class="sourceLineNo">022</span>  private HTablePool tablePool = null;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>  private final HBaseLockingKeyService keyService;<a name="line.23"></a>
+<span class="sourceLineNo">024</span><a name="line.24"></a>
+<span class="sourceLineNo">025</span>  private static final AtomicInteger keysGenerated = new AtomicInteger(0);<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>  public HBaseLockingKeyServiceThroughputTest(int hbasePoolSize) {<a name="line.27"></a>
+<span class="sourceLineNo">028</span>    tablePool = new HTablePool(HBaseConfiguration.create(), hbasePoolSize);<a name="line.28"></a>
+<span class="sourceLineNo">029</span>    keyService = new HBaseLockingKeyService(LOOKUP_TABLE_NAME, COUNTER_TABLE_NAME, OCCURRENCE_TABLE_NAME, tablePool);<a name="line.29"></a>
+<span class="sourceLineNo">030</span>  }<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>  public void testNoContention(int threadCount) throws InterruptedException {<a name="line.32"></a>
+<span class="sourceLineNo">033</span>    // test generating ids as fast as possible in the ideal case of no waiting for contention (all ids are globally<a name="line.33"></a>
+<span class="sourceLineNo">034</span>    // unique)<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    int genPerThread = 100000;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>    List&lt;Thread&gt; threads = Lists.newArrayList();<a name="line.36"></a>
+<span class="sourceLineNo">037</span>    for (int i = 0; i &lt; threadCount; i++) {<a name="line.37"></a>
+<span class="sourceLineNo">038</span>      Thread thread = new Thread(new KeyGenerator(keyService, UUID.randomUUID(), genPerThread));<a name="line.38"></a>
+<span class="sourceLineNo">039</span>      thread.start();<a name="line.39"></a>
+<span class="sourceLineNo">040</span>      threads.add(thread);<a name="line.40"></a>
+<span class="sourceLineNo">041</span>    }<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>    Thread rateReporter = new Thread(new RateReporter(threadCount));<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    rateReporter.start();<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>    for (Thread thread : threads) {<a name="line.46"></a>
+<span class="sourceLineNo">047</span>      thread.join();<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    }<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>    rateReporter.interrupt();<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    rateReporter.join();<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  }<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>  private static class RateReporter implements Runnable {<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private final int threadCount;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private RateReporter(int threadCount) {<a name="line.58"></a>
+<span class="sourceLineNo">059</span>      this.threadCount = threadCount;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    }<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    @Override<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    public void run() {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>      int periods = 0;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>      int runningAvg = 0;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>      int buildAverageAfter = 15;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>      int lastCount = 0;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>      boolean interrupted = false;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>      while (!interrupted) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        try {<a name="line.70"></a>
+<span class="sourceLineNo">071</span>          TimeUnit.SECONDS.sleep(1);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        } catch (InterruptedException e) {<a name="line.72"></a>
+<span class="sourceLineNo">073</span>          interrupted = true;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        }<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        int generated = keysGenerated.intValue() - lastCount;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        if (periods &gt; buildAverageAfter) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>          if (runningAvg == 0) {<a name="line.77"></a>
+<span class="sourceLineNo">078</span>            runningAvg = generated;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>          } else {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>            int netPeriods = periods - buildAverageAfter;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>            runningAvg = (netPeriods * runningAvg + generated) / (netPeriods + 1);<a name="line.81"></a>
+<span class="sourceLineNo">082</span>          }<a name="line.82"></a>
+<span class="sourceLineNo">083</span>          System.out.println("Key generation at [" + generated + " keys/s] for running avg of [" + runningAvg<a name="line.83"></a>
+<span class="sourceLineNo">084</span>                             + " keys/s] and per thread [" + (runningAvg / threadCount)<a name="line.84"></a>
+<span class="sourceLineNo">085</span>                             + " keys/sec] with id generation time of [" + (threadCount * 1000 / runningAvg)<a name="line.85"></a>
+<span class="sourceLineNo">086</span>                             + " ms/id]");<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        } else {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>          System.out.println("Stats in [" + (buildAverageAfter - periods) + "] seconds.");<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        }<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        periods++;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        lastCount = keysGenerated.intValue();<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      }<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    }<a name="line.93"></a>
+<span class="sourceLineNo">094</span>  }<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>  private static class KeyGenerator implements Runnable {<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    private final HBaseLockingKeyService keyService;<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    private final UUID datasetKey;<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    private final int genCount;<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    private KeyGenerator(HBaseLockingKeyService keyService, UUID datasetKey, int genCount) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>      this.keyService = keyService;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>      this.datasetKey = datasetKey;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>      this.genCount = genCount;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    @Override<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public void run() {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>      for (int i = 0; i &lt; genCount; i++) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        keyService.generateKey(ImmutableSet.of(String.valueOf(i)), datasetKey.toString());<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        keysGenerated.incrementAndGet();<a name="line.112"></a>
+<span class="sourceLineNo">113</span>      }<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    }<a name="line.114"></a>
+<span class="sourceLineNo">115</span>  }<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>  public static void main(String[] args) throws InterruptedException {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    int hbasePoolSize = 100;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    int persistingThreads = 100;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    if (args.length == 2) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>      hbasePoolSize = Integer.valueOf(args[0]);<a name="line.121"></a>
+<span class="sourceLineNo">122</span>      persistingThreads = Integer.valueOf(args[1]);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    }<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    System.out<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      .println("Running test with hbasePool [" + hbasePoolSize + "] and persistingThreads [" + persistingThreads + "]");<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    HBaseLockingKeyServiceThroughputTest instance = new HBaseLockingKeyServiceThroughputTest(hbasePoolSize);<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    instance.testNoContention(persistingThreads);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>  }<a name="line.128"></a>
+<span class="sourceLineNo">129</span>}<a name="line.129"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
