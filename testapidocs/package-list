@@ -1,1 +1,4 @@
-org.gbif.occurrencestore.util
+org.gbif.occurrencestore.persistence
+org.gbif.occurrencestore.persistence.guice
+org.gbif.occurrencestore.persistence.keygen
+org.gbif.occurrencestore.persistence.zookeeper
