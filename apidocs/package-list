@@ -1,3 +1,2 @@
-org.gbif.occurrence.ws.factory
-org.gbif.occurrence.ws.guice
-org.gbif.occurrence.ws.resources
+org.gbif.occurrence.ws.client
+org.gbif.occurrence.ws.client.guice
