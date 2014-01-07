@@ -1,3 +1,10 @@
-org.gbif.occurrencestore.search
-org.gbif.occurrencestore.search.guice
-org.gbif.occurrencestore.search.solr
+org.gbif.occurrence.cli
+org.gbif.occurrence.cli.common
+org.gbif.occurrence.cli.dataset
+org.gbif.occurrence.cli.dataset.service
+org.gbif.occurrence.cli.delete
+org.gbif.occurrence.cli.delete.service
+org.gbif.occurrence.cli.index
+org.gbif.occurrence.cli.registry
+org.gbif.occurrence.cli.registry.service
+org.gbif.occurrence.cli.registry.sync
