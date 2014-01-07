@@ -1,5 +1,0 @@
-org.gbif.occurrence.index
-org.gbif.occurrence.index.hadoop
-org.gbif.occurrence.index.hbase
-org.gbif.occurrence.index.multithread
-org.gbif.occurrence.index.solr
