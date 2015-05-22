@@ -1,4 +1,6 @@
-#c1n1.gbif.org:2181,c1n2.gbif.org:2181,c1n3.gbif.org:2181/solr
+#create solr configuration
+solrctl instancedir --create dev_occurrence solr/
+solrctl collection --create dev_occurrence -s 3 -c dev_occurrence -r 2 -m 1 -n 3
 ZK_HOST=$1
 #occurrence
 SOLR_COLLECTION=$2
