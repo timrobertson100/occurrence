@@ -46,16 +46,16 @@
     <fileSet>
       <directory>${project.build.outputDirectory}/batch-indexing/</directory>
       <outputDirectory>/batch-indexing/</outputDirectory>
+      <fileMode>0755</fileMode>
       <includes>
-        <include>**</include>
+        <include>**/*.sh</include>
       </includes>
     </fileSet>
     <fileSet>
       <directory>${project.build.outputDirectory}/batch-indexing/</directory>
       <outputDirectory>/batch-indexing/</outputDirectory>
-      <fileMode>0755</fileMode>
       <includes>
-        <include>**/*.sh</include>
+        <include>**/**</include>
       </includes>
     </fileSet>
     <fileSet>
