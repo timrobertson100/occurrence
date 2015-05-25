@@ -10,6 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>occurrence-hbase-solr-index</artifactId>
+  <packaging>jar</packaging>
 
   <repositories>
     <repository>
@@ -73,6 +74,21 @@
       <artifactId>jts</artifactId>
       <scope>runtime</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.ngdata</groupId>
+      <artifactId>hbase-indexer-engine</artifactId>
+      <version>1.5-cdh5.4.0</version>
+      <exclusions>
+        <!-- Excluding this dependency because it's a snapshot version-->
+        <exclusion>
+          <groupId>com.ngdata</groupId>
+          <artifactId>hbase-sep-impl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+
 
     <!-- GBIF -->
     <dependency>
