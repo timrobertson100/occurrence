@@ -35,7 +35,7 @@
         <include>org.gbif.occurrence:occurrence-search:jar</include>
         <include>org.gbif.occurrence:occurrence-common:jar</include>
         <include>org.gbif:gbif-api:jar</include>
-        <include>org.gbif.occurrenceo:occurrence-hbase-solr-index:jar</include>
+        <include>org.gbif.occurrence:occurrence-hbase-solr-index:jar</include>
         <include>com.vividsolutions:jts:jar</include>
       </includes>
       <excludes>

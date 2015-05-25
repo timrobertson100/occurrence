@@ -93,12 +93,11 @@
     <!-- GBIF -->
     <dependency>
       <groupId>org.gbif.occurrence</groupId>
-      <artifactId>occurrence-search</artifactId>
-      <scope>runtime</scope>
+      <artifactId>occurrence-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.gbif.occurrence</groupId>
-      <artifactId>occurrence-common</artifactId>
+      <artifactId>occurrence-search</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
