@@ -1,6 +1,13 @@
 ZK_HOST=$1
 #occurrence
 SOLR_COLLECTION=$2
+
+#delete collection and instancedir if exist
+set -e
+solrctl --zk $ZK_HOST collection --delete $SOLR_COLLECTION || true
+solrctl --zk $ZK_HOST instancedir --delete $SOLR_COLLECTION  ||true
+
+set +e
 #create solr configuration
 solrctl --zk $ZK_HOST instancedir --create $SOLR_COLLECTION solr/
 solrctl --zk $ZK_HOST collection --create $SOLR_COLLECTION -s 3 -c $SOLR_COLLECTION -r 2 -m 2
