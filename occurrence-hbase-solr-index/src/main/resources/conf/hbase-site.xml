@@ -27,55 +27,7 @@
     <value>${hdfs.namenode}</value>
   </property>
   <property>
-    <name>hbase.cluster.distributed</name>
-    <value>true</value>
-  </property>
-  <property>
-    <name>hbase.tmp.dir</name>
-    <value>/tmp/hbase</value>
-    <description>Temporary directory on the local filesystem.</description>
-  </property>
-  <property>
-    <name>hfile.block.cache.size</name>
-    <value>0.2</value>
-  </property>
-  <property>
     <name>hbase.zookeeper.quorum</name>
     <value>${zookeeper.quorum}</value>
   </property>
-  <property>
-    <name>hbase.client.scanner.caching</name>
-    <value>100</value>
-  </property>
-  <property>
-    <name>hbase.defaults.for.version.skip</name>
-    <value>true</value>
-  </property>
-
-  <!-- HIGHLY EXPERIMENTAL -->
-
-  <!-- default is 256MB 268435456, this is 2GB -->
-  <property>
-    <name>hbase.hregion.max.filesize</name>
-    <value>2147483648</value>
-  </property>
-
-  <!-- default is 2 -->
-  <property>
-    <name>hbase.hregion.memstore.block.multiplier</name>
-    <value>4</value>
-  </property>
-
-  <!-- default is 64MB 67108864 this is 128MB-->
-  <property>
-    <name>hbase.hregion.memstore.flush.size</name>
-    <value>134217728</value>
-  </property>
-
-  <!-- default is 7, should be at least 2x compactionThreshold -->
-  <property>
-    <name>hbase.hstore.blockingStoreFiles</name>
-    <value>200</value>
-  </property>
-
 </configuration>
