@@ -5,7 +5,7 @@ SOLR_COLLECTION=$2
 #delete collection and instancedir if exist
 set -e
 solrctl --zk $ZK_HOST collection --delete $SOLR_COLLECTION || true
-solrctl --zk $ZK_HOST instancedir --delete $SOLR_COLLECTION  ||true
+solrctl --zk $ZK_HOST instancedir --delete $SOLR_COLLECTION  || true
 
 set +e
 #create solr configuration
