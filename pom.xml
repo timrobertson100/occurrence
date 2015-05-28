@@ -37,6 +37,7 @@
     <module>occurrence-ws-client</module>
     <module>occurrence-hive</module>
     <module>occurrence-download</module>
+    <module>occurrence-hbase-solr-index</module>
   </modules>
 
   <properties>

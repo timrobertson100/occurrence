@@ -234,6 +234,12 @@
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-spatial</artifactId>
+      <version>${solr-lucene.version}</version>
+    </dependency>
+
     <!-- GBIF -->
     <dependency>
       <groupId>org.gbif.occurrence</groupId>

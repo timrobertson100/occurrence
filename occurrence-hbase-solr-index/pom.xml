@@ -76,9 +76,22 @@
     </dependency>
 
     <dependency>
+      <groupId>com.spatial4j</groupId>
+      <artifactId>spatial4j</artifactId>
+      <version>0.3</version>
+    </dependency>
+
+
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.9</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.ngdata</groupId>
       <artifactId>hbase-indexer-engine</artifactId>
-      <version>1.5-cdh5.4.0</version>
+      <version>1.3-cdh5.0.0</version>
       <exclusions>
         <!-- Excluding this dependency because it's a snapshot version-->
         <exclusion>
@@ -87,8 +100,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-
-
 
     <!-- GBIF -->
     <dependency>
