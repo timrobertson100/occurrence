@@ -67,9 +67,9 @@
       <field name="country" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="continent" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="publishing_country" type="string" indexed="true" stored="false" docValues="true"/>
-      <field name="coordinate" type="coordinate" indexed="true" stored="false" />
-      <field name="spatial_issues" type="boolean" indexed="true" stored="false" docValues="true" />
-      <field name="has_coordinate" type="boolean" indexed="true" stored="false" docValues="true"/>
+      <field name="coordinate" type="coordinate" indexed="true" stored="false"/>
+      <field name="spatial_issues" type="boolean" indexed="true" stored="false"/>
+      <field name="has_coordinate" type="boolean" indexed="true" stored="false"/>
       <field name="latitude" type="double" indexed="true" stored="false" />
       <field name="longitude" type="double" indexed="true" stored="false" />
       <field name="event_date" type="date" indexed="true" stored="false" />
