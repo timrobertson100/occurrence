@@ -42,7 +42,7 @@
   </modules>
 
   <properties>
-    <jdkLevel>1.8</jdkLevel>
+    <jdkLevel>1.7</jdkLevel>
     <!-- default configurations for all GBIF environments -->
     <hbase.maxConnectionPool>10</hbase.maxConnectionPool>
     <postalservice.threadcount>10</postalservice.threadcount>
