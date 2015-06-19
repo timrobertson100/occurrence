@@ -36,6 +36,7 @@
         <include>org.gbif.occurrence:occurrence-common:jar</include>
         <include>org.gbif:gbif-api:jar</include>
         <include>org.gbif.occurrence:occurrence-hbase-solr-index:jar</include>
+        <include>org.gbif:gbif-parsers:jar</include>
         <include>com.vividsolutions:jts:jar</include>
         <include>com.spatial4j:spatial4j:jar</include>
       </includes>

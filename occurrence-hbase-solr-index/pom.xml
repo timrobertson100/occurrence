@@ -116,5 +116,9 @@
       <artifactId>gbif-api</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-parsers</artifactId>
+    </dependency>
   </dependencies>
 </project>

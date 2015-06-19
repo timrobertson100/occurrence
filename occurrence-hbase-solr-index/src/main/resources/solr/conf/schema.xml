@@ -83,6 +83,7 @@
       <field name="geohash_2" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="geohash_3" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="geohash_4" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="cellid" type="int" indexed="true" stored="false" docValues="true"/>
       <field name="_version_" type="long" indexed="true" stored="true"/>
 	</fields>
 	<!-- Field to use to determine and enforce document uniqueness. Unless this
