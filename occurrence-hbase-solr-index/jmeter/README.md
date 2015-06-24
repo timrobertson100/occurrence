@@ -22,13 +22,15 @@ Files
   * [solr_parameters.csv](solr_parameters.csv): CSV file with the Solr query parameters to be used, its expected format is "q,facet,fq1,fq2"
     - q: Solr [main query](https://wiki.apache.org/solr/CommonQueryParameters#q)
     - facet: Solr [facet field](https://wiki.apache.org/solr/SimpleFacetParameters#facet.field).
+    
       See the Occurrence Solr [schema](../src/main/resources/solr/conf/schema.xml) for possible values for this parameter.
     - fq1: Solr [filter query](https://wiki.apache.org/solr/CommonQueryParameters#fq) 1
     - fq2: Solr [filter query](https://wiki.apache.org/solr/CommonQueryParameters#fq) 2, only 2 filter queries are accepted by this JMeter test plan.
+    
       Note: by default the following values are used: facet=true, facet.limit=-1, facet.mincount=1 and rows=0.
       
 Execution
 ---------
 From this directory, and assuming that JMeter is in the OS path, run:
-    - `jmeter -t OccurrenceFacetsTests.jmx` loads the test file in the JMeter GUI.
-    - `jmeter -n -t OccurrenceFacetsTests.jmx` runs test in Non-GUI mode.
+    - `jmeter -t OccurrenceFacetsTests.jmx` to the test file in the JMeter GUI.
+    - `jmeter -n -t OccurrenceFacetsTests.jmx` to run test in Non-GUI mode.
