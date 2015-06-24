@@ -2,6 +2,7 @@ package org.gbif.occurrence.download.hive;
 
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
+import org.gbif.occurrence.common.HiveColumnsUtils;
 import org.gbif.occurrence.common.TermUtils;
 
 import java.util.List;
@@ -70,6 +71,8 @@ class Queries {
       }
       if (useInitializers && TermUtils.isInterpretedDate(term)) {
         builder.add(new InitializableField(term, toISO8601Initializer(term), HiveDataTypes.TYPE_STRING));
+      } else if (useInitializers && HiveColumnsUtils.isHiveArray(term)) {
+        builder.add(new InitializableField(term, toJoinArray(term), HiveDataTypes.TYPE_STRING));
       } else {
         builder.add(new InitializableField(term, HiveColumns.columnFor(term), HiveDataTypes.TYPE_STRING));
       }
@@ -83,6 +86,14 @@ class Queries {
   private static String toISO8601Initializer(Term term) {
     final String column = HiveColumns.columnFor(term);
     return "toISO8601(" + column + ") AS " + column;
+  }
+
+  /**
+   * Transforms the term into toISO8601(hiveColumn) expression.
+   */
+  private static String toJoinArray(Term term) {
+    final String column = HiveColumns.columnFor(term);
+    return "joinArray(" + column + ",';') AS " + column;
   }
 
   /**
