@@ -18,7 +18,8 @@ Files
     - solr_port: Solr server port (default value: 8983)
     - solr_collection: SolrCloud collection/core
     - solr_jmx_port: Solr JMX port (default value: 3000)
-    Note: every time that you change this file JMeter has to be restarts, i.e.: JMeter loads it at startup time
+    
+      Note: every time that you change this file JMeter has to be restarts, i.e.: JMeter loads it at startup time
   * [solr_parameters.csv](solr_parameters.csv): CSV file with the Solr query parameters to be used, its expected format is "q,facet,fq1,fq2"
     - q: Solr [main query](https://wiki.apache.org/solr/CommonQueryParameters#q)
     - facet: Solr [facet field](https://wiki.apache.org/solr/SimpleFacetParameters#facet.field).
@@ -32,5 +33,5 @@ Files
 Execution
 ---------
 From this directory, and assuming that JMeter is in the OS path, run:
-    - `jmeter -t OccurrenceFacetsTests.jmx` to the test file in the JMeter GUI.
-    - `jmeter -n -t OccurrenceFacetsTests.jmx` to run test in Non-GUI mode.
+    * `jmeter -t OccurrenceFacetsTests.jmx` to the test file in the JMeter GUI.
+    * `jmeter -n -t OccurrenceFacetsTests.jmx` to run test in Non-GUI mode.
