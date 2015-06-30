@@ -54,8 +54,8 @@
       <field name="key" type="int" indexed="true" stored="true" required="true" />
       <field name="dataset_key" type="string" indexed="true" stored="false" />
       <field name="taxon_key" type="int" indexed="true" stored="false" multiValued="true" docValues="true"/>
-      <field name="nub_key" type="int" indexed="true" stored="false" docValues="true"/>
-      <field name="taxon_rank" type="int" indexed="true" stored="false" docValues="true"/>
+      <field name="staxon_key" type="int" indexed="true" stored="false" docValues="true"/>
+      <field name="taxon_rank" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="basis_of_record" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="year" type="int" indexed="true" stored="false" docValues="true"/>
       <field name="month" type="int" indexed="true" stored="false" docValues="true"/>
