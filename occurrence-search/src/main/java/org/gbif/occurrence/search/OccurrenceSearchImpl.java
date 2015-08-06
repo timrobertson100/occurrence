@@ -6,6 +6,8 @@ import org.gbif.api.model.checklistbank.NameUsageMatch.MatchType;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.api.model.occurrence.search.HeatMapResponse;
+import org.gbif.api.model.occurrence.search.OccurrenceHeatmapSearchRequest;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
 import org.gbif.api.service.checklistbank.NameUsageMatchingService;
@@ -13,8 +15,10 @@ import org.gbif.api.service.occurrence.OccurrenceSearchService;
 import org.gbif.api.service.occurrence.OccurrenceService;
 import org.gbif.common.search.exception.SearchException;
 import org.gbif.common.search.util.QueryUtils;
+import org.gbif.occurrence.search.solr.HeatmapResponseBuilder;
 import org.gbif.occurrence.search.solr.OccurrenceSolrField;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +26,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -33,6 +39,7 @@ import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.handler.component.SpatialHeatmapFacets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +60,8 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceSearchImpl.class);
 
+  private static final String DEFAULT_GRID_LEVEL = "3";
+
   // Default order of results
   private static final Map<String, SolrQuery.ORDER> SORT_ORDER = new LinkedHashMap<String, SolrQuery.ORDER>();
 
@@ -63,16 +72,16 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
     SORT_ORDER.put(OccurrenceSolrField.MONTH.getFieldName(), SolrQuery.ORDER.asc);
   }
 
-  private final SolrServer solrServer;
+  private final SolrClient solrClient;
 
   private final OccurrenceSearchRequestBuilder occurrenceSearchRequestBuilder;
   private final NameUsageMatchingService nameUsageMatchingService;
 
   @Inject
-  public OccurrenceSearchImpl(SolrServer solrServer, @Named(SOLR_REQUEST_HANDLER) String requestHandler,
+  public OccurrenceSearchImpl(SolrClient solrClient, @Named(SOLR_REQUEST_HANDLER) String requestHandler,
     OccurrenceService occurrenceService, NameUsageMatchingService nameUsageMatchingService,
     @Named("max.offset") int maxOffset, @Named("max.limit") int maxLimit) {
-    this.solrServer = solrServer;
+    this.solrClient = solrClient;
     occurrenceSearchRequestBuilder = new OccurrenceSearchRequestBuilder(requestHandler, SORT_ORDER,maxOffset,maxLimit);
     this.occurrenceService = occurrenceService;
     this.nameUsageMatchingService = nameUsageMatchingService;
@@ -115,12 +124,34 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
     try {
       if (replaceScientificNames(request)) {
         SolrQuery solrQuery = occurrenceSearchRequestBuilder.build(request);
-        QueryResponse queryResponse = solrServer.query(solrQuery);
+        QueryResponse queryResponse = solrClient.query(solrQuery);
         return buildResponse(queryResponse, request);
       } else {
         return new SearchResponse<Occurrence, OccurrenceSearchParameter>(request);
       }
-    } catch (SolrServerException e) {
+    } catch (SolrServerException|IOException e) {
+      LOG.error("Error executing the search operation", e);
+      throw new SearchException(e);
+    }
+  }
+
+
+  @Override
+  public HeatMapResponse searchHeatMap(@Nullable OccurrenceHeatmapSearchRequest request) {
+    try {
+      if (replaceScientificNames(request)) {
+        SolrQuery solrQuery = occurrenceSearchRequestBuilder.build(request);
+        solrQuery.setFacet(true);
+        solrQuery.add("facet.heatmap", OccurrenceSolrField.COORDINATE.getFieldName());
+        solrQuery.add("facet.heatmap.gridLevel", request.getGridLevel().toString());
+        if(request.getGeometry() != null) {
+          solrQuery.add("facet.heatmap.geom", request.getGeometry());
+        }
+        return HeatmapResponseBuilder.build(solrClient.query(solrQuery),OccurrenceSolrField.COORDINATE.getFieldName());
+      } else {
+        return HeatmapResponseBuilder.EMPTY_RESPONSE;
+      }
+    } catch (SolrServerException|IOException e) {
       LOG.error("Error executing the search operation", e);
       throw new SearchException(e);
     }
@@ -171,14 +202,14 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
     try {
       String solrField = QUERY_FIELD_MAPPING.get(parameter).getFieldName();
       SolrQuery solrQuery = buildTermQuery(QueryUtils.parseQueryValue(prefix), solrField, Objects.firstNonNull(limit, DEFAULT_SUGGEST_LIMIT));
-      QueryResponse queryResponse = solrServer.query(solrQuery);
+      QueryResponse queryResponse = solrClient.query(solrQuery);
       TermsResponse termsResponse = queryResponse.getTermsResponse();
       List<Term> terms = termsResponse.getTerms(solrField);
       for (Term term : terms) {
         suggestions.add(term.getTerm());
       }
       return suggestions;
-    } catch (SolrServerException e) {
+    } catch (SolrServerException|IOException e) {
       LOG.error("Error executing/building the request", e);
       throw new SearchException(e);
     }

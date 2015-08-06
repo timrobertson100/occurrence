@@ -2,6 +2,8 @@ package org.gbif.occurrence.ws.client.mock;
 
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.api.model.occurrence.search.HeatMapResponse;
+import org.gbif.api.model.occurrence.search.OccurrenceHeatmapSearchRequest;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
@@ -35,6 +37,11 @@ public class OccurrenceSearchMockService implements OccurrenceSearchService {
       new SearchResponse<Occurrence, OccurrenceSearchParameter>(0L, NUM_RESULTS, new Long(NUM_RESULTS), results, null);
     response.setResults(results);
     return response;
+  }
+
+  @Override
+  public HeatMapResponse searchHeatMap(OccurrenceHeatmapSearchRequest request) {
+    return new HeatMapResponse();
   }
 
   @Override

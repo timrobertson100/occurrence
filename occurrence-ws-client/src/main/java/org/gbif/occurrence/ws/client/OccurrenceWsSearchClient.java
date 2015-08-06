@@ -2,6 +2,8 @@ package org.gbif.occurrence.ws.client;
 
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.api.model.occurrence.search.HeatMapResponse;
+import org.gbif.api.model.occurrence.search.OccurrenceHeatmapSearchRequest;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
@@ -74,6 +76,13 @@ public class OccurrenceWsSearchClient extends
   @Override
   public SearchResponse<Occurrence, OccurrenceSearchParameter> search(@Nullable OccurrenceSearchRequest request) {
     return getResource(request).queryParams(toOccurrenceMultivaluedMap(request.getParameters())).get(GENERIC_TYPE);
+  }
+
+  @Override
+  public HeatMapResponse searchHeatMap(@Nullable OccurrenceHeatmapSearchRequest request) {
+    return getResource(request).queryParams(toOccurrenceMultivaluedMap(request.getParameters())).
+    queryParam("gridLevel",request.getGridLevel().toString()).queryParam("geom",request.getGeometry())
+     .get(HeatMapResponse.class);
   }
 
   @Override

@@ -29,7 +29,7 @@
           </elementProp>
           <elementProp name="out_dir" elementType="Argument">
             <stringProp name="Argument.name">out_dir</stringProp>
-            <stringProp name="Argument.value">results50ThreadsSolrHeatMaps</stringProp>
+            <stringProp name="Argument.value">results100ThreadsSolrHeatMaps</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -96,12 +96,12 @@
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     <stringProp name="Argument.name">rows</stringProp>
                   </elementProp>
-                  <elementProp name="facet.field" elementType="HTTPArgument">
+                  <elementProp name="facet.heatmap" elementType="HTTPArgument">
                     <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                    <stringProp name="Argument.value">type_status</stringProp>
+                    <stringProp name="Argument.value">coordinate</stringProp>
                     <stringProp name="Argument.metadata">=</stringProp>
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
-                    <stringProp name="Argument.name">facet.field</stringProp>
+                    <stringProp name="Argument.name">facet.heatmap</stringProp>
                   </elementProp>
                   <elementProp name="fq" elementType="HTTPArgument">
                     <boolProp name="HTTPArgument.always_encode">true</boolProp>
@@ -116,6 +116,13 @@
                     <stringProp name="Argument.metadata">=</stringProp>
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     <stringProp name="Argument.name">fq</stringProp>
+                  </elementProp>
+                  <elementProp name="facet.heatmap.gridLevel" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">3</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">facet.heatmap.gridLevel</stringProp>
                   </elementProp>
                 </collectionProp>
               </elementProp>
@@ -166,12 +173,12 @@
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     <stringProp name="Argument.name">rows</stringProp>
                   </elementProp>
-                  <elementProp name="facet.field" elementType="HTTPArgument">
+                  <elementProp name="facet.heatmap" elementType="HTTPArgument">
                     <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                    <stringProp name="Argument.value">type_status</stringProp>
+                    <stringProp name="Argument.value">coordinate</stringProp>
                     <stringProp name="Argument.metadata">=</stringProp>
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
-                    <stringProp name="Argument.name">facet.field</stringProp>
+                    <stringProp name="Argument.name">facet.heatmap</stringProp>
                   </elementProp>
                   <elementProp name="fq" elementType="HTTPArgument">
                     <boolProp name="HTTPArgument.always_encode">true</boolProp>
@@ -179,6 +186,13 @@
                     <stringProp name="Argument.metadata">=</stringProp>
                     <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     <stringProp name="Argument.name">fq</stringProp>
+                  </elementProp>
+                  <elementProp name="facet.heatmap.gridLevel" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">3</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">facet.heatmap.gridLevel</stringProp>
                   </elementProp>
                 </collectionProp>
               </elementProp>
