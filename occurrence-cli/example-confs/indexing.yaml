@@ -1,7 +1,7 @@
 queueName: occurrence_indexing
 commitWithinMs: 120000
 poolSize: 1
-solrServer: YOUR_SOLR_SERVER_URL
+solrClient: YOUR_SOLR_SERVER_URL
 solrServerType: HTTP/CLOUD
 solrCollection: YOUR_SOLR_COLLECION if SolrCloud is used
 messaging:
