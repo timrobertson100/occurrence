@@ -6,7 +6,7 @@ import org.gbif.api.model.checklistbank.NameUsageMatch.MatchType;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
-import org.gbif.api.model.occurrence.search.HeatMapResponse;
+import org.gbif.api.model.occurrence.search.HeatmapResponse;
 import org.gbif.api.model.occurrence.search.OccurrenceHeatmapSearchRequest;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
@@ -26,22 +26,18 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.lucene.spatial.prefix.HeatmapFacetCounter;
-import org.apache.lucene.util.ArrayUtil;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.handler.component.SpatialHeatmapFacets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +58,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceSearchImpl.class);
 
-  private static final String DEFAULT_GRID_LEVEL = "3";
+  private static final int MIN_GRID_LEVEL = 3;
 
   // Default order of results
   private static final Map<String, SolrQuery.ORDER> SORT_ORDER = new LinkedHashMap<String, SolrQuery.ORDER>();
@@ -139,13 +135,13 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
 
 
   @Override
-  public HeatMapResponse searchHeatMap(@Nullable OccurrenceHeatmapSearchRequest request) {
+  public HeatmapResponse searchHeatMap(@Nullable OccurrenceHeatmapSearchRequest request) {
     try {
-      if (replaceScientificNames(request)) {
-        SolrQuery solrQuery = occurrenceSearchRequestBuilder.build(request);
+      if (replaceScientificNames(request.getSearchRequest())) {
+        SolrQuery solrQuery = occurrenceSearchRequestBuilder.build(request.getSearchRequest());
         solrQuery.setFacet(true);
         solrQuery.add("facet.heatmap", OccurrenceSolrField.COORDINATE.getFieldName());
-        solrQuery.add("facet.heatmap.gridLevel", request.getGridLevel().toString());
+        solrQuery.add("facet.heatmap.gridLevel", Integer.toString(gridLevel(request.getZoom())));
         solrQuery.add("facet.heatmap.maxCells", Integer.toString(HeatmapFacetCounter.MAX_ROWS_OR_COLUMNS));
         if(request.getGeometry() != null) {
           solrQuery.add("facet.heatmap.geom", request.getGeometry());
@@ -157,6 +153,18 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
     } catch (SolrServerException|IOException e) {
       LOG.error("Error executing the search operation", e);
       throw new SearchException(e);
+    }
+  }
+
+  private static int gridLevel(int zoom) {
+    if( zoom < MIN_GRID_LEVEL){
+      return MIN_GRID_LEVEL;
+    } else if (zoom <= 6) {
+      return MIN_GRID_LEVEL + 1;
+    } else if (zoom < 11) {
+      return MIN_GRID_LEVEL + 2;
+    } else {
+      return MIN_GRID_LEVEL + 3;
     }
   }
 
