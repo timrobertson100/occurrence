@@ -30,6 +30,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.lucene.spatial.prefix.HeatmapFacetCounter;
+import org.apache.lucene.util.ArrayUtil;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -144,6 +146,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
         solrQuery.setFacet(true);
         solrQuery.add("facet.heatmap", OccurrenceSolrField.COORDINATE.getFieldName());
         solrQuery.add("facet.heatmap.gridLevel", request.getGridLevel().toString());
+        solrQuery.add("facet.heatmap.maxCells", Integer.toString(HeatmapFacetCounter.MAX_ROWS_OR_COLUMNS));
         if(request.getGeometry() != null) {
           solrQuery.add("facet.heatmap.geom", request.getGeometry());
         }
