@@ -21,6 +21,8 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.gbif.common.search.util.QueryUtils.PARAMS_AND_JOINER;
 import static org.gbif.common.search.util.QueryUtils.PARAMS_JOINER;
@@ -38,6 +40,8 @@ import static org.gbif.occurrence.search.OccurrenceSearchDateUtils.toDateQuery;
  * Utility class for building Solr queries from supported parameters for occurrences search.
  */
 public class OccurrenceSearchRequestBuilder {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OccurrenceSearchRequestBuilder.class);
 
   // This is a placeholder to map from the JSON definition ID to the query field
   public static final ImmutableMap<OccurrenceSearchParameter, OccurrenceSolrField> QUERY_FIELD_MAPPING =
@@ -132,7 +136,7 @@ public class OccurrenceSearchRequestBuilder {
     setSortOrder(solrQuery, sortOrder);
     // set the request handler
     setRequestHandler(solrQuery, requestHandler);
-    System.out.println("Solr query: " +  solrQuery);
+    LOG.info("Solr query {}",  solrQuery);
     return solrQuery;
   }
 
