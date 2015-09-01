@@ -73,6 +73,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
   private final SolrClient solrClient;
 
   private final OccurrenceSearchRequestBuilder occurrenceSearchRequestBuilder;
+  private final OccurrenceSearchRequestBuilder occurrenceSearchHeatmapRequestBuilder;
   private final NameUsageMatchingService nameUsageMatchingService;
 
   @Inject
@@ -81,6 +82,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
     @Named("max.offset") int maxOffset, @Named("max.limit") int maxLimit) {
     this.solrClient = solrClient;
     occurrenceSearchRequestBuilder = new OccurrenceSearchRequestBuilder(requestHandler, SORT_ORDER,maxOffset,maxLimit);
+    occurrenceSearchHeatmapRequestBuilder = new OccurrenceSearchRequestBuilder(requestHandler, null,maxOffset,maxLimit);
     this.occurrenceService = occurrenceService;
     this.nameUsageMatchingService = nameUsageMatchingService;
   }
@@ -138,7 +140,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
   public HeatmapResponse searchHeatMap(@Nullable OccurrenceHeatmapSearchRequest request) {
     try {
       if (replaceScientificNames(request.getSearchRequest())) {
-        SolrQuery solrQuery = occurrenceSearchRequestBuilder.build(request.getSearchRequest());
+        SolrQuery solrQuery = occurrenceSearchHeatmapRequestBuilder.build(request.getSearchRequest());
         solrQuery.setFacet(true);
         solrQuery.add("facet.heatmap", OccurrenceSolrField.COORDINATE.getFieldName());
         solrQuery.add("facet.heatmap.gridLevel", Integer.toString(gridLevel(request.getZoom())));
