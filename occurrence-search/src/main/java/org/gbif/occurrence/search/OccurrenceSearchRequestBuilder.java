@@ -41,8 +41,6 @@ import static org.gbif.occurrence.search.OccurrenceSearchDateUtils.toDateQuery;
  */
 public class OccurrenceSearchRequestBuilder {
 
-  private static final Logger LOG = LoggerFactory.getLogger(OccurrenceSearchRequestBuilder.class);
-
   // This is a placeholder to map from the JSON definition ID to the query field
   public static final ImmutableMap<OccurrenceSearchParameter, OccurrenceSolrField> QUERY_FIELD_MAPPING =
     ImmutableMap.<OccurrenceSearchParameter, OccurrenceSolrField>builder()
@@ -136,7 +134,6 @@ public class OccurrenceSearchRequestBuilder {
     setSortOrder(solrQuery, sortOrder);
     // set the request handler
     setRequestHandler(solrQuery, requestHandler);
-    LOG.info("Solr query {}",  solrQuery);
     return solrQuery;
   }
 
