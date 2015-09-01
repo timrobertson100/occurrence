@@ -148,6 +148,7 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
         if(request.getGeometry() != null) {
           solrQuery.add("facet.heatmap.geom", request.getGeometry());
         }
+        LOG.info("Solr heatmap query {}", solrQuery);
         return HeatmapResponseBuilder.build(solrClient.query(solrQuery),OccurrenceSolrField.COORDINATE.getFieldName());
       } else {
         return HeatmapResponseBuilder.EMPTY_RESPONSE;
