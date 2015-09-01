@@ -132,7 +132,7 @@ public class OccurrenceSearchRequestBuilder {
     setSortOrder(solrQuery, sortOrder);
     // set the request handler
     setRequestHandler(solrQuery, requestHandler);
-
+    System.out.println("Solr query: " +  solrQuery);
     return solrQuery;
   }
 
