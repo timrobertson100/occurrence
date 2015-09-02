@@ -38,6 +38,8 @@ import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.FacetParams;
+import org.apache.solr.handler.component.SpatialHeatmapFacets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,13 +144,13 @@ public class OccurrenceSearchImpl implements OccurrenceSearchService {
       if (replaceScientificNames(request.getSearchRequest())) {
         SolrQuery solrQuery = occurrenceSearchHeatmapRequestBuilder.build(request.getSearchRequest());
         solrQuery.setFacet(true);
-        solrQuery.add("facet.heatmap", OccurrenceSolrField.COORDINATE.getFieldName());
-        solrQuery.add("facet.heatmap.gridLevel", Integer.toString(gridLevel(request.getZoom())));
-        solrQuery.add("facet.heatmap.maxCells", Integer.toString(HeatmapFacetCounter.MAX_ROWS_OR_COLUMNS));
+        solrQuery.add(FacetParams.FACET_HEATMAP, OccurrenceSolrField.COORDINATE.getFieldName());
+        solrQuery.add(FacetParams.FACET_HEATMAP_LEVEL, Integer.toString(gridLevel(request.getZoom())));
+        solrQuery.add(FacetParams.FACET_HEATMAP_MAX_CELLS, Integer.toString(HeatmapFacetCounter.MAX_ROWS_OR_COLUMNS));
         if(request.getGeometry() != null) {
-          solrQuery.add("facet.heatmap.geom", request.getGeometry());
+          solrQuery.add(FacetParams.FACET_HEATMAP_GEOM, request.getGeometry());
         }
-        LOG.info("Solr heatmap query {}", solrQuery);
+        LOG.debug("Solr heatmap query {}", solrQuery);
         return HeatmapResponseBuilder.build(solrClient.query(solrQuery),OccurrenceSolrField.COORDINATE.getFieldName());
       } else {
         return HeatmapResponseBuilder.EMPTY_RESPONSE;
