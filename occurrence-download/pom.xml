@@ -3,13 +3,17 @@
   <parent>
     <groupId>org.gbif.occurrence</groupId>
     <artifactId>occurrence-motherpom</artifactId>
-    <version>0.32-SNAPSHOT</version>
+    <version>0.35-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>occurrence-download</artifactId>
+  <name>Occurrence Download</name>
 
   <properties>
+    <!-- has to match cluster version -->
+    <guava.version>14.0.1</guava.version>
+
     <exec-maven-plugin.version>1.3.2</exec-maven-plugin.version>
     <freemarker.version>2.3.20</freemarker.version>
     <hadoop-compress.version>1.1</hadoop-compress.version>
@@ -17,7 +21,7 @@
     <brickhouse.version>0.6.0</brickhouse.version>
     <super-csv.version>2.0.1</super-csv.version>
     <akka-actor.version>2.0.5</akka-actor.version>
-    <gbif-common-mybatis.version>0.15</gbif-common-mybatis.version>
+    <gbif-common-mybatis.version>0.16</gbif-common-mybatis.version>
     <!-- the timestamp is used to set the start date for the Oozie coordinator job -->
     <timestamp>${maven.build.timestamp}</timestamp>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm'Z'</maven.build.timestamp.format>
@@ -42,13 +46,6 @@
       </resource>
     </resources>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -199,6 +196,10 @@
       <artifactId>dwc-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>dwca-io</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.gbif.occurrence</groupId>
       <artifactId>occurrence-persistence</artifactId>
     </dependency>
@@ -280,9 +281,11 @@
       <artifactId>freemarker</artifactId>
       <version>${freemarker.version}</version>
     </dependency>
+    <!-- this needs to match cluster version -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>

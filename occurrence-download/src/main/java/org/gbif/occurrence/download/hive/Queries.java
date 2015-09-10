@@ -17,6 +17,8 @@ import com.google.common.collect.ImmutableList;
  */
 class Queries {
 
+  private static final String JOIN_ARRAY_FMT = "if(%1$s IS NULL,'',joinArray(%1$s,'\\\\;')) AS %1$s";
+
   /**
    * @return the select fields for the verbatim table in the simple download
    */
@@ -71,8 +73,8 @@ class Queries {
       }
       if (useInitializers && TermUtils.isInterpretedDate(term)) {
         builder.add(new InitializableField(term, toISO8601Initializer(term), HiveDataTypes.TYPE_STRING));
-      } else if (useInitializers && HiveColumnsUtils.isHiveArray(term)) {
-        builder.add(new InitializableField(term, toJoinArray(term), HiveDataTypes.TYPE_STRING));
+      } else if (useInitializers && HiveColumnsUtils.isHiveArray(term)){
+        builder.add(new InitializableField(term, String.format(JOIN_ARRAY_FMT,HiveColumns.columnFor(term)), HiveDataTypes.TYPE_STRING));
       } else {
         builder.add(new InitializableField(term, HiveColumns.columnFor(term), HiveDataTypes.TYPE_STRING));
       }
@@ -86,14 +88,6 @@ class Queries {
   private static String toISO8601Initializer(Term term) {
     final String column = HiveColumns.columnFor(term);
     return "toISO8601(" + column + ") AS " + column;
-  }
-
-  /**
-   * Transforms the term into toISO8601(hiveColumn) expression.
-   */
-  private static String toJoinArray(Term term) {
-    final String column = HiveColumns.columnFor(term);
-    return "joinArray(" + column + ",';') AS " + column;
   }
 
   /**

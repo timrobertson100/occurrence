@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>occurrence-motherpom</artifactId>
     <groupId>org.gbif.occurrence</groupId>
-    <version>0.31-SNAPSHOT</version>
+    <version>0.35-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>occurrence-hbase-solr-index</artifactId>
   <packaging>jar</packaging>
+
+  <properties>
+    <hbase-indexer-engine.version>1.5-cdh5.4.2</hbase-indexer-engine.version>
+    <spatial4j.version>0.3</spatial4j.version>
+    <commons-codec.version>1.9</commons-codec.version>
+  </properties>
 
   <repositories>
     <repository>
@@ -18,15 +22,11 @@
       <url>http://repository.gbif.org/content/groups/gbif</url>
     </repository>
     <repository>
-      <id>cloudera</id>
+      <id>cloudera-release</id>
       <url>http://repository.cloudera.com/artifactory/cloudera-repos/</url>
       <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
+        <enabled>false</enabled>
       </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
     </repository>
   </repositories>
 
@@ -78,20 +78,20 @@
     <dependency>
       <groupId>com.spatial4j</groupId>
       <artifactId>spatial4j</artifactId>
-      <version>0.3</version>
+      <version>${spatial4j.version}</version>
     </dependency>
 
 
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.9</version>
+      <version>${commons-codec.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.ngdata</groupId>
       <artifactId>hbase-indexer-engine</artifactId>
-      <version>1.3-cdh5.0.0</version>
+      <version>${hbase-indexer-engine.version}</version>
       <exclusions>
         <!-- Excluding this dependency because it's a snapshot version-->
         <exclusion>

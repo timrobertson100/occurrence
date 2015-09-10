@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif.occurrence</groupId>
     <artifactId>occurrence-motherpom</artifactId>
-    <version>0.32-SNAPSHOT</version>
+    <version>0.35-SNAPSHOT</version>
   </parent>
 
   <artifactId>occurrence-processor</artifactId>
@@ -160,6 +160,10 @@
       <groupId>org.gbif</groupId>
       <artifactId>name-parser</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-httputils</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -204,6 +208,31 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- we need all of these inspite of what mvn:dep says -->

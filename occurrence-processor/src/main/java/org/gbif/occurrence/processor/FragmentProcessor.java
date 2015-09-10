@@ -11,6 +11,7 @@ import org.gbif.common.messaging.api.messages.FragmentPersistedMessage;
 import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 import org.gbif.occurrence.parsing.xml.IdentifierExtractionResult;
 import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
+import org.gbif.occurrence.persistence.IllegalDataStateException;
 import org.gbif.occurrence.persistence.api.Fragment;
 import org.gbif.occurrence.persistence.api.FragmentCreationResult;
 import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
@@ -51,8 +52,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class FragmentProcessor {
 
+  // Please read POR-2807 before changing.
+  // Previously been 3 times @ 500msecs, but this reduces crawling to 15/sec as there are 1.5 sec wait times.
   private static final int MAX_NULL_FRAG_RETRIES = 3;
-  private static final long NULL_FRAG_RETRY_WAIT = 500;
+  private static final long NULL_FRAG_RETRY_WAIT = 100;
 
   private final FragmentPersistenceService fragmentPersister;
   private final OccurrenceKeyPersistenceService occurrenceKeyPersister;
@@ -175,6 +178,9 @@ public class FragmentProcessor {
     final TimerContext fetchContext = findTimer.time();
     try {
       keyResult = occurrenceKeyPersister.findKey(uniqueIds);
+    } catch (IllegalDataStateException e) {
+      failForDataStateException(datasetKey, e);
+      return;
     } catch (ServiceUnavailableException e) {
       failForServiceUnavailable(datasetKey, e);
       return;
@@ -211,6 +217,8 @@ public class FragmentProcessor {
               2) our index is out of sync - it has an index entry pointing to nothing, so delete the index
                 entry(ies) and proceed as if this is an insert
              So we retry a few times to get clear of 1), and then act on 2).
+             Note however in POR-2807, that if for some reason deletions are not clearing lookups (i.e. POR-995)
+             too conservative rates mean the system grinds to a complete halt for large datasets.
           */
           LOG.debug("Fragment for key [{}] was null, sleeping and trying again", key);
           try {
@@ -295,6 +303,8 @@ public class FragmentProcessor {
     } catch (ServiceUnavailableException e) {
       failForServiceUnavailable(datasetKey, e);
       return;
+    } catch (IllegalDataStateException e) {
+      failForDataStateException(datasetKey, e);
     } finally {
       context.stop();
     }
@@ -330,6 +340,12 @@ public class FragmentProcessor {
 
   private void failForServiceUnavailable(UUID datasetKey, Throwable e) {
     LOG.warn("Caught service unavailable from HBase: this fragment for dataset [{}] won't be processed", datasetKey, e);
+    updateZookeeper(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR);
+  }
+
+  private void failForDataStateException(UUID datasetKey, Throwable e) {
+    LOG.warn("Data inconsistency prevents this fragment being processed for dataset [{}]: {}", datasetKey,
+             e.getMessage(), e);
     updateZookeeper(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR);
   }
 

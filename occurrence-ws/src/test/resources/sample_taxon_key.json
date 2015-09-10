@@ -1,11 +1,10 @@
 {
-  "creator":"markus",
-  "notification_addresses": ["gbif@mailinator.com"],
+  "creator":"fmendez",
+  "notification_addresses": ["fmendez@gbif.org"],
   "send_notification":"true",
-  "format": "DWCA",
+  "format": "SIMPLE_CSV",
   "predicate":{
-    "type":"equals",
-    "key":"TAXON_KEY",
-    "value":"5242507"
+    "type":"and","predicates":[{"type":"equals","key":"TAXON_KEY","value":"7681"},{"type":"within","geometry":"POLYGON((-81.5 9.15,-81.5 -20.5,-44.0167 -20.5,-44.0167 9.15,-81.5 9.15))"},{"type":"equals","key":"HAS_GEOSPATIAL_ISSUE","value":"false"},{"type":"equals","key":"HAS_COORDINATE","value":"true"}]
   }
 }
+

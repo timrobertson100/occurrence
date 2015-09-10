@@ -11,6 +11,8 @@ CREATE TEMPORARY FUNCTION toISO8601 AS 'org.gbif.occurrence.hive.udf.ToISO8601UD
 CREATE TEMPORARY FUNCTION cleanDelimiters AS 'org.gbif.occurrence.hive.udf.CleanDelimiterCharsUDF';
 CREATE TEMPORARY FUNCTION joinArray AS 'brickhouse.udf.collect.JoinArrayUDF';
 
+-- don't run joins locally, else risk running out of memory
+SET hive.auto.convert.join=false;
 
 -- setup for our custom, combinable deflated compression
 SET hive.exec.compress.output=true;
@@ -62,12 +64,13 @@ FROM occurrence_hdfs
 -- These will be small tables, so provide reducer hint to MR, to stop is spawning huge numbers
 --
 SET mapred.reduce.tasks=5;
-CREATE TABLE ${r"${multimediaTable}"}
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+-- Disabling hive auto join https://issues.apache.org/jira/browse/HIVE-2601.
+SET hive.auto.convert.join=false;
+CREATE TABLE ${r"${multimediaTable}"} ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 AS SELECT m.*
-FROM
-  ${r"${interpretedTable}"} i
-  JOIN occurrence_multimedia m ON m.gbifId = i.gbifId;
+FROM occurrence_multimedia m
+JOIN ${r"${interpretedTable}"} i ON m.gbifId = i.gbifId;
+SET hive.auto.convert.join=true;
 
 --
 -- Creates the citation table
