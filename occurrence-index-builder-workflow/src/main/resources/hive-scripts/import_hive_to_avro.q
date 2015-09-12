@@ -1,4 +1,4 @@
-INSERT OVERWRITE TABLE ${tempAvroTable}
+INSERT OVERWRITE TABLE ${avroTable}
 SELECT
   gbifid,
   COALESCE(datasetkey,""),

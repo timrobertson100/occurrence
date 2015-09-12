@@ -221,6 +221,10 @@
       <version>${oozie.version}</version>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-map-reduce</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.hbase</groupId>

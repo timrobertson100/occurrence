@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS ${tempAvroTable};
-CREATE TABLE ${tempAvroTable}
+DROP TABLE IF EXISTS ${avroTable};
+CREATE TABLE ${avroTable}
 ROW FORMAT SERDE
 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
 STORED AS INPUTFORMAT

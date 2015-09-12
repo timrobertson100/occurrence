@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS ${tempAvroTable};
+DROP TABLE IF EXISTS ${avroTable};
