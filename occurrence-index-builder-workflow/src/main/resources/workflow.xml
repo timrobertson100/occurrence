@@ -61,7 +61,7 @@
 
 
   <action name='build_index'>
-      <shell xmlns="uri:oozie:shell-action:0.2">
+      <shell xmlns="uri:oozie:shell-action:0.3">
           <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
           <argument>${solr.home}</argument>
           <argument>${nameNode}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
