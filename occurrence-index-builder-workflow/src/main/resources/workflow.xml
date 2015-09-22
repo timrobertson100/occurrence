@@ -11,7 +11,7 @@
 
   <global>
     <job-tracker>${hadoop.jobtracker}</job-tracker>
-    <name-node>${hdfs.namenode}</name-node>
+    <name-node>${wf:conf("hdfs.namenode")}</name-node>
     <configuration>
       <property>
         <name>oozie.launcher.mapreduce.task.classpath.user.precedence</name>
@@ -19,11 +19,11 @@
       </property>
       <property>
         <name>oozie.launcher.mapred.job.queue.name</name>
-        <value>${hadoop.queuename}</value>
+        <value>${wf:conf("hadoop.queuename")}</value>
       </property>
       <property>
         <name>avroTable</name>
-        <value>${hive.db}.occurrence_avro</value>
+        <value>${wf:conf("hive.db")}.occurrence_avro</value>
       </property>
     </configuration>
   </global>
@@ -52,7 +52,7 @@
     <hive xmlns="uri:oozie:hive-action:0.4">
       <job-xml>conf/hive-default.xml</job-xml>
       <script>hive-scripts/import_hive_to_avro.q</script>
-      <param>sourceOccurrenceTable=${hive.db}.occurrence</param>
+      <param>sourceOccurrenceTable=${${wf:conf("hive.db")}.occurrence</param>
     </hive>
 
     <ok to="build_index" />
@@ -64,7 +64,7 @@
       <shell xmlns="uri:oozie:shell-action:0.3">
           <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
           <argument>${wf:conf("solr.home")}</argument>
-          <argument>${wf:conf("nameNode")}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
+          <argument>${wf:conf("hdfs.namenode")}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
           <argument>${wf:conf("solr.zk")}</argument>
           <argument>${wf:conf("nameNode")}/${hdfs.out.dir}</argument>
           <argument>${wf:conf("solr.collection")}</argument>
