@@ -19,29 +19,29 @@
       </property>
       <property>
         <name>oozie.launcher.mapred.job.queue.name</name>
-        <value>download-admin</value>
+        <value>${hadoop.queuename}</value>
+      </property>
+      <property>
+        <name>avroTable</name>
+        <value>${hive.db}.occurrence_avro</value>
       </property>
     </configuration>
   </global>
 
-  <start to="create-workflow-directory" />
+  <start to="build_index" />
 
   <action name="create-workflow-directory">
     <fs>
       <mkdir path='${nameNode}/${oozieWfDestination}'/>
     </fs>
-    <ok to="create-avro-table" />
+    <ok to="import_hive_to_avro" />
     <error to="kill" />
   </action>
 
   <action name="create-avro-table">
-    <hive xmlns="uri:oozie:hive-action:0.2">
-      <job-tracker>${jobTracker}</job-tracker>
-      <name-node>${nameNode}</name-node>
+    <hive xmlns="uri:oozie:hive-action:0.4">
       <job-xml>conf/hive-default.xml</job-xml>
       <script>hive-scripts/create_occurrence_avro_table.q</script>
-
-      <param>avroTable=${hiveDB}.${sourceOccurrenceTable}_avro</param>
     </hive>
 
     <ok to="import_hive_to_avro" />
@@ -49,41 +49,30 @@
   </action>
 
   <action name="import_hive_to_avro">
-    <hive xmlns="uri:oozie:hive-action:0.2">
-      <job-tracker>${jobTracker}</job-tracker>
-      <name-node>${nameNode}</name-node>
+    <hive xmlns="uri:oozie:hive-action:0.4">
       <job-xml>conf/hive-default.xml</job-xml>
       <script>hive-scripts/import_hive_to_avro.q</script>
-
-      <param>avroTable=${hiveDB}.${sourceOccurrenceTable}_avro</param>
-      <param>sourceOccurrenceTable=${hiveDB}.${sourceOccurrenceTable}</param>
+      <param>sourceOccurrenceTable=${hive.db}.occurrence</param>
     </hive>
 
-    <ok to="prepare_cloud_index" />
+    <ok to="build_index" />
     <error to="kill" />
   </action>
 
 
   <action name='build_index'>
-      <shell xmlns="uri:oozie:shell-action:0.1">
-          <job-tracker>${jobTracker}</job-tracker>
-          <name-node>${nameNode}</name-node>
-          <configuration>
-              <property>
-                <name>mapred.job.queue.name</name>
-                <value>${queueName}</value>
-              </property>
-          </configuration>
+      <shell xmlns="uri:oozie:shell-action:0.4">
           <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
-          <argument>/opt/solr-5.3.0/</argument>
-          <argument>${nameNode}/user/hive/warehouse/${hiveDB}.db/${sourceOccurrenceTable}_avro/</argument>
-          <argument>c1n1.gbif.org:2181,c1n2.gbif.org:2181,c1n3.gbif.org:2181/solruat</argument>
-          <argument>${nameNode}/solr/uat_occurrence_from_hdfs</argument>
-          <argument>uat_occurrence</argument>
-          <argument>-shards 12 -replicationFactor 1</argument>
-          <argument>-Xmx2048m</argument>
-          <argument>-D 'mapreduce.reduce.shuffle.input.buffer.percent=0.2' -D 'mapreduce.reduce.shuffle.parallelcopies=5' -D 'mapreduce.map.memory.mb=4096' -D 'mapreduce.map.java.opts=-Xmx3584m' -D 'mapreduce.reduce.memory.mb=8192' -D 'mapreduce.reduce.java.opts=-Xmx7680m'</argument>
+          <argument>${solr.home}</argument>
+          <argument>${nameNode}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
+          <argument>${solr.zk}</argument>
+          <argument>${nameNode}/${hdfs.out.dir}</argument>
+          <argument>${solr.collection}</argument>
+          <argument>${solr.collection.opts}</argument>
+          <argument>${hadoop.client.opts}</argument>
+          <argument>${mapred.opts}</argument>
           <file>scripts/run_mapr_indexer.sh</file>
+          <archive>solr.zip#solr</archive>
       </shell>
       <ok to="end" />
       <error to="kill" />

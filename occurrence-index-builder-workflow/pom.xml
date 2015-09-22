@@ -17,10 +17,6 @@
     <profile>
       <id>oozie</id>
       <build>
-        <filters>
-          <filter>${basedir}/bin/hdfs_indexing/job.properties</filter>
-          <filter>${basedir}/bin/hdfs_indexing/jobsingleshard.properties</filter>
-        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
