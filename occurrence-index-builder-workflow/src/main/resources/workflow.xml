@@ -63,14 +63,14 @@
   <action name='build_index'>
       <shell xmlns="uri:oozie:shell-action:0.3">
           <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
-          <argument>${solr.home}</argument>
-          <argument>${nameNode}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
-          <argument>${solr.zk}</argument>
-          <argument>${nameNode}/${hdfs.out.dir}</argument>
-          <argument>${solr.collection}</argument>
-          <argument>${solr.collection.opts}</argument>
-          <argument>${hadoop.client.opts}</argument>
-          <argument>${mapred.opts}</argument>
+          <argument>${wf:conf("solr.home")}</argument>
+          <argument>${wf:conf("nameNode")}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
+          <argument>${wf:conf("solr.zk")}</argument>
+          <argument>${wf:conf("nameNode")}/${hdfs.out.dir}</argument>
+          <argument>${wf:conf("solr.collection")}</argument>
+          <argument>${wf:conf("solr.collection.opts")}</argument>
+          <argument>${wf:conf("hadoop.client.opts")}</argument>
+          <argument>${wf:conf("mapred.opts")}</argument>
           <file>scripts/run_mapr_indexer.sh</file>
           <archive>solr.zip#solr</archive>
       </shell>
