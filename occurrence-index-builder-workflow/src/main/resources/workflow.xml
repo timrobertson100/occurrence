@@ -64,7 +64,7 @@
       <shell xmlns="uri:oozie:shell-action:0.3">
           <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
           <argument>${wf:conf("solr.home")}</argument>
-          <argument>${wf:conf("hdfs.namenode")}/user/hive/warehouse/${hive.db}.db/occurrence_avro/</argument>
+          <argument>${wf:conf("hdfs.namenode")}/user/hive/warehouse/${wf:conf("hive.db")}.db/occurrence_avro/</argument>
           <argument>${wf:conf("solr.zk")}</argument>
           <argument>${wf:conf("nameNode")}/${hdfs.out.dir}</argument>
           <argument>${wf:conf("solr.collection")}</argument>
