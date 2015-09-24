@@ -27,3 +27,20 @@ def install_solr():
         wget http://mirrors.ucr.ac.cr/apache//lucene/solr/5.3.0/solr-5.3.0.tgz;\
         tar xzf solr-5.3.0.tgz -C /opt/;\
         rm -f solr-5.3.0.tgz;''')
+
+def copy_set_mr_path():
+  put('set-map-reduce-classpath.sh','/opt/solr-5.3.0/server/scripts/map-reduce/',mode=0755)
+
+
+@task
+@parallel
+@roles('cluster_dev')
+def copy_set_mr_path_dev():
+  copy_set_mr_path()
+
+
+@task
+@parallel
+@roles('cluster_prod')
+def copy_set_mr_path_prod():
+  copy_set_mr_path()

@@ -14,6 +14,7 @@ $SOLR_HOME/solr create_collection -c $SOLR_COLLECTION -n $SOLR_COLLECTION $SOLR_
 export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTSP $HADOOP_CLIENT_OPTS"
 export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:jts-1.13.jar
 export HADOOP_USER_CLASSPATH_FIRST=true
+echo $HADOOP_CLIENT_OPTS
 hadoop --config /etc/hadoop/conf/ jar $SOLR_HOME/dist/solr-map-reduce-*.jar $MAP_RED_OPTS -D 'mapreduce.job.user.classpath.first=true' \
 -libjars "$HADOOP_LIBJAR,jts-1.13.jar" --morphline-file avro_solr_occurrence_morphline.conf \
 --zk-host $ZK_HOST --output-dir $OUT_HDFS_DIR \
