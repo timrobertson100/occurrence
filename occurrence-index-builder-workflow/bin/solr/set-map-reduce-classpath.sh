@@ -36,13 +36,13 @@ dir7=`absPath "$solr_distrib/server/solr-webapp/webapp/WEB-INF/lib"`
 
 # Setup -libjar
 
-lib1=`ls -m $dir1/*.jar | tr -d ' \n' | awk {'print "file:/"$1'}`
-lib2=`ls -m $dir2/*.jar | tr -d ' \n' | awk {'print "file:/"$1'} | sed 's/\,[^\,]*\(log4j\|slf4j\)[^\,]*//g'`
-lib3=`ls -m $dir3/*.jar | tr -d ' \n' | awk {'print "file:/"$1'} | sed 's/\,[^\,]*\(hadoop\)[^\,]*//g'`
-lib4=`ls -m $dir4/*.jar | tr -d ' \n' | awk {'print "file:/"$1'}`
-lib5=`ls -m $dir5/*.jar | tr -d ' \n' | awk {'print "file:/"$1'}`
-lib6=`ls -m $dir6/*.jar | tr -d ' \n' | awk {'print "file:/"$1'}`
-lib7=`ls -m $dir7/*.jar | tr -d ' \n' | awk {'print "file:/"$1'} | sed 's/\,[^\,]*\(hadoop\)[^\,]*//g'`
+lib1=`ls $dir1/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//'`
+lib2=`ls $dir2/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//' | sed 's/\,[^\,]*\(log4j\|slf4j\)[^\,]*//g'`
+lib3=`ls $dir3/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//' | sed 's/\,[^\,]*\(hadoop\)[^\,]*//g'`
+lib4=`ls $dir4/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//'`
+lib5=`ls $dir5/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//'`
+lib6=`ls $dir6/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//'`
+lib7=`ls $dir7/*.jar | awk '{print "file://"$1","}' | tr -d ' \n' | sed 's/.$//' | sed 's/\,[^\,]*\(hadoop\)[^\,]*//g'`
 
 export HADOOP_CLASSPATH="$dir1/*:$dir2/*:$dir3/*:$dir4/*:$dir5/*:$dir6/*:$dir7/*"
 export HADOOP_LIBJAR="$lib1,$lib2,$lib3,$lib4,$lib5,$lib6,$lib7"

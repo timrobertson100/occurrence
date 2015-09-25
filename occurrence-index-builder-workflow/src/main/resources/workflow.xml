@@ -71,6 +71,7 @@
           <argument>${wf:conf("solr.collection.opts")}</argument>
           <argument>${wf:conf("hadoop.client.opts")}</argument>
           <argument>${wf:conf("mapred.opts")}</argument>
+          <argument>${wf:conf("solr.http.url")}</argument>
           <file>scripts/run_mapr_singleindexer_hdfs_rc.sh</file>
           <archive>solr.zip#solr</archive>
       </shell>
