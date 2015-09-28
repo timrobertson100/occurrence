@@ -28,20 +28,13 @@
     </configuration>
   </global>
 
-  <start to="build_index" />
-
-  <action name="create-workflow-directory">
-    <fs>
-      <mkdir path='${nameNode}/${oozieWfDestination}'/>
-    </fs>
-    <ok to="import_hive_to_avro" />
-    <error to="kill" />
-  </action>
+  <start to="create-avro-table" />
 
   <action name="create-avro-table">
     <hive xmlns="uri:oozie:hive-action:0.4">
       <job-xml>conf/hive-default.xml</job-xml>
       <script>hive-scripts/create_occurrence_avro_table.q</script>
+      <param>avroTable=${avroTable}</param>
     </hive>
 
     <ok to="import_hive_to_avro" />
@@ -53,6 +46,7 @@
       <job-xml>conf/hive-default.xml</job-xml>
       <script>hive-scripts/import_hive_to_avro.q</script>
       <param>sourceOccurrenceTable=${wf:conf("hive.db")}.occurrence</param>
+      <param>avroTable=${avroTable}</param>
     </hive>
 
     <ok to="build_index" />
@@ -62,7 +56,7 @@
 
   <action name='build_index'>
       <shell xmlns="uri:oozie:shell-action:0.3">
-          <exec>scripts/run_mapr_singleindexer_hdfs_rc.sh</exec>
+          <exec>scripts/build_solr_idx.sh</exec>
           <argument>${wf:conf("solr.home")}</argument>
           <argument>${wf:conf("hdfs.namenode")}/user/hive/warehouse/${wf:conf("hive.db")}.db/occurrence_avro/</argument>
           <argument>${wf:conf("solr.zk")}</argument>
@@ -72,7 +66,7 @@
           <argument>${wf:conf("hadoop.client.opts")}</argument>
           <argument>${wf:conf("mapred.opts")}</argument>
           <argument>${wf:conf("solr.http.url")}</argument>
-          <file>scripts/run_mapr_singleindexer_hdfs_rc.sh</file>
+          <file>scripts/build_solr_idx.sh</file>
           <archive>solr.zip#solr</archive>
       </shell>
       <ok to="end" />
