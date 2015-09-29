@@ -41,7 +41,7 @@
     <hive xmlns="uri:oozie:hive-action:0.4">
       <job-xml>conf/hive-config.xml</job-xml>
       <script>hive-scripts/import_hive_to_avro.q</script>
-      <param>sourceOccurrenceTable=${wf:conf("hive.db")}.occurrence</param>
+      <param>sourceOccurrenceTable=${wf:conf("hive.db")}.occurrence_hdfs</param>
       <param>avroTable=${wf:conf("hive.db")}.occurrence_avro</param>
     </hive>
 
