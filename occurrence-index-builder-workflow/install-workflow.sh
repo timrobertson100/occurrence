@@ -13,8 +13,8 @@ oozie_url=`cat $P.properties| grep "oozie.url" | cut -d'=' -f2`
 
 echo "Assembling jar for $ENV"
 
-mvn -Poozie clean package assembly:single
-mvn -Psolr package assembly:single
+mvn -Poozie,$P clean package assembly:single
+mvn -Psolr,$P package assembly:single
 
 if hdfs dfs -test -d /occurrence-index-builder-$P/; then
    echo "Removing directory content"
