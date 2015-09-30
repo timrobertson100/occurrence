@@ -23,6 +23,7 @@
             <filtering>true</filtering>
             <includes>
               <include>conf/hive-config.xml</include>
+              <include>workflow.xml</include>
             </includes>
           </resource>
           <resource>
