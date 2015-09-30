@@ -7,7 +7,7 @@
   under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES
   OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for
   the specific language governing permissions and ~ limitations under the License. -->
-<workflow-app xmlns="uri:oozie:workflow:0.4.5" name="occurrence-index-builder">
+<workflow-app xmlns="uri:oozie:workflow:0.4.5" name="occurrence-index-builder-${occurrence.environment}">
 
   <global>
     <job-tracker>${wf:conf("hadoop.jobtracker")}</job-tracker>
@@ -56,7 +56,7 @@
           <argument>${wf:conf("solr.home")}</argument>
           <argument>${wf:conf("hdfs.namenode")}/user/hive/warehouse/${wf:conf("hive.db")}.db/occurrence_avro/</argument>
           <argument>${wf:conf("solr.zk")}</argument>
-          <argument>${wf:conf("hdfs.namenode")}/${wf:conf("hdfs.out.dir")}</argument>
+          <argument>${wf:conf("hdfs.out.dir")}</argument>
           <argument>${wf:conf("solr.collection")}</argument>
           <argument>${wf:conf("solr.collection.opts")}</argument>
           <argument>${wf:conf("hadoop.client.opts")}</argument>
