@@ -5,7 +5,7 @@ OUT_HDFS_DIR=$4
 SOLR_COLLECTION=$5
 SOLR_COLLECTION_OPTS=$6
 HADOOP_CLIENT_OPTSP=$7
-MAP_RED_OPTS="$8"
+MAP_RED_OPTS=$8
 SOLR_HTTP_URL=$9
 
 source $SOLR_HOME/server/scripts/map-reduce/set-map-reduce-classpath.sh
@@ -17,7 +17,7 @@ export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$SOLR_HOME/server/solr-webapp/webapp/W
 export HADOOP_USER_CLASSPATH_FIRST=true
 echo "HADOOP_CLASSPATH" $HADOOP_CLASSPATH
 echo "HADOOP_LIBJAR" $HADOOP_LIBJAR
-hadoop --config /etc/hadoop/conf/ jar $SOLR_HOME/dist/solr-map-reduce-*.jar $MAP_RED_OPTS -D 'mapreduce.job.user.classpath.first=true' \
+hadoop --config /etc/hadoop/conf/ jar $SOLR_HOME/dist/solr-map-reduce-*.jar $MAP_RED_OPTS -D mapreduce.job.user.classpath.first=true \
 -libjars $HADOOP_LIBJAR --morphline-file avro_solr_occurrence_morphline.conf \
 --zk-host $ZK_HOST --output-dir $OUT_HDFS_DIR \
 --collection $SOLR_COLLECTION --log4j log4j.properties \
