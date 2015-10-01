@@ -45,3 +45,8 @@ def copy_set_mr_path_dev():
 @roles('cluster_prod')
 def copy_set_mr_path_prod():
   copy_set_mr_path()
+
+@task
+@parallel
+def copy_file(file,target_dir):
+  put(file,target_dir,mode=0755)
