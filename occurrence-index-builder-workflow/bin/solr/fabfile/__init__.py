@@ -50,3 +50,19 @@ def copy_set_mr_path_prod():
 @parallel
 def copy_file(file,target_dir):
   put(file,target_dir,mode=0755)
+
+
+@task
+@parallel
+def start_solr():
+  run('''service solr start;''')
+
+@task
+@parallel
+def stop_solr():
+  run('''service solr stop;''')
+
+@task
+@parallel
+def stop_solr():
+  run('''service solr restart;''')
