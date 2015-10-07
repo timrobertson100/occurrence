@@ -27,5 +27,6 @@ SELECT
   COALESCE(establishmentmeans,""),
   COALESCE(occurrenceid,""),
   COALESCE(mediatype,array()),
-  COALESCE(issue,array())
+  COALESCE(issue,array()),
+  COALESCE(scientificname,"")
 FROM ${sourceOccurrenceTable} occ;
