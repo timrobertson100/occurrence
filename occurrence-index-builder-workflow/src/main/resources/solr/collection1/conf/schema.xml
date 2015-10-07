@@ -19,11 +19,11 @@
 			compression (if enabled in the derived fields) to values which exceed a certain
 			size (in characters). -->
 		<fieldType name="string" class="solr.StrField"
-			sortMissingLast="true" omitNorms="true" />
+			sortMissingLast="true" omitNorms="true" docValues="true"/>
 
 		<!-- boolean type: "true" or "false" -->
 		<fieldType name="boolean" class="solr.BoolField"
-			sortMissingLast="true" omitNorms="true" />
+			sortMissingLast="true" omitNorms="true" docValues="true"/>
 
 		<!-- The optional sortMissingLast and sortMissingFirst attributes are currently
 			supported on types that are sorted internally as strings. This includes "string","boolean","sint","slong","sfloat","sdouble","pdate"
@@ -65,22 +65,22 @@
 
 	</types>
 	<fields>
-      <field name="key" type="int" indexed="true" stored="true" required="true" />
-      <field name="dataset_key" type="string" indexed="true" stored="false" />
-      <field name="taxon_key" type="int" indexed="true" stored="false" multiValued="true"/>
-      <field name="basis_of_record" type="string" indexed="true" stored="false"/>
-      <field name="year" type="int" indexed="true" stored="false" />
-      <field name="month" type="int" indexed="true" stored="false" />
-      <field name="elevation" type="double" indexed="true" stored="false" />
-      <field name="depth" type="double" indexed="true" stored="false" />
+      <field name="key" type="int" indexed="true" stored="true" required="true" docValues="true"/>
+      <field name="dataset_key" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="taxon_key" type="int" indexed="true" stored="false" multiValued="true" docValues="true"/>
+      <field name="basis_of_record" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="year" type="int" indexed="true" stored="false" docValues="true"/>
+      <field name="month" type="int" indexed="true" stored="false" docValues="true"/>
+      <field name="elevation" type="double" indexed="true" stored="false" docValues="true"/>
+      <field name="depth" type="double" indexed="true" stored="false" docValues="true"/>
       <field name="catalog_number" type="string" indexed="true" stored="false" />
       <field name="recorded_by" type="string" indexed="true" stored="false" />
       <field name="record_number" type="string" indexed="true" stored="false" />
       <field name="institution_code" type="string" indexed="true" stored="false" />
       <field name="collection_code" type="string" indexed="true" stored="false" />
-      <field name="country" type="string" indexed="true" stored="false" />
-      <field name="continent" type="string" indexed="true" stored="false"/>
-      <field name="publishing_country" type="string" indexed="true" stored="false" />
+      <field name="country" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="continent" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="publishing_country" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="coordinate" type="coordinate" indexed="true" stored="false" />
       <field name="coordinate_map" type="coordinate_map" indexed="true" stored="false" />
       <field name="spatial_issues" type="boolean" indexed="true" stored="false" />
@@ -89,10 +89,10 @@
       <field name="longitude" type="double" indexed="true" stored="false" />
       <field name="event_date" type="date" indexed="true" stored="false" />
       <field name="last_interpreted" type="date" indexed="true" stored="false" />
-      <field name="type_status" type="string" indexed="true" stored="false"/>
-      <field name="media_type" type="string" indexed="true" stored="false" multiValued="true"/>
-      <field name="issue" type="string" indexed="true" stored="false" multiValued="true"/>
-      <field name="establishment_means" type="string" indexed="true" stored="false"/>
+      <field name="type_status" type="string" indexed="true" stored="false" docValues="true"/>
+      <field name="media_type" type="string" indexed="true" stored="false" multiValued="true" docValues="true"/>
+      <field name="issue" type="string" indexed="true" stored="false" multiValued="true" docValues="true"/>
+      <field name="establishment_means" type="string" indexed="true" stored="false" docValues="true"/>
       <field name="occurrence_id" type="string" indexed="true" stored="false"/>
       <field name="full_text" type="text" indexed="true" stored="true" multiValued="true"/>
       <field name="_version_" type="long" indexed="true" stored="true"/>

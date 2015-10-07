@@ -6,6 +6,8 @@ env.roledefs['cluster_dev'] = ['c1n1.gbif.org','c1n2.gbif.org','c1n3.gbif.org','
 
 env.roledefs['cluster_prod'] = ['c4n1.gbif.org','c4n2.gbif.org','c4n3.gbif.org','c4n4.gbif.org','c4n5.gbif.org','c4n6.gbif.org','c4n7.gbif.org','c4n8.gbif.org','c4n9.gbif.org','c4n10.gbif.org','c4n11.gbif.org','c4n12.gbif.org','prodmaster1-vh.gbif.org','prodmaster2-vh.gbif.org','prodmaster3-vh.gbif.org']
 
+env.roledefs['solr_uat'] = ['uatsolr1-vh.gbif.org','uatsolr2-vh.gbif.org','uatsolr3-vh.gbif.org']
+
 
 @task
 @parallel
@@ -64,5 +66,5 @@ def stop_solr():
 
 @task
 @parallel
-def stop_solr():
+def restart_solr():
   run('''service solr restart;''')
