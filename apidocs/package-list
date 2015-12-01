@@ -1,4 +1,0 @@
-org.gbif.occurrencestore.download.file
-org.gbif.occurrencestore.download.oozie
-org.gbif.occurrencestore.download.util
-org.gbif.occurrencestore.hive.udf
