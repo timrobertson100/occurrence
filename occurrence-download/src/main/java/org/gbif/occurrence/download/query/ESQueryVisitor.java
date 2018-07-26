@@ -18,9 +18,14 @@ import org.gbif.api.model.occurrence.predicate.WithinPredicate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Throwables;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -29,6 +34,10 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The class translates predicates in GBIF download API to equivalent Elastic Search query requests.
+ * The json string provided by {@link #getQuery(Predicate)} can be used with _search get requests of ES index to produce downloads.
+ */
 public class ESQueryVisitor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ESQueryVisitor.class);
@@ -42,6 +51,7 @@ public class ESQueryVisitor {
   private static final String ES_KEYWORD_LTE = "lte";
   private static final String ES_KEYWORD_GT = "gt";
   private static final String ES_KEYWORD_LT = "lt";
+  private static final String ES_KEYWORD_GEO_BBOX = "geo_bounding_box";
   private static final String ES_KEYWORD_MATCH = "match";
   private static final String ES_KEYWORD_WILDCARD = "wildcard";
   private static final String ES_KEYWORD_SHOULD = "should";
@@ -49,25 +59,24 @@ public class ESQueryVisitor {
   private static final String ES_KEYWORD_BOOL = "bool";
   private static final String ES_KEYWORD_QUERY = "query";
 
-  private ObjectNode queryNode = new ObjectMapper().createObjectNode();
+  private final ObjectNode queryNode = new ObjectMapper().createObjectNode();
 
   /**
    * Translates a valid {@link org.gbif.api.model.occurrence.Download} object and translates it into a
-   * strings that can be used as the <em>body</em> for _search request of ES index.
+   * json query that can be used as the <em>body</em> for _search request of ES index.
    *
    * @param predicate to translate
    *
    * @return body clause
    */
-  public String getQuery(Predicate predicate) throws QueryBuildingException {
+  public synchronized String getQuery(Predicate predicate) throws QueryBuildingException {
     String esQuery = "";
-    ObjectNode currNode = queryNode;
     if (predicate != null) {
-      visit(predicate, currNode);
+      visit(predicate, queryNode);
       ObjectNode finalQuery = new ObjectMapper().createObjectNode();
       ObjectNode fullQuery = new ObjectMapper().createObjectNode();
-      fullQuery.put(ES_KEYWORD_BOOL,queryNode);
-      finalQuery.put(ES_KEYWORD_QUERY,fullQuery);
+      fullQuery.put(ES_KEYWORD_BOOL, queryNode);
+      finalQuery.put(ES_KEYWORD_QUERY, fullQuery);
       esQuery = finalQuery.toString();
     }
 
@@ -76,75 +85,140 @@ public class ESQueryVisitor {
     return esQuery;
   }
 
+  /**
+   * handle conjunction predicate
+   *
+   * @param predicate conjunction predicate
+   * @param currNode  query node position to append
+   */
   public void visit(ConjunctionPredicate predicate, JsonNode currNode) throws QueryBuildingException {
-    //with complex query used with AND , OR, NOT
+    //if currNode is array then it is part of complex query used with AND , OR, NOT
     if (currNode.isArray()) {
       ((ArrayNode) currNode).add(emptyBoolNode());
-      currNode = currNode.findValue(ES_KEYWORD_BOOL);
+      //search empty bool node recently created
+      List<JsonNode> collect =
+        currNode.findValues(ES_KEYWORD_BOOL).stream().filter((node) -> node.size() == 0).collect(Collectors.toList());
+      currNode = collect.get(0);
     }
 
     if (!currNode.has(ES_KEYWORD_MUST)) {
       ObjectNode tempNode = (ObjectNode) currNode;
       tempNode.put(ES_KEYWORD_MUST, JsonNodeFactory.instance.arrayNode());
     }
+    // must query structure is equivalent to AND
     visitCompoundPredicate(predicate, ES_KEYWORD_MUST, currNode.get(ES_KEYWORD_MUST));
   }
 
+  /**
+   * handle disjunction predicate
+   *
+   * @param predicate disjunction predicate
+   * @param currNode  query node position to append
+   */
   public void visit(DisjunctionPredicate predicate, JsonNode currNode) throws QueryBuildingException {
-    //with complex query used with AND , OR, NOT
+    //if currNode is array then it is part of complex query used with AND , OR, NOT
     if (currNode.isArray()) {
       ((ArrayNode) currNode).add(emptyBoolNode());
-      currNode = currNode.findValue(ES_KEYWORD_BOOL);
+      //search empty bool node recently created
+      List<JsonNode> collect =
+        currNode.findValues(ES_KEYWORD_BOOL).stream().filter((node) -> node.size() == 0).collect(Collectors.toList());
+      currNode = collect.get(0);
     }
 
     if (!currNode.has(ES_KEYWORD_SHOULD)) {
       ObjectNode tempNode = (ObjectNode) currNode;
       tempNode.put(ES_KEYWORD_SHOULD, JsonNodeFactory.instance.arrayNode());
     }
+    // should query structure is equivalent to OR
     visitCompoundPredicate(predicate, ES_KEYWORD_SHOULD, currNode.get(ES_KEYWORD_SHOULD));
   }
 
   /**
-   * Supports all parameters incl taxonKey expansion for higher taxa.
+   * handles EqualPredicate
+   *
+   * @param predicate equalPredicate
+   * @param currNode  query node position to append
    */
-  public void visit(EqualsPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  public void visit(EqualsPredicate predicate, JsonNode currNode) {
     visitSimplePredicate(predicate, ES_KEYWORD_MATCH, currNode);
   }
 
-  public void visit(GreaterThanOrEqualsPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  /**
+   * handle greater than equals predicate
+   *
+   * @param predicate gte predicate
+   * @param currNode  query node position to append
+   */
+  public void visit(GreaterThanOrEqualsPredicate predicate, JsonNode currNode) {
     visitRangePredicate(predicate, ES_KEYWORD_GTE, currNode);
   }
 
-  public void visit(GreaterThanPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  /**
+   * handles greater than predicate
+   *
+   * @param predicate greater than predicate
+   * @param currNode  query node position to append
+   */
+  public void visit(GreaterThanPredicate predicate, JsonNode currNode) {
     visitRangePredicate(predicate, ES_KEYWORD_GT, currNode);
   }
 
-  public void visit(InPredicate predicate, JsonNode currNode) throws QueryBuildingException {
-    //if currNode is an array it is part of other complex predicate else it is simple predicate
-    boolean isComplex = currNode.isArray();
-    ArrayNode arrNode = isComplex ? (ArrayNode) currNode : JsonNodeFactory.instance.arrayNode();
-
-    arrNode.add(getTermsNode(predicate));
-    //since an equal predicate need to be must
-    if (!isComplex) {
-      ((ObjectNode) currNode).put(ES_KEYWORD_MUST, arrNode);
-    }
-
+  /**
+   * handle IN Predicate
+   *
+   * @param predicate InPredicate
+   * @param currNode  query node position to append
+   */
+  public void visit(InPredicate predicate, JsonNode currNode) {
+    handlePredicate(predicate, "", currNode, NodeType.TERMS);
   }
 
-  public void visit(LessThanOrEqualsPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  /**
+   * handles less than or equals predicate
+   *
+   * @param predicate less than or equals
+   * @param currNode  query node position to append
+   */
+  public void visit(LessThanOrEqualsPredicate predicate, JsonNode currNode) {
     visitRangePredicate(predicate, ES_KEYWORD_LTE, currNode);
   }
 
-  public void visit(LessThanPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  /**
+   * handles less than predicate
+   *
+   * @param predicate less than predicate
+   * @param currNode  query node position to append
+   */
+  public void visit(LessThanPredicate predicate, JsonNode currNode) {
     visitRangePredicate(predicate, ES_KEYWORD_LT, currNode);
   }
 
-  public void visit(LikePredicate predicate, JsonNode currNode) throws QueryBuildingException {
+  /**
+   * handles like predicate
+   *
+   * @param predicate like predicate
+   * @param currNode  query node position to append
+   */
+  public void visit(LikePredicate predicate, JsonNode currNode) {
     visitSimplePredicate(predicate, ES_KEYWORD_WILDCARD, currNode);
   }
 
+  /**
+   * handles not predicate
+   *
+   * @param predicate NOT predicate
+   * @param currNode  query node position to append
+   */
   public void visit(NotPredicate predicate, JsonNode currNode) throws QueryBuildingException {
+    //if currNode is array then it is part of complex query used with AND , OR, NOT
+    if (currNode.isArray()) {
+      ((ArrayNode) currNode).add(emptyBoolNode());
+      //search empty bool node recently created
+      List<JsonNode> collect =
+        currNode.findValues(ES_KEYWORD_BOOL).stream().filter((node) -> node.size() == 0).collect(Collectors.toList());
+      currNode = collect.get(0);
+    }
+
     if (!currNode.has(ES_KEYWORD_MUST_NOT)) {
       ((ObjectNode) currNode).put(ES_KEYWORD_MUST_NOT, JsonNodeFactory.instance.arrayNode());
     }
@@ -152,20 +226,24 @@ public class ESQueryVisitor {
     visit(predicate.getPredicate(), currNode.get(ES_KEYWORD_MUST_NOT));
   }
 
-  public void visit(WithinPredicate within) {
-    /*builder.append(PARAMS_JOINER.join(OccurrenceSolrField.COORDINATE.getFieldName(),
-                                      parseGeometryParam(within.getGeometry())));*/
+  /**
+   * handles within predicate
+   *
+   * @param within   Within predicate
+   * @param currNode query node position to append
+   */
+  public void visit(WithinPredicate within, JsonNode currNode) {
+    handlePredicate(within, ES_KEYWORD_GEO_BBOX, currNode, NodeType.GEOBB);
   }
 
-  public void visit(IsNotNullPredicate predicate, JsonNode currNode) throws QueryBuildingException {
-    boolean isComplex = currNode.isArray();
-    ArrayNode arrNode = isComplex ? (ArrayNode) currNode : JsonNodeFactory.instance.arrayNode();
-
-    arrNode.add(getExistNode(predicate));
-
-    if (!isComplex) {
-      ((ObjectNode) currNode).put(ES_KEYWORD_MUST, arrNode);
-    }
+  /**
+   * handles ISNOTNULL Predicate
+   *
+   * @param predicate ISNOTNULL predicate
+   * @param currNode  query node position to append
+   */
+  public void visit(IsNotNullPredicate predicate, JsonNode currNode) {
+    handlePredicate(predicate, "", currNode, NodeType.EXIST);
   }
 
   /**
@@ -176,46 +254,39 @@ public class ESQueryVisitor {
    * ((predicate) op (predicate) ... op (predicate))
    * </pre>
    */
-  public void visitCompoundPredicate(CompoundPredicate predicate, String op, JsonNode currNode)
+  private void visitCompoundPredicate(CompoundPredicate predicate, String op, JsonNode currNode)
     throws QueryBuildingException {
-    Iterator<Predicate> iterator = predicate.getPredicates().iterator();
-    while (iterator.hasNext()) {
-      Predicate subPredicate = iterator.next();
+    for (Predicate subPredicate : predicate.getPredicates()) {
       visit(subPredicate, currNode);
     }
   }
 
-  public void visitRangePredicate(SimplePredicate predicate, String op, JsonNode currNode)
-    throws QueryBuildingException {
-    boolean isComplex = currNode.isArray();
-    ArrayNode arrNode = isComplex ? (ArrayNode) currNode : JsonNodeFactory.instance.arrayNode();
-
-    arrNode.add(getRangeNode(predicate,op));
-
-    if (!isComplex) {
-      ((ObjectNode) currNode).put(ES_KEYWORD_MUST, arrNode);
-    }
+  /**
+   * handles range predicate
+   *
+   * @param predicate range predicate
+   * @param op        can be any of lt2,lt,gte,gt
+   * @param currNode  query node position to append
+   */
+  private void visitRangePredicate(SimplePredicate predicate, String op, JsonNode currNode) {
+    handlePredicate(predicate, op, currNode, NodeType.RANGE);
   }
 
-
-
-  public void visitSimplePredicate(SimplePredicate predicate, String op, JsonNode currNode)
-    throws QueryBuildingException {
-    boolean isComplex = currNode.isArray();
-
-    ArrayNode arrNode = isComplex ? (ArrayNode) currNode : JsonNodeFactory.instance.arrayNode();
-
-    arrNode.add(getMatchNode(predicate,op));
-
-    if (!isComplex) {
-      ((ObjectNode) currNode).put(ES_KEYWORD_MUST, arrNode);
-    }
+  /**
+   * handles simple predicate eg, equals or like type predicate
+   *
+   * @param predicate simple predicate
+   * @param op        wildcard, match
+   * @param currNode  query node position to append
+   */
+  private void visitSimplePredicate(SimplePredicate predicate, String op, JsonNode currNode) {
+    handlePredicate(predicate, op, currNode, NodeType.MATCH);
   }
 
   private void visit(Object object, JsonNode currNode) throws QueryBuildingException {
-    Method method = null;
+    Method method;
     try {
-      method = getClass().getMethod("visit", new Class[] {object.getClass(), JsonNode.class});
+      method = getClass().getMethod("visit", object.getClass(), JsonNode.class);
     } catch (NoSuchMethodException e) {
       LOG.warn("Visit method could not be found. That means a unknown Predicate has been passed", e);
       throw new IllegalArgumentException("Unknown Predicate", e);
@@ -231,17 +302,47 @@ public class ESQueryVisitor {
     }
   }
 
-  /*********************** utility function *****************/
+  /**
+   * handles predicates for both complex and simple conditions and append smaller unit of query to the main query node.
+   *
+   * @param predicate predicate to handle
+   * @param op        case if there are more than one kind of operations eg. in equal predicate (it can be either match or wildcard) or in range case it can be (gte,lte,gt,lt)
+   * @param currNode  the currNode used for appending new query node
+   * @param type      new query node type to be appended
+   */
+  private void handlePredicate(Predicate predicate, String op, JsonNode currNode, NodeType type) {
+    boolean isComplex = currNode.isArray();
 
-  private void handlePredicate(Predicate predicate,String op, JsonNode currNode){
+    ArrayNode arrNode = isComplex ? (ArrayNode) currNode : JsonNodeFactory.instance.arrayNode();
 
+    switch (type) {
+
+      case TERMS:
+        arrNode.add(getTermsNode((InPredicate) predicate));
+        break;
+      case RANGE:
+        arrNode.add(getRangeNode((SimplePredicate) predicate, op));
+        break;
+      case EXIST:
+        arrNode.add(getExistNode((IsNotNullPredicate) predicate));
+        break;
+      case MATCH:
+        arrNode.add(getEqualNodeWithOp((SimplePredicate) predicate, op));
+        break;
+      case GEOBB:
+        arrNode.add(getBBoxNode(((WithinPredicate) predicate).getGeometry()));
+        break;
+    }
+
+    if (!isComplex) {
+      ((ObjectNode) currNode).put(ES_KEYWORD_MUST, arrNode);
+    }
   }
 
   /**
-   *
    * @return emptyBool node
    */
-  private JsonNode emptyBoolNode(){
+  private JsonNode emptyBoolNode() {
     ObjectNode boolNode = JsonNodeFactory.instance.objectNode();
     boolNode.put(ES_KEYWORD_BOOL, JsonNodeFactory.instance.objectNode());
     return boolNode;
@@ -250,19 +351,16 @@ public class ESQueryVisitor {
   /**
    * create an terms object eg.
    * {
-   * 	"terms": {
-   * 		"CATALOG_NUMBER": ["value_1", "value_2", "value_3"]
-   *    }
+   * "terms": {
+   * "CATALOG_NUMBER": ["value_1", "value_2", "value_3"]
    * }
-   * @param predicate
-   * @return
+   * }
    */
-  private JsonNode getTermsNode(InPredicate predicate){
+  private JsonNode getTermsNode(InPredicate predicate) {
     ObjectNode termsNode = JsonNodeFactory.instance.objectNode();
     ArrayNode valueNode = JsonNodeFactory.instance.arrayNode();
-    Iterator<String> iterator = predicate.getValues().iterator();
-    while (iterator.hasNext()) {
-      valueNode.add(iterator.next());
+    for (String s : predicate.getValues()) {
+      valueNode.add(s);
     }
     termsNode.put(predicate.getKey().name(), valueNode);
 
@@ -274,15 +372,16 @@ public class ESQueryVisitor {
   /**
    * creates an match object eg.
    * {
-   * 	"match": {
-   * 		"INSTITUTION_CODE": "value_2"
-   *    }
+   * "match": {
+   * "INSTITUTION_CODE": "value_2"
    * }
-   * @param predicate
+   * }
+   *
    * @param op can be wildcard,match etc
+   *
    * @return match JSON Node
    */
-  private JsonNode getMatchNode(SimplePredicate predicate, String op){
+  private JsonNode getEqualNodeWithOp(SimplePredicate predicate, String op) {
     ObjectNode matchNode = new ObjectMapper().createObjectNode();
     matchNode.put(predicate.getKey().name(), predicate.getValue());
 
@@ -294,16 +393,16 @@ public class ESQueryVisitor {
   /**
    * creates an range object eg.
    * {
-   * 	"range": {
-   * 		"MONTH": {
-   * 			"gte": "12"
-   *        }
-   *   }
+   * "range": {
+   * "MONTH": {
+   * "gte": "12"
    * }
-   * @param predicate
+   * }
+   * }
+   *
    * @return range JSON Node
    */
-  private JsonNode getRangeNode(SimplePredicate predicate,String op){
+  private JsonNode getRangeNode(SimplePredicate predicate, String op) {
     ObjectNode rangeNode = new ObjectMapper().createObjectNode();
     rangeNode.put(op, predicate.getValue());
 
@@ -317,19 +416,86 @@ public class ESQueryVisitor {
 
   /**
    * creates an exist object eg. {
-   * 	"exists": {
-   * 		"field": "CATALOG_NUMBER"
-   *    }
+   * "exists": {
+   * "field": "CATALOG_NUMBER"
    * }
-   * @param predicate
+   * }
+   *
    * @return exist JSON Node
    */
-  private JsonNode getExistNode(IsNotNullPredicate predicate){
+  private JsonNode getExistNode(IsNotNullPredicate predicate) {
     ObjectNode existNode = new ObjectMapper().createObjectNode();
     existNode.put(ES_KEYWORD_FIELD, predicate.getParameter().name());
 
     ObjectNode finalNodeObject = new ObjectMapper().createObjectNode();
     finalNodeObject.put(ES_KEYWORD_EXISTS, existNode);
     return finalNodeObject;
+  }
+
+  /**
+   * creates a boundingbox json node from wkt string eg. {
+   * "geo_bounding_box": {
+   * "pin.location": {
+   * "top_left": {
+   * "lat": 10.0,
+   * "lon": 10.0
+   * },
+   * "bottom_right": {
+   * "lat": 40.0,
+   * "lon": 40.0
+   * }
+   * }
+   * }
+   * }
+   *
+   * @param wkt wkt format for geometry
+   */
+  private JsonNode getBBoxNode(String wkt) {
+    Envelope envelope = parseGeometryParam(wkt);
+
+    ObjectNode pinlocationNode = JsonNodeFactory.instance.objectNode();
+    ObjectNode topLeftNode = JsonNodeFactory.instance.objectNode();
+    ObjectNode bottomRightNode = JsonNodeFactory.instance.objectNode();
+    ObjectNode geoBBoxNode = JsonNodeFactory.instance.objectNode();
+    ObjectNode withinQueryNode = JsonNodeFactory.instance.objectNode();
+
+    topLeftNode.put("lat", envelope.getMinX());
+    topLeftNode.put("lon", envelope.getMinY());
+
+    bottomRightNode.put("lat", envelope.getMaxX());
+    bottomRightNode.put("lon", envelope.getMaxY());
+
+    pinlocationNode.put("top_left", topLeftNode);
+    pinlocationNode.put("bottom_right", bottomRightNode);
+
+    geoBBoxNode.put("pin.location", pinlocationNode);
+
+    withinQueryNode.put(ES_KEYWORD_GEO_BBOX, geoBBoxNode);
+    return withinQueryNode;
+  }
+
+  /**
+   * Parses a geometry parameter in WKT format.
+   * If the parsed geometry is a rectangle or polygon, the query is transformed into a range query using the southmost and
+   * northmost points.
+   */
+  private Envelope parseGeometryParam(String wkt) {
+    try {
+      Geometry geometry = new WKTReader().read(wkt);
+      if (!geometry.isValid() || geometry.isEmpty()) {
+        throw new IllegalArgumentException("Geometry not in a valid WKT format " + wkt);
+      }
+      //geometry is rectangle or simple
+      return geometry.getEnvelopeInternal();
+
+    } catch (ParseException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /*********************** utility function *****************/
+
+  enum NodeType {
+    TERMS, RANGE, EXIST, MATCH, GEOBB
   }
 }
