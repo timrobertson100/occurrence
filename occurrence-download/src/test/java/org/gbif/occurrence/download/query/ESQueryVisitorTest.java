@@ -225,5 +225,4 @@ public class ESQueryVisitorTest {
       query);
     System.out.println(query);
   }
-
 }

@@ -19,15 +19,15 @@ CREATE TEMPORARY FUNCTION joinArray AS 'brickhouse.udf.collect.JoinArrayUDF';
 DROP TABLE IF EXISTS ${r"${occurrenceTable}"};
 DROP TABLE IF EXISTS ${r"${occurrenceTable}"}_citation;
 
+CREATE EXTERNAL TABLE ${r"${occurrenceTable}"}_es ( basisOfRecord STRING,class STRING,classKey BIGINT, day BIGINT, decimalLatitude FLOAT, decimalLongitude FLOAT, country STRING, family STRING, familyKey BIGINT, genus STRING, genusKey BIGINT, geodeticDatum STRING, infraspecificEpithet STRING, kingdom STRING, kingdomKey BIGINT, month BIGINT, nubKey BIGINT, occurrenceId STRING, order STRING, orderKey BIGINT, phylum STRING, phylumKey BIGINT, scientificName STRING, scientificNameAuthorship STRING, species STRING, speciesKey BIGINT, specificEpithet STRING, taxonRank STRING, year BIGINT)
+STORED BY 'org.elasticsearch.hadoop.hive.EsStorageHandler' TBLPROPERTIES('es.resource' = 'occurrence/occurrence'
+, 'es.query' = '${r"${esQuery}"}','es.node'='c3n1.gbif.org,c3n2.gbif.org,c3n3.gbif.org')
+
+
 -- pre-create verbatim table so it can be used in the multi-insert
 CREATE TABLE ${r"${occurrenceTable}"} ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 TBLPROPERTIES ("serialization.null.format"="")
-AS SELECT
-<#list fields as field>
-  ${field.hiveField}<#if field_has_next>,</#if>
-</#list>
-FROM occurrence_hdfs
-WHERE ${r"${whereClause}"};
+AS SELECT * FROM ${r"${occurrenceTable}"}_es;
 
 -- creates the citations table, citation table is not compressed since it is read later from Java as TSV.
 SET mapred.output.compress=false;

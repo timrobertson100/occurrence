@@ -40,34 +40,15 @@
       <case to="simple_avro_download">
         ${(download_format eq 'SIMPLE_AVRO')}
       </case>
-      <!-- it's a small download -->
-      <case to="from_solr_download">
-        ${wf:actionData('download_prepare')['is_small_download']}
-      </case>
       <case to="simple_csv_download">
-        ${!wf:actionData('download_prepare')['is_small_download'] and (download_format eq 'SIMPLE_CSV')}
+        ${(download_format eq 'SIMPLE_CSV')}
       </case>
       <case to="dwca_download">
-        ${!wf:actionData('download_prepare')['is_small_download'] and (download_format eq 'DWCA')}
+        ${(download_format eq 'DWCA')}
       </case>
       <default to="kill"/>
     </switch>
   </decision>
-
-  <action name="from_solr_download">
-    <java>
-      <main-class>org.gbif.occurrence.download.oozie.FromSolrDownloadAction</main-class>
-      <arg>${download_format}</arg>
-      <arg>${wf:actionData('download_prepare')['solr_query']}</arg>
-      <arg>${wf:actionData('download_prepare')['download_key']}</arg>
-      <arg>${gbif_filter}</arg>
-      <arg>${wf:actionData('download_prepare')['download_table_name']}</arg>
-      <arg>${gbif_user}</arg>
-    </java>
-
-    <ok to="end"/>
-    <error to="kill"/>
-  </action>
 
   <action name="simple_csv_download">
     <sub-workflow>
@@ -79,16 +60,12 @@
           <value>${wf:actionData('download_prepare')['download_key']}</value>
         </property>
         <property>
-          <name>is_small_download</name>
-          <value>${wf:actionData('download_prepare')['is_small_download']}</value>
+          <name>es_query</name>
+          <value>${wf:actionData('download_prepare')['es_query']}</value>
         </property>
         <property>
           <name>download_table_name</name>
           <value>${wf:actionData('download_prepare')['download_table_name']}</value>
-        </property>
-        <property>
-          <name>hive_query</name>
-          <value>${wf:actionData('download_prepare')['hive_query']}</value>
         </property>
         <property>
           <name>hive_db</name>

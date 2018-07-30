@@ -6,6 +6,7 @@ import org.gbif.api.service.registry.OccurrenceDownloadService;
 import org.gbif.occurrence.common.download.DownloadUtils;
 import org.gbif.occurrence.download.conf.WorkflowConfiguration;
 import org.gbif.occurrence.download.inject.DownloadWorkflowModule;
+import org.gbif.occurrence.download.query.ESQueryVisitor;
 import org.gbif.occurrence.download.query.HiveQueryVisitor;
 import org.gbif.occurrence.download.query.QueryBuildingException;
 import org.gbif.occurrence.download.query.SolrQueryVisitor;
@@ -57,9 +58,7 @@ public class DownloadPrepareAction {
 
   private static final String OOZIE_ACTION_OUTPUT_PROPERTIES = "oozie.action.output.properties";
 
-  private static final String IS_SMALL_DOWNLOAD = "is_small_download";
-
-  private static final String SOLR_QUERY = "solr_query";
+  private static final String ES_QUERY = "es_query";
 
   private static final String HIVE_DB = "hive_db";
 
@@ -70,8 +69,6 @@ public class DownloadPrepareAction {
   //'-' is not allowed in a Hive table name.
   // This value will hold the same value as the DOWNLOAD_KEY but the - is replaced by an '_'.
   private static final String DOWNLOAD_TABLE_NAME = "download_table_name";
-
-  private final SolrClient solrClient;
 
   // Holds the value of the maximum number of records that a small download can have.
   private final int smallDownloadLimit;
@@ -106,12 +103,10 @@ public class DownloadPrepareAction {
    */
   @Inject
   public DownloadPrepareAction(
-    SolrClient solrClient,
     @Named(DownloadWorkflowModule.DefaultSettings.MAX_RECORDS_KEY) int smallDownloadLimit,
     OccurrenceDownloadService occurrenceDownloadService,
     WorkflowConfiguration workflowConfiguration
   ) {
-    this.solrClient = solrClient;
     this.smallDownloadLimit = smallDownloadLimit;
     this.occurrenceDownloadService = occurrenceDownloadService;
     this.workflowConfiguration = workflowConfiguration;
@@ -134,15 +129,14 @@ public class DownloadPrepareAction {
    */
   public void updateDownloadData(String rawPredicate, String downloadKey) throws IOException, QueryBuildingException {
     Predicate predicate = OBJECT_MAPPER.readValue(rawPredicate, Predicate.class);
-    String solrQuery = new SolrQueryVisitor().getQuery(predicate);
-    long recordCount = getRecordCount(solrQuery);
+    String esQuery = new ESQueryVisitor().getQuery(predicate);
+
     String oozieProp = System.getProperty(OOZIE_ACTION_OUTPUT_PROPERTIES);
     if (oozieProp != null) {
       File propFile = new File(oozieProp);
       Properties props = new Properties();
       try (OutputStream os = new FileOutputStream(propFile)) {
-        props.setProperty(IS_SMALL_DOWNLOAD, isSmallDownloadCount(recordCount).toString());
-        props.setProperty(SOLR_QUERY, solrQuery);
+        props.setProperty(ES_QUERY, esQuery);
         props.setProperty(HIVE_QUERY, StringEscapeUtils.escapeXml10(new HiveQueryVisitor().getHiveQuery(predicate)));
         props.setProperty(DOWNLOAD_KEY, downloadKey);
         // '-' is replaced by '_' because it's not allowed in hive table names
@@ -156,23 +150,9 @@ public class DownloadPrepareAction {
     } else {
       throw new IllegalStateException(OOZIE_ACTION_OUTPUT_PROPERTIES + " System property not defined");
     }
-    if (recordCount >= 0) {
+    /*if (recordCount >= 0) {
       updateTotalRecordsCount(downloadKey, recordCount);
-    }
-  }
-
-  /**
-   * Executes the Solr query and returns the number of records found.
-   * If an error occurs 'ERROR_COUNT' is returned.
-   */
-  private long getRecordCount(String solrQuery) {
-    try {
-      QueryResponse response = solrClient.query(new SolrQuery(solrQuery));
-      return response.getResults().getNumFound();
-    } catch (Exception e) {
-      LOG.error("Error getting the records count", e);
-      return ERROR_COUNT;
-    }
+    }*/
   }
 
   /**
