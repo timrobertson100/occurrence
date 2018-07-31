@@ -59,6 +59,8 @@ public class ESQueryVisitor {
   private static final String ES_KEYWORD_BOOL = "bool";
   private static final String ES_KEYWORD_QUERY = "query";
 
+  private static final String ES_DEFAULT_QUERY = "?q=*:*";
+
   private final ObjectNode queryNode = new ObjectMapper().createObjectNode();
 
   /**
@@ -70,7 +72,7 @@ public class ESQueryVisitor {
    * @return body clause
    */
   public synchronized String getQuery(Predicate predicate) throws QueryBuildingException {
-    String esQuery = "";
+    String esQuery = ES_DEFAULT_QUERY;
     if (predicate != null) {
       visit(predicate, queryNode);
       ObjectNode finalQuery = new ObjectMapper().createObjectNode();
