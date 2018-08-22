@@ -15,10 +15,12 @@ import org.gbif.api.model.occurrence.predicate.NotPredicate;
 import org.gbif.api.model.occurrence.predicate.Predicate;
 import org.gbif.api.model.occurrence.predicate.SimplePredicate;
 import org.gbif.api.model.occurrence.predicate.WithinPredicate;
-
+import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Throwables;
@@ -62,6 +64,19 @@ public class ESQueryVisitor {
   private static final String ES_DEFAULT_QUERY = "?q=*:*";
 
   private final ObjectNode queryNode = new ObjectMapper().createObjectNode();
+  
+  private static Map<OccurrenceSearchParameter, String> searchParamToESField =
+      new EnumMap<>(OccurrenceSearchParameter.class);
+
+  static {
+    for (OccurrenceSearchParameter searchParam : OccurrenceSearchParameter.values()) {
+      searchParamToESField.put(searchParam, searchParam.name().toLowerCase().replaceAll("_", ""));
+    }
+  }
+
+  public static String getESEquivalentSearchField(OccurrenceSearchParameter param) {
+    return searchParamToESField.get(param);
+  }
 
   /**
    * Translates a valid {@link org.gbif.api.model.occurrence.Download} object and translates it into a
@@ -364,7 +379,7 @@ public class ESQueryVisitor {
     for (String s : predicate.getValues()) {
       valueNode.add(s);
     }
-    termsNode.put(predicate.getKey().name(), valueNode);
+    termsNode.put(getESEquivalentSearchField(predicate.getKey()), valueNode);
 
     ObjectNode finalNodeObject = new ObjectMapper().createObjectNode();
     finalNodeObject.put(ES_KEYWORD_TERMS, termsNode);
@@ -385,7 +400,7 @@ public class ESQueryVisitor {
    */
   private JsonNode getEqualNodeWithOp(SimplePredicate predicate, String op) {
     ObjectNode matchNode = new ObjectMapper().createObjectNode();
-    matchNode.put(predicate.getKey().name(), predicate.getValue());
+    matchNode.put(getESEquivalentSearchField(predicate.getKey()), predicate.getValue());
 
     ObjectNode finalNodeObject = new ObjectMapper().createObjectNode();
     finalNodeObject.put(op, matchNode);
@@ -409,7 +424,7 @@ public class ESQueryVisitor {
     rangeNode.put(op, predicate.getValue());
 
     ObjectNode rangeNodeObject = new ObjectMapper().createObjectNode();
-    rangeNodeObject.put(predicate.getKey().name(), rangeNode);
+    rangeNodeObject.put(getESEquivalentSearchField(predicate.getKey()), rangeNode);
 
     ObjectNode finalNodeObject = new ObjectMapper().createObjectNode();
     finalNodeObject.put(ES_KEYWORD_RANGE, rangeNodeObject);
@@ -427,7 +442,7 @@ public class ESQueryVisitor {
    */
   private JsonNode getExistNode(IsNotNullPredicate predicate) {
     ObjectNode existNode = new ObjectMapper().createObjectNode();
-    existNode.put(ES_KEYWORD_FIELD, predicate.getParameter().name());
+    existNode.put(ES_KEYWORD_FIELD, getESEquivalentSearchField(predicate.getParameter()));
 
     ObjectNode finalNodeObject = new ObjectMapper().createObjectNode();
     finalNodeObject.put(ES_KEYWORD_EXISTS, existNode);

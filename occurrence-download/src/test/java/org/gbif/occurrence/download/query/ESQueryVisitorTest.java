@@ -14,7 +14,6 @@ import org.gbif.api.model.occurrence.predicate.NotPredicate;
 import org.gbif.api.model.occurrence.predicate.Predicate;
 import org.gbif.api.model.occurrence.predicate.WithinPredicate;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
-
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -22,14 +21,16 @@ import org.junit.Test;
 public class ESQueryVisitorTest {
 
   private static final OccurrenceSearchParameter PARAM = OccurrenceSearchParameter.CATALOG_NUMBER;
-  private static final OccurrenceSearchParameter PARAM2 = OccurrenceSearchParameter.INSTITUTION_CODE;
+  private static final OccurrenceSearchParameter PARAM2 =
+      OccurrenceSearchParameter.INSTITUTION_CODE;
   private final ESQueryVisitor visitor = new ESQueryVisitor();
 
   @Test
   public void testEqualsPredicate() throws QueryBuildingException {
     Predicate p = new EqualsPredicate(PARAM, "value");
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value\"}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value\"}}]}}}", query);
     System.out.println(query);
   }
 
@@ -37,7 +38,8 @@ public class ESQueryVisitorTest {
   public void testGreaterThanOrEqualPredicate() throws QueryBuildingException {
     Predicate p = new GreaterThanOrEqualsPredicate(OccurrenceSearchParameter.ELEVATION, "222");
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"range\":{\"ELEVATION\":{\"gte\":\"222\"}}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"range\":{\"elevation\":{\"gte\":\"222\"}}}]}}}", query);
     System.out.println(query);
   }
 
@@ -45,7 +47,8 @@ public class ESQueryVisitorTest {
   public void testGreaterThanPredicate() throws QueryBuildingException {
     Predicate p = new GreaterThanPredicate(OccurrenceSearchParameter.ELEVATION, "1000");
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"range\":{\"ELEVATION\":{\"gt\":\"1000\"}}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"range\":{\"elevation\":{\"gt\":\"1000\"}}}]}}}", query);
     System.out.println(query);
   }
 
@@ -53,7 +56,9 @@ public class ESQueryVisitorTest {
   public void testLessThanOrEqualPredicate() throws QueryBuildingException {
     Predicate p = new LessThanOrEqualsPredicate(OccurrenceSearchParameter.ELEVATION, "1000");
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"range\":{\"ELEVATION\":{\"lte\":\"1000\"}}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"range\":{\"elevation\":{\"lte\":\"1000\"}}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -61,7 +66,8 @@ public class ESQueryVisitorTest {
   public void testLessThanPredicate() throws QueryBuildingException {
     Predicate p = new LessThanPredicate(OccurrenceSearchParameter.ELEVATION, "1000");
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"range\":{\"ELEVATION\":{\"lt\":\"1000\"}}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"range\":{\"elevation\":{\"lt\":\"1000\"}}}]}}}", query);
     System.out.println(query);
   }
 
@@ -73,8 +79,8 @@ public class ESQueryVisitorTest {
     Predicate p = new ConjunctionPredicate(Lists.newArrayList(p1, p2, p3));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}},{\"range\":{\"MONTH\":{\"gte\":\"12\"}}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"match\":{\"institutioncode\":\"value_2\"}},{\"range\":{\"month\":{\"gte\":\"12\"}}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -86,8 +92,8 @@ public class ESQueryVisitorTest {
     DisjunctionPredicate p = new DisjunctionPredicate(Lists.newArrayList(p1, p2));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"should\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"should\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"match\":{\"institutioncode\":\"value_2\"}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -96,8 +102,8 @@ public class ESQueryVisitorTest {
     Predicate p = new InPredicate(PARAM, Lists.newArrayList("value_1", "value_2", "value_3"));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"terms\":{\"CATALOG_NUMBER\":[\"value_1\",\"value_2\",\"value_3\"]}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must\":[{\"terms\":{\"catalognumber\":[\"value_1\",\"value_2\",\"value_3\"]}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -109,8 +115,8 @@ public class ESQueryVisitorTest {
     Predicate p = new ConjunctionPredicate(Lists.newArrayList(p1, p2, p3));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"terms\":{\"CATALOG_NUMBER\":[\"value_1\",\"value_2\",\"value_3\"]}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}}}",
-      query);
+       "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"terms\":{\"catalognumber\":[\"value_1\",\"value_2\",\"value_3\"]}},{\"match\":{\"institutioncode\":\"value_2\"}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -118,7 +124,9 @@ public class ESQueryVisitorTest {
   public void testNotPredicate() throws QueryBuildingException {
     Predicate p = new NotPredicate(new EqualsPredicate(PARAM, "value"));
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must_not\":[{\"match\":{\"CATALOG_NUMBER\":\"value\"}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must_not\":[{\"match\":{\"catalognumber\":\"value\"}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -132,8 +140,8 @@ public class ESQueryVisitorTest {
     Predicate p = new NotPredicate(cp);
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"match\":{\"institutioncode\":\"value_2\"}}]}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -141,7 +149,9 @@ public class ESQueryVisitorTest {
   public void testLikePredicate() throws QueryBuildingException {
     LikePredicate likePredicate = new LikePredicate(PARAM, "value_1*");
     String query = visitor.getQuery(likePredicate);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"wildcard\":{\"CATALOG_NUMBER\":\"value_1*\"}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"wildcard\":{\"catalognumber\":\"value_1*\"}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -153,8 +163,8 @@ public class ESQueryVisitorTest {
     Predicate p = new ConjunctionPredicate(Lists.newArrayList(p1, p2, p3));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"wildcard\":{\"CATALOG_NUMBER\":\"value_1*\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"wildcard\":{\"catalognumber\":\"value_1*\"}},{\"match\":{\"institutioncode\":\"value_2\"}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -162,7 +172,8 @@ public class ESQueryVisitorTest {
   public void testIsNotNullPredicate() throws QueryBuildingException {
     Predicate p = new IsNotNullPredicate(PARAM);
     String query = visitor.getQuery(p);
-    Assert.assertEquals("{\"query\":{\"bool\":{\"must\":[{\"exists\":{\"field\":\"CATALOG_NUMBER\"}}]}}}", query);
+    Assert.assertEquals(
+        "{\"query\":{\"bool\":{\"must\":[{\"exists\":{\"field\":\"catalognumber\"}}]}}}", query);
     System.out.println(query);
   }
 
@@ -184,8 +195,8 @@ public class ESQueryVisitorTest {
     Predicate p = new NotPredicate(pdis);
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must_not\":[{\"bool\":{\"should\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"wildcard\":{\"CATALOG_NUMBER\":\"value_1*\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}}]}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must_not\":[{\"bool\":{\"should\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"wildcard\":{\"catalognumber\":\"value_1*\"}},{\"match\":{\"institutioncode\":\"value_2\"}}]}}]}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -201,8 +212,8 @@ public class ESQueryVisitorTest {
     Predicate p = new ConjunctionPredicate(Lists.newArrayList(p4, new NotPredicate(p5)));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}}]}},{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"wildcard\":{\"CATALOG_NUMBER\":\"value_1*\"}}]}}]}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"match\":{\"institutioncode\":\"value_2\"}}]}},{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"wildcard\":{\"catalognumber\":\"value_1*\"}}]}}]}}]}}}",
+        query);
     System.out.println(query);
   }
 
@@ -221,8 +232,8 @@ public class ESQueryVisitorTest {
     Predicate p = new ConjunctionPredicate(Lists.newArrayList(p5, p6));
     String query = visitor.getQuery(p);
     Assert.assertEquals(
-      "{\"query\":{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"match\":{\"INSTITUTION_CODE\":\"value_2\"}},{\"geo_bounding_box\":{\"pin.location\":{\"top_left\":{\"lat\":10.0,\"lon\":10.0},\"bottom_right\":{\"lat\":40.0,\"lon\":40.0}}}}]}},{\"bool\":{\"must\":[{\"match\":{\"CATALOG_NUMBER\":\"value_1\"}},{\"wildcard\":{\"CATALOG_NUMBER\":\"value_1*\"}}]}}]}}}",
-      query);
+        "{\"query\":{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"match\":{\"institutioncode\":\"value_2\"}},{\"geo_bounding_box\":{\"pin.location\":{\"top_left\":{\"lat\":10.0,\"lon\":10.0},\"bottom_right\":{\"lat\":40.0,\"lon\":40.0}}}}]}},{\"bool\":{\"must\":[{\"match\":{\"catalognumber\":\"value_1\"}},{\"wildcard\":{\"catalognumber\":\"value_1*\"}}]}}]}}}",
+        query);
     System.out.println(query);
   }
 }
