@@ -15,14 +15,19 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.common.SolrInputDocument;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.occurrence.persistence.util.OccurrenceBuilder;
 import org.gbif.occurrence.search.writer.SolrOccurrenceWriter;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Executes a pipeline that reads HBase and loads SOLR. */
 public class BulkLoadSolr {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BulkLoadSolr.class);
 
   public static void main(String[] args) {
     PipelineOptionsFactory.register(BulkLoadOptions.class);
@@ -67,8 +72,9 @@ public class BulkLoadSolr {
                         c.output(document);
                         docsIndexed.inc();
                       }
-                    } catch (NullPointerException e) {
+                    } catch (Exception e) {
                       // Expected for bad data
+                      LOG.info("Error reading HBase record {} ", Bytes.toInt(row.getRow()));
                       docsFailed.inc();
                     }
                   }
