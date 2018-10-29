@@ -8,6 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>occurrence-beam-hbase-solr</artifactId>
+  <name>Occurrence HBase-(Beam)-Solr Index Builder</name>
   <packaging>jar</packaging>
 
   <distributionManagement>
