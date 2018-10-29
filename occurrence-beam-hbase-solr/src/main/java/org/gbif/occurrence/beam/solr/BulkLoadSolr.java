@@ -72,9 +72,9 @@ public class BulkLoadSolr {
                         c.output(document);
                         docsIndexed.inc();
                       }
-                    } catch (Exception e) {
+                    } catch (Exception ex) {
                       // Expected for bad data
-                      LOG.error("Error reading HBase record {} ", Bytes.toInt(row.getRow()));
+                      LOG.error("Error reading HBase record {} ", Bytes.toInt(row.getRow()), ex);
                       docsFailed.inc();
                     }
                   }
