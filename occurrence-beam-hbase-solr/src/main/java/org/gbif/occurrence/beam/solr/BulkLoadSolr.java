@@ -46,8 +46,6 @@ public class BulkLoadSolr {
     Scan scan = new Scan();
     scan.setBatch(options.getBatchSize()); // for safety
     scan.addFamily("o".getBytes());
-    scan.setStartRow(Bytes.toBytes(890194207));
-    scan.setStopRow(Bytes.toBytes(890194208));
 
     int keyDivisor = options.getKeyDivisor();
     int keyReminder = options.getKeyRemainder();
