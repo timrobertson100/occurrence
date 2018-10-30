@@ -132,6 +132,19 @@
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hbase</artifactId>
       <version>${apache.beam.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+      <version>${apache.beam.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
   </dependencies>
 </project>
