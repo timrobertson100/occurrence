@@ -48,6 +48,7 @@ public class BulkLoadSolr {
     Counter docsFailed =  Metrics.counter(BulkLoadSolr.class,"docsFailed");
 
     String solrCollection = options.getSolrCollection();
+    String errorFile = options.getErrorFile();
 
     Configuration hbaseConfig = HBaseConfiguration.create();
     hbaseConfig.set("hbase.zookeeper.quorum", options.getHbaseZk());
@@ -64,7 +65,7 @@ public class BulkLoadSolr {
         p.apply(
             "read",
             HBaseIO.read().withConfiguration(hbaseConfig).withScan(scan).withTableId(table));
-OccurrenceBuilder
+
     TupleTag<SolrInputDocument> solrDocs = new TupleTag<SolrInputDocument>(){};
     TupleTag<String> failedRows  = new TupleTag<String>(){};
 
@@ -107,7 +108,6 @@ OccurrenceBuilder
 
     final SolrIO.ConnectionConfiguration conn = SolrIO.ConnectionConfiguration.create(options.getSolrZk());
 
-    org.apache.beam.sdk.io.TextIO.write().
     docs.get(solrDocs)
       .apply("write",
         SolrIO.write()
@@ -116,7 +116,7 @@ OccurrenceBuilder
             .withRetryConfiguration(
                 SolrIO.RetryConfiguration.create(options.getMaxAttempts(), Duration.standardMinutes(1))));
     docs.get(failedRows)
-      .apply("export", TextIO.write().to("").withoutSharding());
+      .apply("export", TextIO.write().to(errorFile).withoutSharding());
 
     PipelineResult result = p.run();
     result.waitUntilFinish();

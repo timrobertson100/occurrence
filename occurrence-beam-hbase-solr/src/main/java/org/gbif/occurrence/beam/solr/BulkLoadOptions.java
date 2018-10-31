@@ -25,6 +25,10 @@ public interface BulkLoadOptions extends PipelineOptions {
   String getTable();
   void setTable(String table);
 
+  @Description("A file to write non-indexed records")
+  String getErrorFile();
+  void setErrorFile(String errorFile);
+
   @Description("Batch size of documents to be sent to Solr")
   @Default.Integer(10000)
   int getBatchSize();
