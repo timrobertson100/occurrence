@@ -27,6 +27,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.occurrence.persistence.util.OccurrenceBuilder;
 import org.gbif.occurrence.search.writer.SolrOccurrenceWriter;
+
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.joda.time.Duration;
@@ -78,9 +80,11 @@ public class BulkLoadSolr {
 
                   private String asJson(Result record) {
                     try {
-                      return mapper.writeValueAsString(record.getFamilyMap("o".getBytes()).entrySet()
+                      Map<String,String> recordMap = record.getFamilyMap("o".getBytes()).entrySet()
                         .stream()
-                        .collect(Collectors.toMap(entry -> Bytes.toString(entry.getKey()), entry -> Bytes.toString(entry.getValue()))));
+                        .collect(Collectors.toMap(entry -> Bytes.toString(entry.getKey()), entry -> Bytes.toString(entry.getKey()).toLowerCase().endsWith("key")? Integer.toString(Bytes.toInt(entry.getValue())) : Bytes.toString(entry.getValue())));
+                      recordMap.put("key", Integer.toString(Bytes.toInt(record.getRow())));
+                      return mapper.writeValueAsString(recordMap);
                     } catch (JsonProcessingException ex) {
                       LOG.error("Error converting to JSON", ex);
                       throw Throwables.propagate(ex);
