@@ -152,6 +152,11 @@
       <version>${apache.beam.version}</version>
       <scope>runtime</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>
+      <version>${apache.beam.version}</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 </project>
