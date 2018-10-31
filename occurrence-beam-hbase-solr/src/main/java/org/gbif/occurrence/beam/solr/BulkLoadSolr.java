@@ -97,10 +97,10 @@ public class BulkLoadSolr {
                         c.output(solrDocs, document);
                         docsIndexed.inc();
                       }
+                      c.output(failedRows, asJson(row));
                     } catch (Exception ex) {
                       // Expected for bad data
                       LOG.error("Error reading HBase record {} ", Bytes.toInt(row.getRow()), ex);
-                      c.output(failedRows, asJson(row));
                       docsFailed.inc();
                     }
                   }
