@@ -82,7 +82,7 @@ public class BulkLoadSolr {
                     try {
                       Map<String,String> recordMap = record.getFamilyMap("o".getBytes()).entrySet()
                         .stream()
-                        .collect(Collectors.toMap(entry -> Bytes.toString(entry.getKey()), entry -> Bytes.toString(entry.getKey()).toLowerCase().endsWith("key")? Integer.toString(Bytes.toInt(entry.getValue())) : Bytes.toString(entry.getValue())));
+                        .collect(Collectors.toMap(entry -> Bytes.toString(entry.getKey()), entry -> Bytes.toString(entry.getValue())));
                       recordMap.put("key", Integer.toString(Bytes.toInt(record.getRow())));
                       return mapper.writeValueAsString(recordMap);
                     } catch (JsonProcessingException ex) {
