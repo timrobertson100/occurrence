@@ -25,6 +25,10 @@ public interface BulkLoadOptions extends PipelineOptions {
   String getTable();
   void setTable(String table);
 
+  @Description("Occurrence snapshot table")
+  String getSnapshotTable();
+  void setSnapshotTable(String snapshotTable);
+
   @Description("A file to write non-indexed records")
   String getErrorFile();
   void setErrorFile(String errorFile);
