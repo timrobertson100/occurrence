@@ -200,9 +200,6 @@ public class BulkLoadSolr {
     String solrCollection = options.getSolrCollection();
     String errorFile = options.getErrorFile();
 
-    Configuration hbaseConf = HBaseConfiguration.create();
-    hbaseConf.set("hbase.zookeeper.quorum", options.getHbaseZk());
-
     Scan scan = new Scan();
     scan.setBatch(options.getBatchSize()); // for safety
     scan.addFamily("o".getBytes());
