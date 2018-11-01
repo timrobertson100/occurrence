@@ -23,6 +23,7 @@ import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -57,12 +58,12 @@ public class BulkLoadSolr {
   private static Configuration snapshotConfig(String table, String hbaseZk, Scan scan) {
     try {
       Configuration hbaseConf = HBaseConfiguration.create();
-      hbaseConf.set("hbase.zookeeper.quorum", hbaseZk);
-      hbaseConf.set("hbase.rootdir", "/hbase");
+      hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, hbaseZk);
+      hbaseConf.set(HConstants.HBASE_DIR, "/hbase");
       hbaseConf.setClass(
         "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
       hbaseConf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
-      hbaseConf.setClass("value.class", Result.class, Writable.class);
+      hbaseConf.setClass("value.class", Result.class, Object.class);
       ClientProtos.Scan proto = ProtobufUtil.toScan(scan);
       hbaseConf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
       // Make use of existing utility methods
@@ -138,7 +139,7 @@ public class BulkLoadSolr {
     Counter docsFailed =  Metrics.counter(BulkLoadSolr.class,"docsFailed");
 
     Configuration hbaseConf = HBaseConfiguration.create();
-    hbaseConf.set("hbase.zookeeper.quorum", options.getHbaseZk());
+    hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, options.getHbaseZk());
     String table =  options.getTable();
 
     Scan scan = new Scan();
