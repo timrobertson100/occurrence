@@ -194,7 +194,6 @@ public class BulkLoadSolr {
   public static void main(String[] args) {
     PipelineOptionsFactory.register(BulkLoadOptions.class);
     BulkLoadOptions options = PipelineOptionsFactory.fromArgs(args).as(BulkLoadOptions.class);
-    options.setRunner(SparkRunner.class);
     Pipeline p = Pipeline.create(options);
 
     String solrCollection = options.getSolrCollection();
