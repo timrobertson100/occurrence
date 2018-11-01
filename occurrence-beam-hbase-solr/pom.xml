@@ -23,6 +23,7 @@
     <apache.beam.version>2.8.0</apache.beam.version>
     <google-auto-service.version>1.0-rc2</google-auto-service.version>
     <google-auto-value.version>1.5.3</google-auto-value.version>
+    <flink.version>1.5.0</flink.version>
 
     <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
   </properties>
@@ -174,6 +175,21 @@
       <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>
       <version>${apache.beam.version}</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-flink_2.11</artifactId>
+      <version>${apache.beam.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-java</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-clients_2.11</artifactId>
+      <version>${flink.version}</version>
     </dependency>
   </dependencies>
 </project>
