@@ -159,6 +159,9 @@
     <name-parser.version>3.1.6</name-parser.version>
 
     <maven-remote-resources-plugin.version>1.5</maven-remote-resources-plugin.version>
+    <spotless.plugin.version>1.16.0</spotless.plugin.version>
+    <eclipse.format.version>4.8.0</eclipse.format.version>
+    <spotbugs.plugin.version>3.1.8</spotbugs.plugin.version>
   </properties>
 
   <repositories>
@@ -187,6 +190,55 @@
       <url>http://download.osgeo.org/webdav/geotools/</url>
     </repository>
   </repositories>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>${spotless.plugin.version}</version>
+				<configuration>
+					<java>
+					    <eclipse>
+							<file>${maven.multiModuleProjectDirectory}/format/modified-google-style.xml</file>
+							<version>${eclipse.format.version}</version>
+						</eclipse> 
+						<removeUnusedImports />
+						<importOrder>
+							<order>java,javax,org,com</order>
+						</importOrder>
+					</java>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs.plugin.version}</version>
+				<configuration>
+					<effort>Max</effort>
+					<threshold>Low</threshold>
+					<xmlOutput>true</xmlOutput>
+					<xmlOutputDirectory>target/site</xmlOutputDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
   <dependencyManagement>
     <dependencies>
