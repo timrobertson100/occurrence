@@ -1,20 +1,18 @@
 package org.gbif.occurrence.processor.interpreting.util;
 
-import org.gbif.api.vocabulary.OccurrenceIssue;
-import org.gbif.common.parsers.core.OccurrenceParseResult;
-import org.gbif.common.parsers.core.ParseResult;
-import org.gbif.common.parsers.geospatial.LatLng;
-
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.gbif.api.vocabulary.OccurrenceIssue;
+import org.gbif.common.parsers.core.OccurrenceParseResult;
+import org.gbif.common.parsers.core.ParseResult;
+import org.gbif.common.parsers.geospatial.LatLng;
+import org.junit.Test;
+
 /**
- * An online converter to verify results available at:
- * http://cs2cs.mygeodata.eu/
+ * An online converter to verify results available at: http://cs2cs.mygeodata.eu/
  */
 public class Wgs84ProjectionTest {
 
@@ -54,25 +52,25 @@ public class Wgs84ProjectionTest {
     lat = -34.0;
     lng = 138.0;
     assertLatLon(Wgs84Projection.reproject(lat, lng, "GDA94"), lat, lng, false, false);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "AGD66"), lat+0.001356, lng+0.001041, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "AGD84"), lat+0.001275, lng+0.001094, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "AGD66"), lat + 0.001356, lng + 0.001041, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "AGD84"), lat + 0.001275, lng + 0.001094, false, true);
 
     // NORTH AMERICA
     lat = 40.0;
     lng = -73.0;
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "NAD27"), lat-0.00002, lng+0.000534, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "North American Datum 1927"), lat-0.00002, lng+0.000534, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "NAD27"), lat - 0.00002, lng + 0.000534, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "North American Datum 1927"), lat - 0.00002, lng + 0.000534, false, true);
     assertLatLon(Wgs84Projection.reproject(lat, lng, "NAD83"), lat, lng, false, false);
 
     // OTHER
     // based on http://www.colorado.edu/geography/gcraft/notes/datum/gif/shift.gif
     lat = 30.2;
     lng = -97.7;
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "TOKYO"), lat+0.008063, lng-0.002217, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "ARC 1950"), lat-0.005546, lng-0.001274, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "INDIAN"), lat+0.007992, lng+0.0008119, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "CAPE"), lat-0.005581, lng-0.0012493, false, true);
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "WGS66"), lat-0.00000427, lng, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "TOKYO"), lat + 0.008063, lng - 0.002217, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "ARC 1950"), lat - 0.005546, lng - 0.001274, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "INDIAN"), lat + 0.007992, lng + 0.0008119, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "CAPE"), lat - 0.005581, lng - 0.0012493, false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "WGS66"), lat - 0.00000427, lng, false, true);
   }
 
   @Test
@@ -113,11 +111,10 @@ public class Wgs84ProjectionTest {
     double lat = 43.0;
     double lng = 79.0;
     // geodetic CRS
-    ParseResult<LatLng> res = Wgs84Projection.reproject(lat, lng, "EPSG:"+crsCode);
+    ParseResult<LatLng> res = Wgs84Projection.reproject(lat, lng, "EPSG:" + crsCode);
     // datum only
-    assertLatLon(Wgs84Projection.reproject(lat, lng, "EPSG:" + datumCode),
-                 res.getPayload().getLat(),
-                 res.getPayload().getLng(), false, true);
+    assertLatLon(Wgs84Projection.reproject(lat, lng, "EPSG:" + datumCode), res.getPayload().getLat(), res.getPayload().getLng(), false,
+        true);
   }
 
   private void assertLatLon(OccurrenceParseResult<LatLng> result, double lat, double lng, boolean assumedWgs, boolean reprojected) {
@@ -142,7 +139,7 @@ public class Wgs84ProjectionTest {
     if (issue == null) {
       assertTrue("Issues found", result.getIssues().isEmpty());
     } else {
-      assertTrue("Expected issue "+issue+" missing", result.getIssues().contains(issue));
+      assertTrue("Expected issue " + issue + " missing", result.getIssues().contains(issue));
     }
     assertEquals("Latitude mismatch", lat, result.getPayload().getLat().doubleValue(), 0.000001);
     assertEquals("Longitude mismatch", lng, result.getPayload().getLng().doubleValue(), 0.000001);

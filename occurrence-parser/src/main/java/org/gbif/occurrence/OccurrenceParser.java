@@ -1,28 +1,19 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.occurrence.constants.ExtractionSimpleXPaths;
-import org.gbif.occurrence.model.RawOccurrenceRecord;
-import org.gbif.occurrence.parsing.RawXmlOccurrence;
-import org.gbif.occurrence.parsing.response_file.ParsedSearchResponse;
-import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
-import org.gbif.occurrence.util.XmlSanitizingReader;
-import org.gbif.utils.file.CharsetDetection;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,23 +26,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import com.sun.org.apache.xerces.internal.impl.io.MalformedByteSequenceException;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.NodeCreateRule;
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.occurrence.constants.ExtractionSimpleXPaths;
+import org.gbif.occurrence.model.RawOccurrenceRecord;
+import org.gbif.occurrence.parsing.RawXmlOccurrence;
+import org.gbif.occurrence.parsing.response_file.ParsedSearchResponse;
+import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
+import org.gbif.occurrence.util.XmlSanitizingReader;
+import org.gbif.utils.file.CharsetDetection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.sun.org.apache.xerces.internal.impl.io.MalformedByteSequenceException;
 
 /**
- * Entry point into the parsing of raw occurrence records as retrieved from publishers.  Will attempt to determine
- * both XML encodings and schema type.  Parse happens in two steps - first extracts each record element into a
- * RawXmlOccurrence, and then parses each of those into RawOccurrenceRecords.
+ * Entry point into the parsing of raw occurrence records as retrieved from publishers. Will attempt
+ * to determine both XML encodings and schema type. Parse happens in two steps - first extracts each
+ * record element into a RawXmlOccurrence, and then parses each of those into RawOccurrenceRecords.
  */
 public class OccurrenceParser {
 
@@ -69,8 +68,9 @@ public class OccurrenceParser {
   }
 
   /**
-   * This parses a stream of uncompressed ABCD or DwC Occurrences into {@link RawXmlOccurrence}s.
-   * No care is taken to handle wrong encodings or character sets in general. This might be changed later on.
+   * This parses a stream of uncompressed ABCD or DwC Occurrences into {@link RawXmlOccurrence}s. No
+   * care is taken to handle wrong encodings or character sets in general. This might be changed later
+   * on.
    *
    * @param is stream to parse
    *
@@ -106,9 +106,9 @@ public class OccurrenceParser {
       digester.addRule(ExtractionSimpleXPaths.DWC_1_4_RECORD_XPATH, rawDwc1_4);
       digester.addSetNext(ExtractionSimpleXPaths.DWC_1_4_RECORD_XPATH, ADD_RECORD_AS_XML);
 
-      //      NodeCreateRule rawDwcManis = new NodeCreateRule();
-      //      digester.addRule(ExtractionSimpleXPaths.DWC_MANIS_RECORD_XPATH, rawDwcManis);
-      //      digester.addSetNext(ExtractionSimpleXPaths.DWC_MANIS_RECORD_XPATH, "addRecordAsXml");
+      // NodeCreateRule rawDwcManis = new NodeCreateRule();
+      // digester.addRule(ExtractionSimpleXPaths.DWC_MANIS_RECORD_XPATH, rawDwcManis);
+      // digester.addSetNext(ExtractionSimpleXPaths.DWC_MANIS_RECORD_XPATH, "addRecordAsXml");
 
       NodeCreateRule rawDwc2009 = new NodeCreateRule();
       digester.addRule(ExtractionSimpleXPaths.DWC_2009_RECORD_XPATH, rawDwc2009);
@@ -127,7 +127,8 @@ public class OccurrenceParser {
    * Parses a single response gzipFile and returns a List of the contained RawXmlOccurrences.
    */
   public List<RawXmlOccurrence> parseResponseFileToRawXml(File gzipFile) {
-    if (LOG.isDebugEnabled()) LOG.debug(">> parseResponseFileToRawXml [{}]", gzipFile.getAbsolutePath());
+    if (LOG.isDebugEnabled())
+      LOG.debug(">> parseResponseFileToRawXml [{}]", gzipFile.getAbsolutePath());
     ParsedSearchResponse responseBody = null;
     try {
       responseBody = new ParsedSearchResponse();
@@ -137,9 +138,8 @@ public class OccurrenceParser {
       for (String charsetName : charsets) {
         LOG.debug("Trying charset [{}]", charsetName);
         try (FileInputStream fis = new FileInputStream(gzipFile);
-             GZIPInputStream inputStream = new GZIPInputStream(fis);
-             BufferedReader inputReader =
-               new BufferedReader(new XmlSanitizingReader(new InputStreamReader(inputStream, charsetName)));) {
+            GZIPInputStream inputStream = new GZIPInputStream(fis);
+            BufferedReader inputReader = new BufferedReader(new XmlSanitizingReader(new InputStreamReader(inputStream, charsetName)));) {
           InputSource inputSource = new InputSource(inputReader);
 
           Digester digester = new Digester();
@@ -175,21 +175,20 @@ public class OccurrenceParser {
           goodCharset = charsetName;
           break;
         } catch (SAXException e) {
-          String msg = "SAX exception when parsing parsing from response gzipFile [" + gzipFile.getAbsolutePath()
-              + "] using encoding [" + charsetName + "] - trying another charset";
+          String msg = "SAX exception when parsing parsing from response gzipFile [" + gzipFile.getAbsolutePath() + "] using encoding ["
+              + charsetName + "] - trying another charset";
           LOG.debug(msg, e);
         } catch (MalformedByteSequenceException e) {
           LOG.debug("Malformed utf-8 byte when parsing with encoding [{}] - trying another charset", charsetName);
           encodingError = true;
         } catch (IOException ex) {
-          LOG.warn("Error reading input files",ex);
+          LOG.warn("Error reading input files", ex);
         }
       }
 
       if (goodCharset == null) {
         if (encodingError) {
-          LOG.warn(
-              "Could not parse gzipFile - all encoding attempts failed  with malformed utf8 - skipping gzipFile [{}]",
+          LOG.warn("Could not parse gzipFile - all encoding attempts failed  with malformed utf8 - skipping gzipFile [{}]",
               gzipFile.getAbsolutePath());
         } else {
           LOG.warn("Could not parse gzipFile (malformed parsing) - skipping gzipFile [{}]", gzipFile.getAbsolutePath());
@@ -201,23 +200,20 @@ public class OccurrenceParser {
     } catch (TransformerException e) {
       LOG.warn("Could not create parsing transformer for [{}] - skipping gzipFile", gzipFile.getAbsolutePath(), e);
     } catch (ParserConfigurationException e) {
-      LOG.warn("Failed to pull raw parsing from response gzipFile [{}] - skipping gzipFile",
-               gzipFile.getAbsolutePath(), e);
+      LOG.warn("Failed to pull raw parsing from response gzipFile [{}] - skipping gzipFile", gzipFile.getAbsolutePath(), e);
     }
 
-    if (LOG.isDebugEnabled()) LOG.debug("<< parseResponseFileToRawXml [{}]", gzipFile.getAbsolutePath());
+    if (LOG.isDebugEnabled())
+      LOG.debug("<< parseResponseFileToRawXml [{}]", gzipFile.getAbsolutePath());
     return (responseBody == null) ? null : responseBody.getRecords();
   }
 
   /**
-   * Utility method to extract character encondings from a gzip file.
-   * Charsets are a nightmare and users can't be trusted, so strategy
-   * is try these encodings in order until one of them (hopefully) works
-   * (note the last two could be repeats of the first two):
-   *  - utf-8
-   *  - latin1 (iso-8859-1)
-   *  - the declared encoding from the parsing itself
-   *  - a guess at detecting the charset from the raw gzipFile bytes
+   * Utility method to extract character encondings from a gzip file. Charsets are a nightmare and
+   * users can't be trusted, so strategy is try these encodings in order until one of them (hopefully)
+   * works (note the last two could be repeats of the first two): - utf-8 - latin1 (iso-8859-1) - the
+   * declared encoding from the parsing itself - a guess at detecting the charset from the raw
+   * gzipFile bytes
    */
   private static List<String> getCharsets(File gzipFile) throws IOException {
     List<String> charsets = new ArrayList<String>();
@@ -227,9 +223,9 @@ public class OccurrenceParser {
     // read parsing declaration
 
     try (FileInputStream fis = new FileInputStream(gzipFile);
-         GZIPInputStream inputStream = new GZIPInputStream(fis);
-         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-         BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+        GZIPInputStream inputStream = new GZIPInputStream(fis);
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
       boolean gotEncoding = false;
       String encoding;
       int lineCount = 0;
@@ -237,7 +233,7 @@ public class OccurrenceParser {
         String line = bufferedReader.readLine();
         lineCount++;
         if (line != null && line.contains(ENCONDING_EQ)) {
-          encoding = ENCODING_PATTERN.split(line,0)[1];
+          encoding = ENCODING_PATTERN.split(line, 0)[1];
           // drop trailing ?>
           encoding = encoding.substring(0, encoding.length() - 2);
           // drop quotes
@@ -247,9 +243,7 @@ public class OccurrenceParser {
             Charset.forName(encoding);
             charsets.add(encoding);
           } catch (Exception e) {
-            LOG.debug(
-              "Could not find supported charset matching detected encoding of [{}] - trying other guesses instead",
-              encoding);
+            LOG.debug("Could not find supported charset matching detected encoding of [{}] - trying other guesses instead", encoding);
           }
           gotEncoding = true;
         }
@@ -270,4 +264,3 @@ public class OccurrenceParser {
   }
 
 }
-

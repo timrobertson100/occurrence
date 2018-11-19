@@ -1,14 +1,11 @@
 package org.gbif.occurrence.ws.provider;
 
-import org.gbif.api.model.occurrence.VerbatimOccurrence;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.Term;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -24,12 +21,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.gbif.api.model.occurrence.VerbatimOccurrence;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Custom {@link MessageBodyWriter} to serialize {@link VerbatimOccurrence} in DarwinCore XML.
- * We do not use JAXB annotations to keep it easy to manage dynamic properties like verbatim fields map.
+ * Custom {@link MessageBodyWriter} to serialize {@link VerbatimOccurrence} in DarwinCore XML. We do
+ * not use JAXB annotations to keep it easy to manage dynamic properties like verbatim fields map.
  *
  */
 @Provider
@@ -72,16 +72,14 @@ public class OccurrenceVerbatimDwcXMLBodyWriter implements MessageBodyWriter<Ver
   }
 
   @Override
-  public long getSize(VerbatimOccurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations,
-                      MediaType mediaType) {
+  public long getSize(VerbatimOccurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
     // deprecated by JAX-RS 2.0 and ignored by Jersey runtime
     return -1L;
   }
 
   @Override
-  public void writeTo(VerbatimOccurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations,
-                      MediaType mediaType, MultivaluedMap<String, Object> httpHeaders,
-                      OutputStream entityStream) throws IOException, WebApplicationException {
+  public void writeTo(VerbatimOccurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+      MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
     entityStream.write(verbatimOccurrenceXMLAsByteArray(occurrence));
   }
 

@@ -1,17 +1,13 @@
 package org.gbif.occurrence.processor.interpreting.util;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.common.parsers.core.OccurrenceParseResult;
 import org.gbif.common.parsers.core.ParseResult;
 import org.gbif.common.parsers.geospatial.DatumParser;
 import org.gbif.common.parsers.geospatial.LatLng;
-
-import java.util.EnumSet;
-import java.util.Set;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import org.geotools.factory.BasicFactories;
 import org.geotools.factory.FactoryRegistryException;
 import org.geotools.referencing.CRS;
@@ -24,6 +20,10 @@ import org.opengis.referencing.datum.GeodeticDatum;
 import org.opengis.referencing.operation.MathTransform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * Utils class that reprojects to WGS84 based on geotools transformations and SRS databases.
@@ -46,12 +46,12 @@ public class Wgs84Projection {
 
   /**
    * Reproject the given coordinates into WGS84 coordinates based on a known source datum or SRS.
-   * Darwin Core allows not only geodetic datums but also full spatial reference systems as values for "datum".
-   * The method will always return lat lons even if the processing failed. In that case only issues are set and the
-   * parsing result set to fail - but with a valid payload.
+   * Darwin Core allows not only geodetic datums but also full spatial reference systems as values for
+   * "datum". The method will always return lat lons even if the processing failed. In that case only
+   * issues are set and the parsing result set to fail - but with a valid payload.
    *
-   * @param lat   the original latitude
-   * @param lon   the original longitude
+   * @param lat the original latitude
+   * @param lon the original longitude
    * @param datum the original geodetic datum the coordinates are in
    *
    * @return the reprojected coordinates or the original ones in case transformation failed
@@ -94,8 +94,7 @@ public class Wgs84Projection {
         // verify the datum shift is reasonable
         if (Math.abs(lat - lat2) > SUSPICIOUS_SHIFT || Math.abs(lon - lon2) > SUSPICIOUS_SHIFT) {
           issues.add(OccurrenceIssue.COORDINATE_REPROJECTION_SUSPICIOUS);
-          LOG.debug("Found suspicious shift for datum={} and lat/lon={}/{} so returning failure and keeping orig coord",
-            datum, lat, lon);
+          LOG.debug("Found suspicious shift for datum={} and lat/lon={}/{} so returning failure and keeping orig coord", datum, lat, lon);
           return OccurrenceParseResult.fail(new LatLng(lat, lon), issues);
         }
         // flag the record if coords actually changed

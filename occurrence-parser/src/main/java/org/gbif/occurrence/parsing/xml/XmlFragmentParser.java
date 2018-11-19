@@ -1,33 +1,17 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.parsing.xml;
-
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.occurrence.model.IdentifierRecord;
-import org.gbif.occurrence.model.RawOccurrenceRecord;
-import org.gbif.occurrence.parsing.RawXmlOccurrence;
-import org.gbif.occurrence.parsing.xml.rules.Abcd12RuleSet;
-import org.gbif.occurrence.parsing.xml.rules.Abcd206RuleSet;
-import org.gbif.occurrence.parsing.xml.rules.Dwc10RuleSet;
-import org.gbif.occurrence.parsing.xml.rules.Dwc14RuleSet;
-import org.gbif.occurrence.parsing.xml.rules.Dwc2009RuleSet;
-import org.gbif.occurrence.parsing.xml.rules.DwcManisRuleSet;
-import org.gbif.occurrence.common.identifier.HolyTriplet;
-import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -37,14 +21,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.RuleSet;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.occurrence.common.identifier.HolyTriplet;
+import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.model.IdentifierRecord;
+import org.gbif.occurrence.model.RawOccurrenceRecord;
+import org.gbif.occurrence.parsing.RawXmlOccurrence;
+import org.gbif.occurrence.parsing.xml.rules.Abcd12RuleSet;
+import org.gbif.occurrence.parsing.xml.rules.Abcd206RuleSet;
+import org.gbif.occurrence.parsing.xml.rules.Dwc10RuleSet;
+import org.gbif.occurrence.parsing.xml.rules.Dwc14RuleSet;
+import org.gbif.occurrence.parsing.xml.rules.Dwc2009RuleSet;
+import org.gbif.occurrence.parsing.xml.rules.DwcManisRuleSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Methods for parsing {@link RawXmlOccurrence}s and {@link UniqueIdentifier}s from xml fragments.
@@ -56,8 +54,7 @@ public class XmlFragmentParser {
   private static final Map<OccurrenceSchemaType, RuleSet> RULE_SETS = Maps.newHashMap();
 
   // static class, should never be instantiated
-  private XmlFragmentParser() {
-  }
+  private XmlFragmentParser() {}
 
   static {
     try {
@@ -104,7 +101,7 @@ public class XmlFragmentParser {
   }
 
   private static List<RawOccurrenceRecord> parseRecord(InputSource inputSource, OccurrenceSchemaType schemaType)
-    throws IOException, SAXException {
+      throws IOException, SAXException {
     RawOccurrenceRecordBuilder builder = new RawOccurrenceRecordBuilder();
     Digester digester = new Digester();
     digester.setNamespaceAware(true);
@@ -118,9 +115,10 @@ public class XmlFragmentParser {
   }
 
   /**
-   * This method is a hack to return a single result where ScientificName matches the given unitQualifier. This
-   * behaviour is only relevant for ABCD 2.06 - the others all produce a single record anyway.
-   * TODO: refactor the parse/builder to return what we want, rather than hacking around
+   * This method is a hack to return a single result where ScientificName matches the given
+   * unitQualifier. This behaviour is only relevant for ABCD 2.06 - the others all produce a single
+   * record anyway. TODO: refactor the parse/builder to return what we want, rather than hacking
+   * around
    */
   public static RawOccurrenceRecord parseRecord(byte[] xml, OccurrenceSchemaType schemaType, String unitQualifier) {
     RawOccurrenceRecord result = null;
@@ -148,27 +146,29 @@ public class XmlFragmentParser {
   }
 
   /**
-   * Extract sets of UniqueIdentifiers from the xml snippet. In the usual case the set will contain a single
-   * result, which will in turn contain 1 or more UniqueIdentifiers for the given xml. In the ABCD 2 case there
-   * may be more than one occurrence represented by the given xml, in which case there will be an
-   * IdentifierExtractionResult (with UniqueIdentifiers) returned for each of the represented occurrences (e.g. if 3
-   * occurrences are in the xml snippet and each have one UniqueIdentifier the result will be a set of 3
-   * IdentifierExtractionResults, where each result contains a single UniqueIdentifier). If the passed in xml is
-   * somehow malformed there may be 0 UniqueIdentifiers found, in which case an empty set is returned.
+   * Extract sets of UniqueIdentifiers from the xml snippet. In the usual case the set will contain a
+   * single result, which will in turn contain 1 or more UniqueIdentifiers for the given xml. In the
+   * ABCD 2 case there may be more than one occurrence represented by the given xml, in which case
+   * there will be an IdentifierExtractionResult (with UniqueIdentifiers) returned for each of the
+   * represented occurrences (e.g. if 3 occurrences are in the xml snippet and each have one
+   * UniqueIdentifier the result will be a set of 3 IdentifierExtractionResults, where each result
+   * contains a single UniqueIdentifier). If the passed in xml is somehow malformed there may be 0
+   * UniqueIdentifiers found, in which case an empty set is returned.
    *
-   * @param datasetKey      UUID for this dataset
-   * @param xml             snippet of xml representing one (or more, in ABCD) occurrence
-   * @param schemaType      the protocol that produced this xml (e.g. DWC, ABCD)
-   * @param useOccurrenceId @return a set of 0 or more IdentifierExtractionResults containing UniqueIdentifiers as found
-   *                        in the xml
+   * @param datasetKey UUID for this dataset
+   * @param xml snippet of xml representing one (or more, in ABCD) occurrence
+   * @param schemaType the protocol that produced this xml (e.g. DWC, ABCD)
+   * @param useOccurrenceId @return a set of 0 or more IdentifierExtractionResults containing
+   *        UniqueIdentifiers as found in the xml
    *
    * @see UniqueIdentifier
    */
-  public static Set<IdentifierExtractionResult> extractIdentifiers(UUID datasetKey, byte[] xml,
-    OccurrenceSchemaType schemaType, boolean useTriplet, boolean useOccurrenceId) {
+  public static Set<IdentifierExtractionResult> extractIdentifiers(UUID datasetKey, byte[] xml, OccurrenceSchemaType schemaType,
+      boolean useTriplet, boolean useOccurrenceId) {
     Set<IdentifierExtractionResult> results = Sets.newHashSet();
 
-    // this is somewhat wasteful, but a whole separate stack of parsing to extract triplet seems excessive
+    // this is somewhat wasteful, but a whole separate stack of parsing to extract triplet seems
+    // excessive
     List<RawOccurrenceRecord> records = parseRecord(xml, schemaType);
     if (records != null && !records.isEmpty()) {
       for (RawOccurrenceRecord record : records) {
@@ -177,20 +177,23 @@ public class XmlFragmentParser {
         if (useTriplet) {
           HolyTriplet holyTriplet = null;
           try {
-            holyTriplet = new HolyTriplet(datasetKey, record.getInstitutionCode(), record.getCollectionCode(),
-              record.getCatalogueNumber(), record.getUnitQualifier());
+            holyTriplet = new HolyTriplet(datasetKey, record.getInstitutionCode(), record.getCollectionCode(), record.getCatalogueNumber(),
+                record.getUnitQualifier());
           } catch (IllegalArgumentException e) {
-            // some of the triplet was null or empty, so it's not valid - that's highly suspicious, but could be ok...
+            // some of the triplet was null or empty, so it's not valid - that's highly suspicious, but could be
+            // ok...
             LOG.info("No holy triplet for an xml snippet in dataset [{}] and schema [{}], got error [{}]",
-              new String[] {datasetKey.toString(), schemaType.toString(), e.getMessage()});
+                new String[] {datasetKey.toString(), schemaType.toString(), e.getMessage()});
           }
-          if (holyTriplet != null) ids.add(holyTriplet);
+          if (holyTriplet != null)
+            ids.add(holyTriplet);
         }
 
         if (useOccurrenceId) {
           if (record.getIdentifierRecords() != null && !record.getIdentifierRecords().isEmpty()) {
             for (IdentifierRecord idRecord : record.getIdentifierRecords()) {
-              // TODO: this needs much better checking (ie can we trust that guid (type 1) and sourceid (type 7) are
+              // TODO: this needs much better checking (ie can we trust that guid (type 1) and sourceid (type 7)
+              // are
               // getting set and parsed properly?)
               // TODO: identifier types need to be enums
               if (idRecord.getIdentifierType() == 1 || idRecord.getIdentifierType() == 7) {

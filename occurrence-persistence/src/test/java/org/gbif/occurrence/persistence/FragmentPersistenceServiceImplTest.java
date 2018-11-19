@@ -1,21 +1,10 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.common.identifier.HolyTriplet;
-import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-import org.gbif.occurrence.persistence.api.Fragment;
-import org.gbif.occurrence.persistence.api.FragmentCreationResult;
-import org.gbif.dwc.terms.GbifInternalTerm;
-import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
-import org.gbif.occurrence.persistence.hbase.Columns;
-import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -26,12 +15,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.curator.test.TestingServer;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -39,6 +27,22 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifInternalTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.common.identifier.HolyTriplet;
+import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.persistence.api.Fragment;
+import org.gbif.occurrence.persistence.api.FragmentCreationResult;
+import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
+import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
+import org.gbif.occurrence.persistence.hbase.Columns;
+import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
+import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,11 +51,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Sets;
 
 public class FragmentPersistenceServiceImplTest {
 
@@ -112,8 +112,7 @@ public class FragmentPersistenceServiceImplTest {
 
     // setup zookeeper
     zookeeperServer = new TestingServer();
-    curator =
-      CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(zookeeperServer.getConnectString())
+    curator = CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(zookeeperServer.getConnectString())
         .retryPolicy(new RetryNTimes(1, 1000)).build();
     curator.start();
     zooLockProvider = new ThreadLocalLockProvider(curator);
@@ -135,8 +134,7 @@ public class FragmentPersistenceServiceImplTest {
     connection = ConnectionFactory.createConnection(TEST_UTIL.getConfiguration());
 
     // reset lookup table
-    KeyPersistenceService keyPersistenceService =
-      new ZkLockingKeyService(CFG, connection, zooLockProvider);
+    KeyPersistenceService keyPersistenceService = new ZkLockingKeyService(CFG, connection, zooLockProvider);
     occurrenceKeyService = new OccurrenceKeyPersistenceServiceImpl(keyPersistenceService);
     Set<UniqueIdentifier> ids = Sets.newHashSet();
     HolyTriplet holyTriplet = new HolyTriplet(XML_DATASET_KEY, INST_CODE, COL_CODE, CAT, UNIT_QUALIFIER);
@@ -186,7 +184,7 @@ public class FragmentPersistenceServiceImplTest {
     put.addColumn(CF, Bytes.toBytes(Columns.column(GbifTerm.protocol)), Bytes.toBytes(JSON_ENDPOINT_TYPE.toString()));
     table.put(put);
 
-    //table.flushCommits();
+    // table.flushCommits();
     table.close();
   }
 
@@ -247,9 +245,8 @@ public class FragmentPersistenceServiceImplTest {
   public void testInsertEmptyIds() {
     byte[] data = "boo".getBytes();
     byte[] dataHash = "far".getBytes();
-    Fragment frag =
-      new Fragment(UUID.randomUUID(), data, dataHash, Fragment.FragmentType.JSON, EndpointType.DWC_ARCHIVE, new Date(),
-        1, null, null, null);
+    Fragment frag = new Fragment(UUID.randomUUID(), data, dataHash, Fragment.FragmentType.JSON, EndpointType.DWC_ARCHIVE, new Date(), 1,
+        null, null, null);
     exception.expect(NullPointerException.class);
     exception.expectMessage("uniqueIds can't be null");
     fragmentService.insert(frag, null);
@@ -268,8 +265,7 @@ public class FragmentPersistenceServiceImplTest {
     String unitQualifier = "Puma concolor";
     Long created = System.currentTimeMillis();
 
-    Fragment update =
-      new Fragment(orig.getDatasetKey(), xml, xmlHash, orig.getFragmentType(), endpointType, harvestDate, crawlId,
+    Fragment update = new Fragment(orig.getDatasetKey(), xml, xmlHash, orig.getFragmentType(), endpointType, harvestDate, crawlId,
         xmlSchema, unitQualifier, created);
     update.setKey(orig.getKey());
     fragmentService.update(update);
@@ -338,9 +334,8 @@ public class FragmentPersistenceServiceImplTest {
     byte[] jsonHash = DigestUtils.md5(json);
     Long created = System.currentTimeMillis();
 
-    Fragment update =
-      new Fragment(orig.getDatasetKey(), json, jsonHash, orig.getFragmentType(), orig.getProtocol(), harvestDate,
-        crawlId, null, null, created);
+    Fragment update = new Fragment(orig.getDatasetKey(), json, jsonHash, orig.getFragmentType(), orig.getProtocol(), harvestDate, crawlId,
+        null, null, created);
     update.setKey(orig.getKey());
     fragmentService.update(update);
 
@@ -368,7 +363,7 @@ public class FragmentPersistenceServiceImplTest {
 
     int threadCount = 100;
     ExecutorService tp = Executors.newFixedThreadPool(threadCount);
-    for (int i=0; i < threadCount; i++) {
+    for (int i = 0; i < threadCount; i++) {
       tp.submit(new FragmentInserter(fragment, ids));
     }
     tp.shutdown();
@@ -397,9 +392,11 @@ public class FragmentPersistenceServiceImplTest {
       }
       FragmentCreationResult result = fragmentService.insert(fragment, ids);
       if (result.isKeyCreated()) {
-        System.out.println(new Date().getTime() + " " + Thread.currentThread().getName() + " Created id [" + result.getFragment().getKey() + "]");
+        System.out
+            .println(new Date().getTime() + " " + Thread.currentThread().getName() + " Created id [" + result.getFragment().getKey() + "]");
       } else {
-        System.out.println(new Date().getTime() + " " + Thread.currentThread().getName() + " Reusing existing id [" + result.getFragment().getKey() + "]");
+        System.out.println(
+            new Date().getTime() + " " + Thread.currentThread().getName() + " Reusing existing id [" + result.getFragment().getKey() + "]");
       }
 
     }

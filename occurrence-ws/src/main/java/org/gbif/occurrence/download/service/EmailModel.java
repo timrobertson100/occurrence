@@ -1,12 +1,12 @@
 package org.gbif.occurrence.download.service;
 
+import java.net.URI;
+
 import org.gbif.api.model.occurrence.Download;
 import org.gbif.utils.file.FileUtils;
 
-import java.net.URI;
-
 /**
- *  Encapsulates the email data sent from the occurrence download services.
+ * Encapsulates the email data sent from the occurrence download services.
  */
 public class EmailModel {
 

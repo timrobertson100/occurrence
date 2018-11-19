@@ -6,12 +6,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Preconditions;
+
 import freemarker.template.TemplateDateModel;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides a java.util.Date rendering for freemarker in the form of "17th December 2014".
@@ -46,10 +48,14 @@ public class NiceDateTemplateMethodModel implements TemplateMethodModelEx {
       return "th";
     }
     switch (n % 10) {
-      case 1:  return "st";
-      case 2:  return "nd";
-      case 3:  return "rd";
-      default: return "th";
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
     }
   }
 

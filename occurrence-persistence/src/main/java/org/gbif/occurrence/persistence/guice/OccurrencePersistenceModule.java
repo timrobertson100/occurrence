@@ -1,5 +1,15 @@
 package org.gbif.occurrence.persistence.guice;
 
+import java.io.IOException;
+import java.util.Properties;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryNTimes;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.gbif.api.service.occurrence.OccurrenceService;
 import org.gbif.occurrence.common.config.OccHBaseConfiguration;
 import org.gbif.occurrence.persistence.DatasetDeletionServiceImpl;
@@ -13,28 +23,18 @@ import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
 import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
 import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
 import org.gbif.occurrence.persistence.zookeeper.ZookeeperLockManager;
-
-import java.io.IOException;
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Throwables;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * A convenience module to include the OccurrencePersistenceServiceImpl via Guice. See the README for needed
- * properties.
+ * A convenience module to include the OccurrencePersistenceServiceImpl via Guice. See the README
+ * for needed properties.
  */
 public class OccurrencePersistenceModule extends PrivateModule {
 
@@ -54,6 +54,7 @@ public class OccurrencePersistenceModule extends PrivateModule {
 
   /**
    * Get an OccurrencePersistenceModule instance with the provided HBase configuration.
+   * 
    * @param cfg
    * @param hbaseConfiguration
    */
@@ -85,8 +86,7 @@ public class OccurrencePersistenceModule extends PrivateModule {
     bind(OccurrenceKeyPersistenceService.class).to(OccurrenceKeyPersistenceServiceImpl.class);
     bind(FragmentPersistenceService.class).to(FragmentPersistenceServiceImpl.class);
     bind(ZookeeperLockManager.class).toProvider(ThreadLocalLockProvider.class);
-    bind(new TypeLiteral<KeyPersistenceService<Integer>>() {
-    }).to(HBaseLockingKeyService.class);
+    bind(new TypeLiteral<KeyPersistenceService<Integer>>() {}).to(HBaseLockingKeyService.class);
     bind(DatasetDeletionService.class).to(DatasetDeletionServiceImpl.class);
 
     expose(OccurrenceService.class);
@@ -94,8 +94,7 @@ public class OccurrencePersistenceModule extends PrivateModule {
     expose(OccurrenceKeyPersistenceService.class);
     expose(FragmentPersistenceService.class);
     expose(ZookeeperLockManager.class);
-    expose(new TypeLiteral<KeyPersistenceService<Integer>>() {
-    });
+    expose(new TypeLiteral<KeyPersistenceService<Integer>>() {});
     expose(DatasetDeletionService.class);
   }
 
@@ -104,7 +103,7 @@ public class OccurrencePersistenceModule extends PrivateModule {
   public Connection provideHBaseConnection() {
 
     try {
-      if(hbaseConfiguration != null){
+      if (hbaseConfiguration != null) {
         return ConnectionFactory.createConnection(hbaseConfiguration);
       }
       return ConnectionFactory.createConnection(HBaseConfiguration.create());
@@ -116,8 +115,7 @@ public class OccurrencePersistenceModule extends PrivateModule {
   @Provides
   @Singleton
   public ThreadLocalLockProvider provideLockProvider() {
-    CuratorFramework curator =
-      CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(cfg.zkConnectionString)
+    CuratorFramework curator = CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(cfg.zkConnectionString)
         .retryPolicy(new RetryNTimes(5, 1000)).build();
     curator.start();
 

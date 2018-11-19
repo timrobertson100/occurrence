@@ -36,6 +36,7 @@ public class OccHBaseConfiguration {
 
   /**
    * Uses conventions to populate all table names based on the environment prefix. Only used in tests!
+   * 
    * @param prefix environment prefix, e.g. prod or uat
    */
   public void setEnvironment(String prefix) {
@@ -46,13 +47,8 @@ public class OccHBaseConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("hbasePoolSize", hbasePoolSize)
-      .add("occTable", occTable)
-      .add("counterTable", counterTable)
-      .add("lookupTable", lookupTable)
-      .add("zkConnectionString", zkConnectionString)
-      .toString();
+    return Objects.toStringHelper(this).add("hbasePoolSize", hbasePoolSize).add("occTable", occTable).add("counterTable", counterTable)
+        .add("lookupTable", lookupTable).add("zkConnectionString", zkConnectionString).toString();
   }
 
 }

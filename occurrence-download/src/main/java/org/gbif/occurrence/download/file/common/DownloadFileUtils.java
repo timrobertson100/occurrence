@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.fs.FileStatus;
@@ -16,6 +17,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 
@@ -50,9 +52,10 @@ public final class DownloadFileUtils {
       inputFile.delete();
     }
   }
-  
+
   /**
    * Reads count from table path. Helps in utilities for Species list download and SQL Download.
+   * 
    * @param nameNode namenode of hdfs.
    * @param path species count table path.
    * @return species count.
@@ -60,21 +63,20 @@ public final class DownloadFileUtils {
    */
   public static long readCount(String nameNode, String path) throws IOException {
     FileSystem fs = getHdfs(nameNode);
-    return Arrays.stream(fs.listStatus(new Path(path))).filter(FileStatus::isFile).findFirst()
-        .map(file -> {
-          try (BufferedReader countReader = new BufferedReader(new InputStreamReader(fs.open(file.getPath()), StandardCharsets.UTF_8))) {
-            return Long.parseLong(countReader.readLine());
-          } catch (IOException e) {
-            LOG.error("Couldnot read count from table", e);
-            throw Throwables.propagate(e);
-          }
-        }).orElse(0L);
+    return Arrays.stream(fs.listStatus(new Path(path))).filter(FileStatus::isFile).findFirst().map(file -> {
+      try (BufferedReader countReader = new BufferedReader(new InputStreamReader(fs.open(file.getPath()), StandardCharsets.UTF_8))) {
+        return Long.parseLong(countReader.readLine());
+      } catch (IOException e) {
+        LOG.error("Couldnot read count from table", e);
+        throw Throwables.propagate(e);
+      }
+    }).orElse(0L);
   }
 
   /**
    * Hidden constructor.
    */
   private DownloadFileUtils() {
-    //empty constructor
+    // empty constructor
   }
 }

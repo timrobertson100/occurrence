@@ -1,11 +1,24 @@
 package org.gbif.occurrence.ws.resources;
 
-import com.google.common.base.Function;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.Range;
+import static org.gbif.ws.paths.OccurrencePaths.FRAGMENT_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.VERBATIM_PATH;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import org.gbif.api.model.common.search.Facet;
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.metrics.cube.Rollup;
@@ -23,30 +36,18 @@ import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.api.vocabulary.TypeStatus;
 import org.gbif.ws.server.interceptor.NullToNotFound;
 import org.gbif.ws.util.ExtraMediaTypes;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.ws.paths.OccurrencePaths.FRAGMENT_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.VERBATIM_PATH;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Range;
+import com.google.inject.Inject;
 
 /**
  * Occurrence resource, the verbatim sub resource, and occurrence metrics.
@@ -64,10 +65,7 @@ public class OccurrenceResource {
   private final OccurrenceSearchService occurrenceSearchService;
 
   @Inject
-  public OccurrenceResource(
-    OccurrenceService occurrenceService,
-    OccurrenceSearchService occurrenceSearchService
-  ) {
+  public OccurrenceResource(OccurrenceService occurrenceService, OccurrenceSearchService occurrenceSearchService) {
     this.occurrenceService = occurrenceService;
     this.occurrenceSearchService = occurrenceSearchService;
   }
@@ -101,8 +99,8 @@ public class OccurrenceResource {
   }
 
   /**
-   * This retrieves a single VerbatimOccurrence detail by its key from HBase and transforms it into the API
-   * version which uses Maps.
+   * This retrieves a single VerbatimOccurrence detail by its key from HBase and transforms it into
+   * the API version which uses Maps.
    *
    * @param key The Occurrence key
    * @return requested VerbatimOccurrence or null if none could be found
@@ -117,6 +115,7 @@ public class OccurrenceResource {
 
   /**
    * Removed API call, which supported a stream of featured occurrences on the old GBIF.org homepage.
+   * 
    * @return An empty list.
    */
   @GET
@@ -128,8 +127,8 @@ public class OccurrenceResource {
   }
 
   /**
-   * This method is implemented specifically to support Annosys and is not advertised or
-   * documented in the public API.  <em>It may be removed at any time without notice</em>.
+   * This method is implemented specifically to support Annosys and is not advertised or documented in
+   * the public API. <em>It may be removed at any time without notice</em>.
    *
    * @param key
    * @return
@@ -144,8 +143,8 @@ public class OccurrenceResource {
   }
 
   /**
-   * This method is implemented specifically to support Annosys and is not advertised or
-   * documented in the public API.  <em>It may be removed at any time without notice</em>.
+   * This method is implemented specifically to support Annosys and is not advertised or documented in
+   * the public API. <em>It may be removed at any time without notice</em>.
    *
    * @param key
    * @return
@@ -160,8 +159,9 @@ public class OccurrenceResource {
   }
 
   /*
-   * The following methods implement the Metrics APIs.  These used to be served using the
-   * <a href="https://github.com/gbif/metrics">Metrics project</a>, but with SOLR Cloud we can now use SOLR directly.
+   * The following methods implement the Metrics APIs. These used to be served using the <a
+   * href="https://github.com/gbif/metrics">Metrics project</a>, but with SOLR Cloud we can now use
+   * SOLR directly.
    */
 
   /**
@@ -169,30 +169,32 @@ public class OccurrenceResource {
    */
   @GET
   @Path("/count")
-  public Long count(
-    @QueryParam("basisOfRecord") BasisOfRecord basisOfRecord,
-    @QueryParam("country") String countryIsoCode,
-    @QueryParam("datasetKey") UUID datasetKey,
-    @QueryParam("isGeoreferenced") Boolean isGeoreferenced,
-    @QueryParam("issue") OccurrenceIssue occurrenceIssue,
-    @QueryParam("protocol") EndpointType endpointType,
-    @QueryParam("publishingCountry") String publishingCountryIsoCode,
-    @QueryParam("taxonKey") Integer taxonKey,
-    @QueryParam("typeStatus") TypeStatus typeStatus,
-    @QueryParam("year") Integer year
-  ) {
+  public Long count(@QueryParam("basisOfRecord") BasisOfRecord basisOfRecord, @QueryParam("country") String countryIsoCode,
+      @QueryParam("datasetKey") UUID datasetKey, @QueryParam("isGeoreferenced") Boolean isGeoreferenced,
+      @QueryParam("issue") OccurrenceIssue occurrenceIssue, @QueryParam("protocol") EndpointType endpointType,
+      @QueryParam("publishingCountry") String publishingCountryIsoCode, @QueryParam("taxonKey") Integer taxonKey,
+      @QueryParam("typeStatus") TypeStatus typeStatus, @QueryParam("year") Integer year) {
     OccurrenceSearchRequest osr = new OccurrenceSearchRequest();
     osr.setLimit(0);
 
-    if (basisOfRecord != null) osr.addBasisOfRecordFilter(basisOfRecord);
-    if (countryIsoCode != null) osr.addCountryFilter(Country.fromIsoCode(countryIsoCode));
-    if (datasetKey != null) osr.addDatasetKeyFilter(datasetKey);
-    if (occurrenceIssue != null) osr.addIssueFilter(occurrenceIssue);
-    if (publishingCountryIsoCode != null) osr.addPublishingCountryFilter(Country.fromIsoCode(publishingCountryIsoCode));
-    if (endpointType != null) osr.addParameter(OccurrenceSearchParameter.PROTOCOL, endpointType);
-    if (taxonKey != null) osr.addTaxonKeyFilter(taxonKey);
-    if (typeStatus != null) osr.addTypeStatusFilter(typeStatus);
-    if (year != null) osr.addYearFilter(year);
+    if (basisOfRecord != null)
+      osr.addBasisOfRecordFilter(basisOfRecord);
+    if (countryIsoCode != null)
+      osr.addCountryFilter(Country.fromIsoCode(countryIsoCode));
+    if (datasetKey != null)
+      osr.addDatasetKeyFilter(datasetKey);
+    if (occurrenceIssue != null)
+      osr.addIssueFilter(occurrenceIssue);
+    if (publishingCountryIsoCode != null)
+      osr.addPublishingCountryFilter(Country.fromIsoCode(publishingCountryIsoCode));
+    if (endpointType != null)
+      osr.addParameter(OccurrenceSearchParameter.PROTOCOL, endpointType);
+    if (taxonKey != null)
+      osr.addTaxonKeyFilter(taxonKey);
+    if (typeStatus != null)
+      osr.addTypeStatusFilter(typeStatus);
+    if (year != null)
+      osr.addYearFilter(year);
 
     // Georeferenced is different from hasCoordinate and includes a no geospatial issue check.
     if (isGeoreferenced != null) {
@@ -233,9 +235,8 @@ public class OccurrenceResource {
   @Path("/counts/countries")
   public Map<Country, Long> getCountries(@QueryParam("publishingCountry") String publishingCountryIso) {
     if (publishingCountryIso == null) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-        .entity("publishingCountry parameter is required")
-        .build());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST).entity("publishingCountry parameter is required").build());
     }
 
     OccurrenceSearchRequest osr = osr(OccurrenceSearchParameter.COUNTRY);
@@ -247,8 +248,8 @@ public class OccurrenceResource {
 
   @GET
   @Path("/counts/datasets")
-  public Map<UUID, Long> getDatasets(@QueryParam("country") String countryIso,
-                                     @QueryParam("nubKey") Integer nubKey, @QueryParam("taxonKey") Integer taxonKey) {
+  public Map<UUID, Long> getDatasets(@QueryParam("country") String countryIso, @QueryParam("nubKey") Integer nubKey,
+      @QueryParam("taxonKey") Integer taxonKey) {
     OccurrenceSearchRequest osr = osr(OccurrenceSearchParameter.DATASET_KEY);
 
     if (countryIso != null) {
@@ -275,9 +276,7 @@ public class OccurrenceResource {
   @Path("/counts/publishingCountries")
   public Map<Country, Long> getPublishingCountries(@QueryParam("country") String countryIso) {
     if (countryIso == null) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-        .entity("country parameter is required")
-        .build());
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("country parameter is required").build());
     }
 
     OccurrenceSearchRequest osr = osr(OccurrenceSearchParameter.PUBLISHING_COUNTRY);
@@ -321,9 +320,8 @@ public class OccurrenceResource {
       return result;
 
     } catch (IllegalArgumentException e) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-        .entity("Parameter "+ year +" is not a valid year range")
-        .build());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST).entity("Parameter " + year + " is not a valid year range").build());
     }
   }
 

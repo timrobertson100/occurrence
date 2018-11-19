@@ -1,19 +1,20 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.util;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,9 +26,6 @@ import java.util.zip.GZIPInputStream;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class XmlSanitizingReaderTest {
 
   private String doSingleReads(String test) throws IOException {
@@ -38,7 +36,8 @@ public class XmlSanitizingReaderTest {
     while (xmlReader.ready()) {
       int nextIntChar = xmlReader.read();
       char nextChar = (char) nextIntChar;
-      if (nextIntChar != -1) sb.append(nextChar);
+      if (nextIntChar != -1)
+        sb.append(nextChar);
     }
     String result = sb.toString();
 
@@ -127,9 +126,7 @@ public class XmlSanitizingReaderTest {
     char bad1 = 0xb;
     char bad2 = 0x7;
     char goodWeird = 0xa;
-    String test =
-      "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 +
-      "end";
+    String test = "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 + "end";
     String goal = "Some bad chars " + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية end";
     String result = doSingleReads(test);
     assertTrue(result.equals(goal));
@@ -140,9 +137,7 @@ public class XmlSanitizingReaderTest {
     char bad1 = 0xb;
     char bad2 = 0x7;
     char goodWeird = 0xa;
-    String test =
-      "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 +
-      "end";
+    String test = "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 + "end";
     String goal = "Some bad chars " + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية end";
     String result = doSimpleBufferRead(test);
     assertTrue(result.equals(goal));
@@ -153,9 +148,7 @@ public class XmlSanitizingReaderTest {
     char bad1 = 0xb;
     char bad2 = 0x7;
     char goodWeird = 0xa;
-    String test =
-      "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 +
-      "end";
+    String test = "Some bad chars " + bad1 + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية " + bad2 + "end";
     String goal = "Some bad chars " + goodWeird + " and some seriously funny chars: äåáàæœčéèêëïñøöüßšž北京العربية end";
     String result = doOffsetBufferRead(test);
     assertTrue(result.equals(goal));
@@ -203,8 +196,7 @@ public class XmlSanitizingReaderTest {
     GZIPInputStream inputStream = new GZIPInputStream(fis);
 
     StringBuilder sb = new StringBuilder();
-    BufferedReader buffReader =
-      new BufferedReader(new XmlSanitizingReader(new InputStreamReader(inputStream, "UTF-8")));
+    BufferedReader buffReader = new BufferedReader(new XmlSanitizingReader(new InputStreamReader(inputStream, "UTF-8")));
     while (buffReader.ready()) {
       String line = buffReader.readLine();
       // System.out.println("adding line [" + line + "]");

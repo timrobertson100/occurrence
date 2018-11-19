@@ -1,5 +1,17 @@
 package org.gbif.occurrence.download.file.simplecsv;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.gbif.api.model.occurrence.Download;
 import org.gbif.api.service.registry.OccurrenceDownloadService;
 import org.gbif.api.vocabulary.License;
@@ -14,21 +26,10 @@ import org.gbif.occurrence.download.hive.DownloadTerms;
 import org.gbif.occurrence.download.license.LicenseSelector;
 import org.gbif.occurrence.download.license.LicenseSelectors;
 import org.gbif.utils.file.FileUtils;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import javax.inject.Inject;
-
-import com.google.common.base.Throwables;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
 
 /**
  * Combine the parts created by actor and combine them into single zip file.
@@ -45,20 +46,19 @@ public class SimpleCsvDownloadAggregator implements DownloadAggregator {
 
   private final OccurrenceDownloadService occurrenceDownloadService;
   private final LicenseSelector licenseSelector = LicenseSelectors.getMostRestrictiveLicenseSelector(License.CC_BY_4_0);
+
   @Inject
-  public SimpleCsvDownloadAggregator(DownloadJobConfiguration configuration,
-                                     WorkflowConfiguration workflowConfiguration,
-                                     OccurrenceDownloadService occurrenceDownloadService) {
+  public SimpleCsvDownloadAggregator(DownloadJobConfiguration configuration, WorkflowConfiguration workflowConfiguration,
+      OccurrenceDownloadService occurrenceDownloadService) {
     this.configuration = configuration;
     this.workflowConfiguration = workflowConfiguration;
-    outputFileName =
-      configuration.getDownloadTempDir() + Path.SEPARATOR + configuration.getDownloadKey() + CSV_EXTENSION;
+    outputFileName = configuration.getDownloadTempDir() + Path.SEPARATOR + configuration.getDownloadKey() + CSV_EXTENSION;
     this.occurrenceDownloadService = occurrenceDownloadService;
   }
 
   /**
-   * Collects the results of each job.
-   * Iterates over the list of futures to collect individual results.
+   * Collects the results of each job. Iterates over the list of futures to collect individual
+   * results.
    */
   @Override
   public void aggregate(List<Result> results) {
@@ -66,14 +66,11 @@ public class SimpleCsvDownloadAggregator implements DownloadAggregator {
       if (!results.isEmpty()) {
         mergeResults(results);
       }
-      SimpleCsvArchiveBuilder.withHeader(DownloadTerms.SIMPLE_DOWNLOAD_TERMS)
-                             .mergeToZip(FileSystem.getLocal(new Configuration()).getRawFileSystem(),
-                                         DownloadFileUtils.getHdfs(workflowConfiguration.getHdfsNameNode()),
-                                         configuration.getDownloadTempDir(),
-                                         workflowConfiguration.getHdfsOutputPath(),
-                                         configuration.getDownloadKey(),
-                                         ModalZipOutputStream.MODE.DEFAULT);
-      //Delete the temp directory
+      SimpleCsvArchiveBuilder.withHeader(DownloadTerms.SIMPLE_DOWNLOAD_TERMS).mergeToZip(
+          FileSystem.getLocal(new Configuration()).getRawFileSystem(), DownloadFileUtils.getHdfs(workflowConfiguration.getHdfsNameNode()),
+          configuration.getDownloadTempDir(), workflowConfiguration.getHdfsOutputPath(), configuration.getDownloadKey(),
+          ModalZipOutputStream.MODE.DEFAULT);
+      // Delete the temp directory
       FileUtils.deleteDirectoryRecursively(Paths.get(configuration.getDownloadTempDir()).toFile());
     } catch (IOException ex) {
       LOG.error("Error aggregating download files", ex);
@@ -112,8 +109,7 @@ public class SimpleCsvDownloadAggregator implements DownloadAggregator {
       download.setLicense(licenseSelector.getSelectedLicense());
       occurrenceDownloadService.update(download);
     } catch (Exception ex) {
-      LOG.error("Error persisting download license information, downloadKey: {}, licenses:{} ", downloadKey, licenses,
-                ex);
+      LOG.error("Error persisting download license information, downloadKey: {}, licenses:{} ", downloadKey, licenses, ex);
     }
   }
 }

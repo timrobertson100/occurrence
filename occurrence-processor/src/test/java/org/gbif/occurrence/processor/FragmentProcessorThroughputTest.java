@@ -1,5 +1,17 @@
 package org.gbif.occurrence.processor;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Connection;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.OccurrenceSchemaType;
 import org.gbif.common.messaging.ConnectionParameters;
@@ -13,23 +25,13 @@ import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
 import org.gbif.occurrence.processor.zookeeper.ZookeeperConnector;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.rabbitmq.client.ConnectionFactory;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Connection;
+
 /**
- * Note not a real JUnit test but rather an extremely expensive test that is meant to be run against the real cluster.
+ * Note not a real JUnit test but rather an extremely expensive test that is meant to be run against
+ * the real cluster.
  */
 public class FragmentProcessorThroughputTest {
   private static final OccHBaseConfiguration CFG = new OccHBaseConfiguration();
@@ -38,23 +40,21 @@ public class FragmentProcessorThroughputTest {
   }
 
   private static final String xmlPrefix =
-    "<DarwinRecord><GlobalUniqueIdentifier>ZMA:Entomology:Diptera_Tipulidae_NL_TEMP_09183</GlobalUniqueIdentifier>"
-    + "<DateLastModified>2007-05-02</DateLastModified><BasisOfRecord>Museum specimen</BasisOfRecord>"
-    + "<InstitutionCode>ZMA</InstitutionCode><CollectionCode>Tipulidae</CollectionCode><CatalogNumber>";
-  private static final String xmlSuffix =
-    "</CatalogNumber><ScientificName>Ctenophora (Cnemoncosis) festiva Meigen, 1804</ScientificName>"
-    + "<Kingdom>Animalia</Kingdom><Phylum nil=\"true\"/><Class>Insecta</Class>"
-    + "<Order nil=\"true\"/><Family>Tipulidae</Family><Genus>Ctenophora</Genus>"
-    + "<SpecificEpithet>festiva</SpecificEpithet>" + "<InfraspecificEpithet nil=\"true\"/><Continent nil=\"true\"/>"
-    + "<WaterBody nil=\"true\"/>" + "<Country>Netherlands</Country>"
-    + "<StateProvince>Utrecht</StateProvince><Locality>Leusden</Locality><MinimumElevationInMeters nil=\"true\"/>"
-    + "<MaximumElevationInMeters nil=\"true\"/><MinimumDepthInMeters nil=\"true\"/>"
-    + "<MaximumDepthInMeters nil=\"true\"/><CollectingMethod>unrecorded</CollectingMethod>"
-    + "<EarliestDateCollected>1985-06-08 00:00:00</EarliestDateCollected>"
-    + "<LatestDateCollected>1985-06-08 00:00:00</LatestDateCollected><DayOfYear nil=\"true\"/>"
-    + "<Collector>Zeegers, T.</Collector><DecimalLatitude nil=\"true\"/><DecimalLongitude nil=\"true\"/>"
-    + "<CoordinateUncertaintyInMeters nil=\"true\"/><Preparations>dry pinned</Preparations>"
-    + "<TypeStatus nil=\"true\"/></DarwinRecord>";
+      "<DarwinRecord><GlobalUniqueIdentifier>ZMA:Entomology:Diptera_Tipulidae_NL_TEMP_09183</GlobalUniqueIdentifier>"
+          + "<DateLastModified>2007-05-02</DateLastModified><BasisOfRecord>Museum specimen</BasisOfRecord>"
+          + "<InstitutionCode>ZMA</InstitutionCode><CollectionCode>Tipulidae</CollectionCode><CatalogNumber>";
+  private static final String xmlSuffix = "</CatalogNumber><ScientificName>Ctenophora (Cnemoncosis) festiva Meigen, 1804</ScientificName>"
+      + "<Kingdom>Animalia</Kingdom><Phylum nil=\"true\"/><Class>Insecta</Class>"
+      + "<Order nil=\"true\"/><Family>Tipulidae</Family><Genus>Ctenophora</Genus>" + "<SpecificEpithet>festiva</SpecificEpithet>"
+      + "<InfraspecificEpithet nil=\"true\"/><Continent nil=\"true\"/>" + "<WaterBody nil=\"true\"/>" + "<Country>Netherlands</Country>"
+      + "<StateProvince>Utrecht</StateProvince><Locality>Leusden</Locality><MinimumElevationInMeters nil=\"true\"/>"
+      + "<MaximumElevationInMeters nil=\"true\"/><MinimumDepthInMeters nil=\"true\"/>"
+      + "<MaximumDepthInMeters nil=\"true\"/><CollectingMethod>unrecorded</CollectingMethod>"
+      + "<EarliestDateCollected>1985-06-08 00:00:00</EarliestDateCollected>"
+      + "<LatestDateCollected>1985-06-08 00:00:00</LatestDateCollected><DayOfYear nil=\"true\"/>"
+      + "<Collector>Zeegers, T.</Collector><DecimalLatitude nil=\"true\"/><DecimalLongitude nil=\"true\"/>"
+      + "<CoordinateUncertaintyInMeters nil=\"true\"/><Preparations>dry pinned</Preparations>"
+      + "<TypeStatus nil=\"true\"/></DarwinRecord>";
 
   private final FragmentProcessor fragmentProcessor;
 
@@ -64,28 +64,26 @@ public class FragmentProcessorThroughputTest {
     Configuration hBaseConfiguration = HBaseConfiguration.create();
     hBaseConfiguration.set("hbase.hconnection.threads.max", Integer.toString(hbasePoolSize));
     Connection connection = org.apache.hadoop.hbase.client.ConnectionFactory.createConnection(hBaseConfiguration);
-    HBaseLockingKeyService keyService =
-      new HBaseLockingKeyService(CFG, connection);
+    HBaseLockingKeyService keyService = new HBaseLockingKeyService(CFG, connection);
     OccurrenceKeyPersistenceService occurrenceKeyService = new OccurrenceKeyPersistenceServiceImpl(keyService);
-    FragmentPersistenceService fragService =
-      new FragmentPersistenceServiceImpl(CFG, connection, occurrenceKeyService);
+    FragmentPersistenceService fragService = new FragmentPersistenceServiceImpl(CFG, connection, occurrenceKeyService);
     ConnectionFactory connectionFactory = new ConnectionFactory();
     connectionFactory.setHost("mq.gbif.org");
     connectionFactory.setVirtualHost("/users/omeyn");
     connectionFactory.setUsername("omeyn");
     connectionFactory.setPassword("omeyn");
     MessagePublisher messagePublisher =
-      new DefaultMessagePublisher(new ConnectionParameters("mq.gbif.org", 5672, "omeyn", "omeyn", "/users/omeyn"));
-    CuratorFramework curator =
-      CuratorFrameworkFactory.builder().namespace("/fragproctest").retryPolicy(new ExponentialBackoffRetry(25, 100))
-        .connectString("zk1.gbif-dev.org:2181").build();
+        new DefaultMessagePublisher(new ConnectionParameters("mq.gbif.org", 5672, "omeyn", "omeyn", "/users/omeyn"));
+    CuratorFramework curator = CuratorFrameworkFactory.builder().namespace("/fragproctest")
+        .retryPolicy(new ExponentialBackoffRetry(25, 100)).connectString("zk1.gbif-dev.org:2181").build();
     curator.start();
     ZookeeperConnector zkConnector = new ZookeeperConnector(curator);
     fragmentProcessor = new FragmentProcessor(fragService, occurrenceKeyService, messagePublisher, zkConnector);
   }
 
   public void testNoContention(int threadCount) throws InterruptedException {
-    // test generating ids as fast as possible in the ideal case of no waiting for contention (all ids are globally
+    // test generating ids as fast as possible in the ideal case of no waiting for contention (all ids
+    // are globally
     // unique)
     int genPerThread = 10000;
     List<Thread> threads = Lists.newArrayList();
@@ -136,9 +134,8 @@ public class FragmentProcessorThroughputTest {
             runningAvg = (netPeriods * runningAvg + generated) / (netPeriods + 1);
           }
           System.out.println("Frags persisted at [" + generated + " frags/s] for running avg of [" + runningAvg
-                             + " frags/s] and per thread [" + (runningAvg / threadCount)
-                             + " frags/sec] with frag process time of [" + (threadCount * 1000 / runningAvg)
-                             + " ms/frag]");
+              + " frags/s] and per thread [" + (runningAvg / threadCount) + " frags/sec] with frag process time of ["
+              + (threadCount * 1000 / runningAvg) + " ms/frag]");
         } else {
           System.out.println("Stats in [" + (buildAverageAfter - periods) + "] seconds.");
         }
@@ -179,8 +176,7 @@ public class FragmentProcessorThroughputTest {
       hbasePoolSize = Integer.valueOf(args[0]);
       persistingThreads = Integer.valueOf(args[1]);
     }
-    System.out
-      .println("Running test with hbasePool [" + hbasePoolSize + "] and persistingThreads [" + persistingThreads + "]");
+    System.out.println("Running test with hbasePool [" + hbasePoolSize + "] and persistingThreads [" + persistingThreads + "]");
     FragmentProcessorThroughputTest instance = new FragmentProcessorThroughputTest(hbasePoolSize);
     instance.testNoContention(persistingThreads);
   }

@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.beust.jcommander.internal.Lists;
-import com.beust.jcommander.internal.Maps;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
@@ -14,10 +12,14 @@ import org.apache.curator.retry.RetryUntilElapsed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.internal.Lists;
+import com.beust.jcommander.internal.Maps;
+
 /**
- * This is a simple wrapper around a DistributedAtomicLong that will flush periodically to ZooKeeper. It's meant as a
- * patch to solve the massive contention problems that DALs have when many threads try to increment at the same time.
- * Note that counts could be lost if the client application dies.
+ * This is a simple wrapper around a DistributedAtomicLong that will flush periodically to
+ * ZooKeeper. It's meant as a patch to solve the massive contention problems that DALs have when
+ * many threads try to increment at the same time. Note that counts could be lost if the client
+ * application dies.
  */
 public final class BatchingDalWrapper {
 
@@ -72,7 +74,7 @@ public final class BatchingDalWrapper {
               LOG.warn("Counter {} no longer exists, not changing it, counts will be wrong", path);
             } else {
               DistributedAtomicLong dal = new DistributedAtomicLong(client, path,
-                new RetryUntilElapsed((int) TimeUnit.MINUTES.toMillis(5), (int) TimeUnit.MILLISECONDS.toMillis(25)));
+                  new RetryUntilElapsed((int) TimeUnit.MINUTES.toMillis(5), (int) TimeUnit.MILLISECONDS.toMillis(25)));
               AtomicValue<Long> result = dal.add(entry.getValue().get());
               if (!result.succeeded()) {
                 LOG.warn("Counter updates are failing and we've exhausted retry - counts will be wrong");

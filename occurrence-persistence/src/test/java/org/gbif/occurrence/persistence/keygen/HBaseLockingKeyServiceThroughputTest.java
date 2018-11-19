@@ -1,22 +1,23 @@
 package org.gbif.occurrence.persistence.keygen;
 
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 /**
- * Note not a real JUnit test, but an extremely expensive performance test that should use the real cluster.
+ * Note not a real JUnit test, but an extremely expensive performance test that should use the real
+ * cluster.
  */
 public class HBaseLockingKeyServiceThroughputTest {
 
@@ -38,7 +39,8 @@ public class HBaseLockingKeyServiceThroughputTest {
   }
 
   public void testNoContention(int threadCount) throws InterruptedException {
-    // test generating ids as fast as possible in the ideal case of no waiting for contention (all ids are globally
+    // test generating ids as fast as possible in the ideal case of no waiting for contention (all ids
+    // are globally
     // unique)
     int genPerThread = 100000;
     List<Thread> threads = Lists.newArrayList();
@@ -88,10 +90,8 @@ public class HBaseLockingKeyServiceThroughputTest {
             int netPeriods = periods - buildAverageAfter;
             runningAvg = (netPeriods * runningAvg + generated) / (netPeriods + 1);
           }
-          System.out.println("Key generation at [" + generated + " keys/s] for running avg of [" + runningAvg
-                             + " keys/s] and per thread [" + (runningAvg / threadCount)
-                             + " keys/sec] with id generation time of [" + (threadCount * 1000 / runningAvg)
-                             + " ms/id]");
+          System.out.println("Key generation at [" + generated + " keys/s] for running avg of [" + runningAvg + " keys/s] and per thread ["
+              + (runningAvg / threadCount) + " keys/sec] with id generation time of [" + (threadCount * 1000 / runningAvg) + " ms/id]");
         } else {
           System.out.println("Stats in [" + (buildAverageAfter - periods) + "] seconds.");
         }
@@ -129,8 +129,7 @@ public class HBaseLockingKeyServiceThroughputTest {
       hbasePoolSize = Integer.valueOf(args[0]);
       persistingThreads = Integer.valueOf(args[1]);
     }
-    System.out
-      .println("Running test with hbasePool [" + hbasePoolSize + "] and persistingThreads [" + persistingThreads + "]");
+    System.out.println("Running test with hbasePool [" + hbasePoolSize + "] and persistingThreads [" + persistingThreads + "]");
     HBaseLockingKeyServiceThroughputTest instance = new HBaseLockingKeyServiceThroughputTest(hbasePoolSize);
     instance.testNoContention(persistingThreads);
   }

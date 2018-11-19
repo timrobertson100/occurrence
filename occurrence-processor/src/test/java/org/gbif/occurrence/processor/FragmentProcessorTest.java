@@ -1,5 +1,24 @@
 package org.gbif.occurrence.processor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.Charsets;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryNTimes;
+import org.apache.curator.test.TestingServer;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.OccurrenceSchemaType;
@@ -12,22 +31,6 @@ import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
 import org.gbif.occurrence.persistence.api.KeyLookupResult;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.processor.zookeeper.ZookeeperConnector;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.Nullable;
-
-import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.Charsets;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
-import org.apache.curator.test.TestingServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -36,10 +39,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.google.common.collect.Sets;
+import com.google.common.io.Resources;
 
 @Ignore("requires real messaging")
 public class FragmentProcessorTest {
@@ -73,14 +74,13 @@ public class FragmentProcessorTest {
 
     zkServer = new TestingServer();
     curator = CuratorFrameworkFactory.builder().connectString(zkServer.getConnectString()).namespace("crawler")
-      .retryPolicy(new RetryNTimes(1, 1000)).build();
+        .retryPolicy(new RetryNTimes(1, 1000)).build();
     curator.start();
     zookeeperConnector = new ZookeeperConnector(curator);
 
     occurrenceKeyService = new OccurrenceKeyPersistenceServiceMock();
     fragmentPersistenceService = new FragmentPersistenceServiceMock(occurrenceKeyService);
-    fragmentProcessor =
-      new FragmentProcessor(fragmentPersistenceService, occurrenceKeyService, messagePublisher, zookeeperConnector);
+    fragmentProcessor = new FragmentProcessor(fragmentPersistenceService, occurrenceKeyService, messagePublisher, zookeeperConnector);
   }
 
   @After
@@ -120,8 +120,7 @@ public class FragmentProcessorTest {
     UUID datasetKey = UUID.randomUUID();
     OccurrenceSchemaType schemaType = OccurrenceSchemaType.ABCD_2_0_6;
     Integer crawlId = 1;
-    fragmentProcessor
-      .buildFragments(datasetKey, abcd206Multi.getBytes(), schemaType, EndpointType.BIOCASE, crawlId, null);
+    fragmentProcessor.buildFragments(datasetKey, abcd206Multi.getBytes(), schemaType, EndpointType.BIOCASE, crawlId, null);
     Set<Fragment> fragments = Sets.newHashSet();
     Fragment first = fragmentPersistenceService.get(1);
     fragments.add(first);
@@ -195,7 +194,8 @@ public class FragmentProcessorTest {
 
   @Test
   public void testHBaseFailureDuringKeyLookup() {
-    // make sure that a keylookup failure due to hbase failure does not result in same behaviour as "key not found"
+    // make sure that a keylookup failure due to hbase failure does not result in same behaviour as "key
+    // not found"
     occurrenceKeyService = new OccurrenceKeyPersistenceService() {
       @Nullable
       @Override
@@ -223,8 +223,7 @@ public class FragmentProcessorTest {
         throw new UnsupportedOperationException("Not implemented yet");
       }
     };
-    fragmentProcessor =
-      new FragmentProcessor(fragmentPersistenceService, occurrenceKeyService, messagePublisher, zookeeperConnector);
+    fragmentProcessor = new FragmentProcessor(fragmentPersistenceService, occurrenceKeyService, messagePublisher, zookeeperConnector);
 
     UUID datasetKey = UUID.randomUUID();
     OccurrenceSchemaType schemaType = OccurrenceSchemaType.ABCD_2_0_6;

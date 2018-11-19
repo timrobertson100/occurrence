@@ -9,12 +9,14 @@ public interface LicenseSelector {
 
   /**
    * Collect license.
+   * 
    * @param license
    */
   void collectLicense(License license);
 
   /**
    * Get the license selected according to the implementation.
+   * 
    * @return
    */
   License getSelectedLicense();

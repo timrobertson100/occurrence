@@ -1,16 +1,17 @@
 package org.gbif.occurrence.ws.resources;
 
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-import org.gbif.occurrence.common.TermUtils;
-
 import java.util.Set;
+
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
+import org.gbif.occurrence.common.TermUtils;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
@@ -28,6 +29,7 @@ public class TermResource {
 
   /**
    * Function to "wrap" a DwcTerm inside a TermWrapper.
+   * 
    * @return a TermWrapper instance that contains a term
    */
   private static final Function<Term, TermWrapper> TO_TERM_WRAPPER = new Function<Term, TermWrapper>() {
@@ -38,13 +40,9 @@ public class TermResource {
   };
 
 
-  private static final Set<TermWrapper> OCCURRENCE_TERMS =
-          ImmutableSet.copyOf(
-                  Iterables.transform(ImmutableSet.copyOf(
-                          ImmutableSet.<Term>builder()
-                                  .addAll(TermUtils.interpretedTerms())
-                                  .addAll(TermUtils.verbatimTerms())
-                                  .build()), TO_TERM_WRAPPER));
+  private static final Set<TermWrapper> OCCURRENCE_TERMS = ImmutableSet.copyOf(Iterables.transform(
+      ImmutableSet.copyOf(ImmutableSet.<Term>builder().addAll(TermUtils.interpretedTerms()).addAll(TermUtils.verbatimTerms()).build()),
+      TO_TERM_WRAPPER));
 
   @GET
   public Set<TermWrapper> getInterpretation() {
@@ -66,9 +64,9 @@ public class TermResource {
 
       // Not too clean but we can't override the Term's @JsonSerialize
       if (DwcTerm.class.equals(term.getClass())) {
-        group = ((DwcTerm)term).getGroup();
+        group = ((DwcTerm) term).getGroup();
       } else if (GbifTerm.class.equals(term.getClass())) {
-        group = ((GbifTerm)term).getGroup();
+        group = ((GbifTerm) term).getGroup();
       } else {
         group = null;
       }

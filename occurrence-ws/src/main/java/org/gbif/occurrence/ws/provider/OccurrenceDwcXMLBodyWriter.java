@@ -1,19 +1,12 @@
 package org.gbif.occurrence.ws.provider;
 
-import org.gbif.api.model.occurrence.Occurrence;
-import org.gbif.api.vocabulary.Country;
-import org.gbif.api.vocabulary.OccurrenceIssue;
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Date;
+
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -31,13 +24,20 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.api.vocabulary.Country;
+import org.gbif.api.vocabulary.OccurrenceIssue;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Custom {@link MessageBodyWriter} to serialize {@link Occurrence} in DarwinCore XML.
- * We do not use JAXB annotations to keep the distinction between the model and its XML representation.
- * It is also easier to manage properties like Country, List, Map.
+ * Custom {@link MessageBodyWriter} to serialize {@link Occurrence} in DarwinCore XML. We do not use
+ * JAXB annotations to keep the distinction between the model and its XML representation. It is also
+ * easier to manage properties like Country, List, Map.
  *
  */
 @Provider
@@ -63,8 +63,8 @@ public class OccurrenceDwcXMLBodyWriter implements MessageBodyWriter<Occurrence>
 
       appendIfNotNull(dwcXMLDocument, GbifTerm.gbifID, occurrence.getKey());
 
-      //this may be not the most compact way to serialize an Occurrence (e.g. reflection) but
-      //it gives more freedom to handle things like date and country fields
+      // this may be not the most compact way to serialize an Occurrence (e.g. reflection) but
+      // it gives more freedom to handle things like date and country fields
       appendIfNotNull(dwcXMLDocument, DwcTerm.basisOfRecord, occurrence.getBasisOfRecord());
       appendIfNotNull(dwcXMLDocument, DwcTerm.individualCount, occurrence.getIndividualCount());
       appendIfNotNull(dwcXMLDocument, DwcTerm.sex, occurrence.getSex());
@@ -123,7 +123,7 @@ public class OccurrenceDwcXMLBodyWriter implements MessageBodyWriter<Occurrence>
       appendIfNotNull(dwcXMLDocument, DcTerm.references, occurrence.getReferences());
 
       appendIfNotNull(dwcXMLDocument, GbifTerm.datasetKey, occurrence.getDatasetKey());
-      //append(dwcXMLDocument, GbifTerm., occurrence.getPublishingOrgKey());
+      // append(dwcXMLDocument, GbifTerm., occurrence.getPublishingOrgKey());
 
       appendIfNotNull(dwcXMLDocument, GbifTerm.protocol, occurrence.getProtocol());
       dwcXMLDocument.append(GbifTerm.lastCrawled, toISODateTime(occurrence.getLastCrawled()));
@@ -156,16 +156,14 @@ public class OccurrenceDwcXMLBodyWriter implements MessageBodyWriter<Occurrence>
   }
 
   @Override
-  public long getSize(Occurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations,
-                      MediaType mediaType) {
+  public long getSize(Occurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
     // deprecated by JAX-RS 2.0 and ignored by Jersey runtime
     return -1L;
   }
 
   @Override
-  public void writeTo(Occurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations,
-                      MediaType mediaType, MultivaluedMap<String, Object> httpHeaders,
-                      OutputStream entityStream) throws IOException, WebApplicationException {
+  public void writeTo(Occurrence occurrence, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+      MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
     entityStream.write(occurrenceXMLAsByteArray(occurrence));
   }
 

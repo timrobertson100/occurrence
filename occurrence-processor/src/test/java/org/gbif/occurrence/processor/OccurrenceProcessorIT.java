@@ -1,5 +1,22 @@
 package org.gbif.occurrence.processor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Calendar;
+import java.util.TimeZone;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.Charsets;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryNTimes;
+import org.apache.curator.test.TestingServer;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.occurrence.Occurrence;
@@ -22,38 +39,21 @@ import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
 import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
-import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
+import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.occurrence.processor.messaging.FragmentPersistedListener;
 import org.gbif.occurrence.processor.messaging.OccurrenceFragmentedListener;
 import org.gbif.occurrence.processor.messaging.VerbatimPersistedListener;
 import org.gbif.occurrence.processor.zookeeper.ZookeeperConnector;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Calendar;
-import java.util.TimeZone;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.io.Resources;
-import org.apache.commons.io.Charsets;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
-import org.apache.curator.test.TestingServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import com.google.common.io.Resources;
 
 @Ignore("requires live webservices and messaging")
 public class OccurrenceProcessorIT {
@@ -66,8 +66,7 @@ public class OccurrenceProcessorIT {
   private OccurrenceFragmentedListener occurrenceFragmentedListener;
   private FragmentPersistedListener fragmentPersistedListener;
   private VerbatimPersistedListener verbatimPersistedListener;
-  private final OccurrencePersistenceService occurrenceService =
-    new OccurrencePersistenceServiceMock(fragmentPersister);
+  private final OccurrencePersistenceService occurrenceService = new OccurrencePersistenceServiceMock(fragmentPersister);
   private MessageListener messageListener;
   private MessagePublisher messagePublisher;
   private TestingServer zkServer;
@@ -104,25 +103,21 @@ public class OccurrenceProcessorIT {
 
     zkServer = new TestingServer();
     curator = CuratorFrameworkFactory.builder().connectString(zkServer.getConnectString()).namespace("crawlertest")
-      .retryPolicy(new RetryNTimes(1, 1000)).build();
+        .retryPolicy(new RetryNTimes(1, 1000)).build();
     curator.start();
     zookeeperConnector = new ZookeeperConnector(curator);
 
     long now = System.currentTimeMillis();
-    fragmentProcessor =
-      new FragmentProcessor(fragmentPersister, occurrenceKeyService, messagePublisher, zookeeperConnector);
+    fragmentProcessor = new FragmentProcessor(fragmentPersister, occurrenceKeyService, messagePublisher, zookeeperConnector);
     occurrenceFragmentedListener = new OccurrenceFragmentedListener(fragmentProcessor);
     messageListener.listen("occ_frag_test_" + now, 1, occurrenceFragmentedListener);
-    verbatimProcessor =
-      new VerbatimProcessor(fragmentPersister, occurrenceService, messagePublisher, zookeeperConnector);
+    verbatimProcessor = new VerbatimProcessor(fragmentPersister, occurrenceService, messagePublisher, zookeeperConnector);
     fragmentPersistedListener = new FragmentPersistedListener(verbatimProcessor);
     messageListener.listen("frag_persisted_test_" + now, 1, fragmentPersistedListener);
     interpretedProcessor = new InterpretedProcessor(
-      new OccurrenceInterpreter(new DatasetInfoInterpreter(cfg.newApiClient()),
-      new TaxonomyInterpreter(cfg.newApiClient()),
-      new LocationInterpreter(new CoordinateInterpreter(cfg.newApiClient()))),
-        fragmentPersister, occurrenceService, messagePublisher, zookeeperConnector, cfg.newApiClient()
-    );
+        new OccurrenceInterpreter(new DatasetInfoInterpreter(cfg.newApiClient()), new TaxonomyInterpreter(cfg.newApiClient()),
+            new LocationInterpreter(new CoordinateInterpreter(cfg.newApiClient()))),
+        fragmentPersister, occurrenceService, messagePublisher, zookeeperConnector, cfg.newApiClient());
     verbatimPersistedListener = new VerbatimPersistedListener(interpretedProcessor);
     messageListener.listen("verb_persisted_test_" + now, 1, verbatimPersistedListener);
   }
@@ -140,11 +135,9 @@ public class OccurrenceProcessorIT {
     OccurrenceSchemaType xmlSchema = OccurrenceSchemaType.DWCA;
     Integer crawlId = 1;
 
-    DwcaValidationReport report = new DwcaValidationReport(datasetKey,
-      new OccurrenceValidationReport(1, 1, 0, 1, 0, true));
+    DwcaValidationReport report = new DwcaValidationReport(datasetKey, new OccurrenceValidationReport(1, 1, 0, 1, 0, true));
     OccurrenceFragmentedMessage msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, dwcaSingle.getBytes(), xmlSchema, EndpointType.DWC_ARCHIVE,
-        report);
+        new OccurrenceFragmentedMessage(datasetKey, crawlId, dwcaSingle.getBytes(), xmlSchema, EndpointType.DWC_ARCHIVE, report);
     messagePublisher.send(msg);
 
     TimeUnit.MILLISECONDS.sleep(5000);
@@ -155,7 +148,8 @@ public class OccurrenceProcessorIT {
     assertEquals("Pontaurus", got.getVerbatimField(DwcTerm.collectionCode));
     assertEquals("988", got.getVerbatimField(DwcTerm.catalogNumber));
     assertEquals(datasetKey, got.getDatasetKey());
-    // note: this is set here inside the occ project, but from a ws call the serializer will omit these 'superseded' terms
+    // note: this is set here inside the occ project, but from a ws call the serializer will omit these
+    // 'superseded' terms
     assertEquals("Verbascum cheiranthifolium var. cheiranthifolium", got.getVerbatimField(DwcTerm.scientificName));
     assertEquals("Verbascum cheiranthifolium var. cheiranthifolium", got.getScientificName());
     assertEquals(37.421230, got.getDecimalLatitude().doubleValue(), 0.000001);
@@ -182,7 +176,7 @@ public class OccurrenceProcessorIT {
     assertEquals(1, got.getMedia().size());
     assertEquals(MediaType.StillImage, got.getMedia().get(0).getType());
     assertEquals("http://digit.snm.ku.dk/www/Aves/full/AVES-100348_Caprimulgus_pectoralis_fervidus_ad____f.jpg",
-      got.getMedia().get(0).getIdentifier().toString());
+        got.getMedia().get(0).getIdentifier().toString());
 
   }
 
@@ -192,8 +186,7 @@ public class OccurrenceProcessorIT {
     OccurrenceSchemaType xmlSchema = OccurrenceSchemaType.ABCD_2_0_6;
     Integer crawlId = 1;
     OccurrenceFragmentedMessage msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), xmlSchema, EndpointType.BIOCASE,
-        null);
+        new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), xmlSchema, EndpointType.BIOCASE, null);
     messagePublisher.send(msg);
 
     TimeUnit.MILLISECONDS.sleep(10000);
@@ -230,7 +223,7 @@ public class OccurrenceProcessorIT {
     assertEquals(TypeStatus.HOLOTYPE, got.getTypeStatus());
     assertEquals(2, got.getMedia().size());
     assertEquals(new URI("http://www.tierstimmenarchiv.de/recordings/Ailuroedus_buccoides_V2010_04_short.mp3"),
-      got.getMedia().get(0).getIdentifier());
+        got.getMedia().get(0).getIdentifier());
 
     // from default value set in machine tag
     assertEquals("1", got.getVerbatimField(DwcTerm.individualCount));
@@ -244,23 +237,19 @@ public class OccurrenceProcessorIT {
     OccurrenceSchemaType schemaType = OccurrenceSchemaType.ABCD_2_0_6;
     Integer crawlId = 1;
     OccurrenceFragmentedMessage msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), schemaType, EndpointType.BIOCASE,
-        null);
+        new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Single.getBytes(), schemaType, EndpointType.BIOCASE, null);
     messagePublisher.send(msg);
 
     // two in one abcd 2
     schemaType = OccurrenceSchemaType.ABCD_2_0_6;
     crawlId = 1;
-    msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Multi.getBytes(), schemaType, EndpointType.BIOCASE,
-        null);
+    msg = new OccurrenceFragmentedMessage(datasetKey, crawlId, abcd206Multi.getBytes(), schemaType, EndpointType.BIOCASE, null);
     messagePublisher.send(msg);
 
     // one dwc 1.4
     schemaType = OccurrenceSchemaType.DWC_1_4;
     crawlId = 1;
-    msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14.getBytes(), schemaType, EndpointType.BIOCASE, null);
+    msg = new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14.getBytes(), schemaType, EndpointType.BIOCASE, null);
     messagePublisher.send(msg);
 
     // dupe of dwc 1.4
@@ -269,46 +258,26 @@ public class OccurrenceProcessorIT {
     // update of dwc 1.4
     schemaType = OccurrenceSchemaType.DWC_1_4;
     crawlId = 1;
-    msg =
-      new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14_modified.getBytes(), schemaType, EndpointType.DIGIR,
-        null);
+    msg = new OccurrenceFragmentedMessage(datasetKey, crawlId, dwc14_modified.getBytes(), schemaType, EndpointType.DIGIR, null);
     messagePublisher.send(msg);
 
     TimeUnit.MILLISECONDS.sleep(6000);
 
-    assertEquals(5l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED).longValue());
-    assertEquals(5l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_PROCESSED).longValue());
-    assertEquals(0l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR)
-        .longValue()
-    );
+    assertEquals(5l, zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED).longValue());
+    assertEquals(5l, zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.FRAGMENT_PROCESSED).longValue());
+    assertEquals(0l, zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_ERROR).longValue());
     assertEquals(1l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UNCHANGED)
-        .longValue()
-    );
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UNCHANGED).longValue());
     assertEquals(1l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UPDATED)
-        .longValue()
-    );
-    assertEquals(4l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_NEW)
-        .longValue()
-    );
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_UPDATED).longValue());
+    assertEquals(4l, zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.RAW_OCCURRENCE_PERSISTED_NEW).longValue());
     assertEquals(0l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_ERROR)
-        .longValue()
-    );
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_ERROR).longValue());
     assertEquals(5l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_SUCCESS)
-        .longValue()
-    );
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.VERBATIM_OCCURRENCE_PERSISTED_SUCCESS).longValue());
     assertEquals(0l,
-      zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_ERROR)
-        .longValue()
-    );
-    assertEquals(5l, zookeeperConnector
-      .readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_SUCCESS).longValue());
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_ERROR).longValue());
+    assertEquals(5l,
+        zookeeperConnector.readCounter(datasetKey, ZookeeperConnector.CounterName.INTERPRETED_OCCURRENCE_PERSISTED_SUCCESS).longValue());
   }
 }

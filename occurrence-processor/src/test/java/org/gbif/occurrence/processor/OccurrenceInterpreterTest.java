@@ -1,5 +1,13 @@
 package org.gbif.occurrence.processor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.*;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.BasisOfRecord;
@@ -16,25 +24,17 @@ import org.gbif.occurrence.persistence.api.Fragment;
 import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
 import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
-import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
+import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
-
-import java.net.URI;
-import java.util.*;
-
-import com.beust.jcommander.internal.Sets;
-import com.google.common.base.Charsets;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.beust.jcommander.internal.Sets;
+import com.google.common.base.Charsets;
 
 @Ignore("requires real webservices")
 public class OccurrenceInterpreterTest {
@@ -54,16 +54,14 @@ public class OccurrenceInterpreterTest {
     ApiClientConfiguration cfg = new ApiClientConfiguration();;
     cfg.url = URI.create("http://api.gbif-dev.org/v1/");
 
-    FragmentPersistenceService fragmentPersister =
-      new FragmentPersistenceServiceMock(new OccurrenceKeyPersistenceServiceMock());
+    FragmentPersistenceService fragmentPersister = new FragmentPersistenceServiceMock(new OccurrenceKeyPersistenceServiceMock());
     Fragment fragment = new Fragment(DATASET_KEY, "fake".getBytes(Charsets.UTF_8), "fake".getBytes(Charsets.UTF_8),
-      Fragment.FragmentType.JSON, EndpointType.DWC_ARCHIVE, new Date(), 1, null, null, new Date().getTime());
+        Fragment.FragmentType.JSON, EndpointType.DWC_ARCHIVE, new Date(), 1, null, null, new Date().getTime());
     Set<UniqueIdentifier> uniqueIds = Sets.newHashSet();
     uniqueIds.add(new HolyTriplet(DATASET_KEY, "ic", "cc", "cn", null));
     fragmentPersister.insert(fragment, uniqueIds);
-    interpreter = new OccurrenceInterpreter(new DatasetInfoInterpreter(cfg.newApiClient()),
-      new TaxonomyInterpreter(cfg.newApiClient()),
-      new LocationInterpreter(new CoordinateInterpreter(cfg.newApiClient())));
+    interpreter = new OccurrenceInterpreter(new DatasetInfoInterpreter(cfg.newApiClient()), new TaxonomyInterpreter(cfg.newApiClient()),
+        new LocationInterpreter(new CoordinateInterpreter(cfg.newApiClient())));
 
     verb = buildVerbatim(fragment.getKey());
 

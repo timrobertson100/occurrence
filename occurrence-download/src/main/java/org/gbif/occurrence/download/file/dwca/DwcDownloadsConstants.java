@@ -12,6 +12,7 @@ public class DwcDownloadsConstants {
   public static final String CITATIONS_FILENAME = "citations.txt";
   public static final String RIGHTS_FILENAME = "rights.txt";
   public static final String DESCRIPTOR_FILENAME = "meta.xml";
+
   /**
    * Hidden constructor.
    */

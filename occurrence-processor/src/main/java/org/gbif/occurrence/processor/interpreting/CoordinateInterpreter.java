@@ -1,7 +1,19 @@
 package org.gbif.occurrence.processor.interpreting;
 
-import com.google.common.cache.CacheLoader;
-import com.google.common.io.ByteStreams;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+
+import javax.annotation.Nullable;
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.common.parsers.core.OccurrenceParseResult;
@@ -14,33 +26,23 @@ import org.gbif.geocode.ws.client.GeocodeWsClient;
 import org.gbif.occurrence.processor.interpreting.result.CoordinateResult;
 import org.gbif.occurrence.processor.interpreting.util.CountryMaps;
 import org.gbif.occurrence.processor.interpreting.util.Wgs84Projection;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import javax.annotation.Nullable;
-import javax.ws.rs.core.MultivaluedMap;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+
 /**
- * Attempts to parse given string latitude and longitude into doubles, and compares the given country (if any) to a reverse
- * lookup of the parsed coordinates. If no country was given and the lookup produced something, that looked up result
- * is returned. If the lookup result and passed in country don't match, a "GeospatialIssue" is noted.
+ * Attempts to parse given string latitude and longitude into doubles, and compares the given
+ * country (if any) to a reverse lookup of the parsed coordinates. If no country was given and the
+ * lookup produced something, that looked up result is returned. If the lookup result and passed in
+ * country don't match, a "GeospatialIssue" is noted.
  */
 public class CoordinateInterpreter {
 
@@ -60,7 +62,8 @@ public class CoordinateInterpreter {
     TRANSFORMS.put(Collections.emptyList(), (lat, lng) -> new LatLng(lat, lng));
     TRANSFORMS.put(Arrays.asList(OccurrenceIssue.PRESUMED_NEGATED_LATITUDE), (lat, lng) -> new LatLng(-1 * lat, lng));
     TRANSFORMS.put(Arrays.asList(OccurrenceIssue.PRESUMED_NEGATED_LONGITUDE), (lat, lng) -> new LatLng(lat, -1 * lng));
-    TRANSFORMS.put(Arrays.asList(OccurrenceIssue.PRESUMED_NEGATED_LATITUDE, OccurrenceIssue.PRESUMED_NEGATED_LONGITUDE), (lat, lng) -> new LatLng(-1 * lat, -1 * lng));
+    TRANSFORMS.put(Arrays.asList(OccurrenceIssue.PRESUMED_NEGATED_LATITUDE, OccurrenceIssue.PRESUMED_NEGATED_LONGITUDE),
+        (lat, lng) -> new LatLng(-1 * lat, -1 * lng));
     TRANSFORMS.put(Arrays.asList(OccurrenceIssue.PRESUMED_SWAPPED_COORDINATE), (lat, lng) -> new LatLng(lng, lat));
   }
 
@@ -71,6 +74,7 @@ public class CoordinateInterpreter {
 
   /**
    * Should not be instantiated.
+   * 
    * @param apiWs API webservice base URL
    */
   @Inject
@@ -82,29 +86,29 @@ public class CoordinateInterpreter {
       byte[] bitmap = realGeocodeService.bitmap();
       this.geocodeService = new GeocodeBitmapCache(realGeocodeService, ByteStreams.asByteSource(bitmap).openStream());
 
-      CACHE = CacheBuilder.newBuilder().maximumSize(50000).expireAfterAccess(1, TimeUnit.HOURS).build(
-        new CacheLoader<LatLng, Collection<Location>>() {
-          @Override
-          public Collection<Location> load(LatLng ll) throws Exception {
+      CACHE = CacheBuilder.newBuilder().maximumSize(50000).expireAfterAccess(1, TimeUnit.HOURS)
+          .build(new CacheLoader<LatLng, Collection<Location>>() {
+            @Override
+            public Collection<Location> load(LatLng ll) throws Exception {
 
-            for (int attempt = 1; attempt <= NUM_RETRIES; attempt++) {
-              try {
-                return geocodeService.get(ll.getLat(), ll.getLng(), null);
-              } catch (Exception e) {
-                LOG.debug("Error geocoding [{}], attempt[{}] of max[{}]", ll, attempt, NUM_RETRIES, e);
-                if (attempt >= NUM_RETRIES) {
-                  LOG.error("Error geocoding [{}] after {} attempts", ll, NUM_RETRIES, e);
-                  throw e;
-                }
-                if (RETRY_PERIOD_MSEC > 0) {
-                  TimeUnit.MILLISECONDS.sleep(RETRY_PERIOD_MSEC);
+              for (int attempt = 1; attempt <= NUM_RETRIES; attempt++) {
+                try {
+                  return geocodeService.get(ll.getLat(), ll.getLng(), null);
+                } catch (Exception e) {
+                  LOG.debug("Error geocoding [{}], attempt[{}] of max[{}]", ll, attempt, NUM_RETRIES, e);
+                  if (attempt >= NUM_RETRIES) {
+                    LOG.error("Error geocoding [{}] after {} attempts", ll, NUM_RETRIES, e);
+                    throw e;
+                  }
+                  if (RETRY_PERIOD_MSEC > 0) {
+                    TimeUnit.MILLISECONDS.sleep(RETRY_PERIOD_MSEC);
+                  }
                 }
               }
+              // Should not ever happen as we propagate the underlying exception above
+              throw new IllegalStateException("Retry count exhausted");
             }
-            // Should not ever happen as we propagate the underlying exception above
-            throw new IllegalStateException("Retry count exhausted");
-          }
-        });
+          });
 
     } catch (Exception e) {
       throw new RuntimeException("Unable to initialize GeocodeService bitmap cache", e);
@@ -112,29 +116,32 @@ public class CoordinateInterpreter {
   }
 
   /**
-   * Attempts to convert the given lat and long into Doubles, and the given country string into an ISO country code.
+   * Attempts to convert the given lat and long into Doubles, and the given country string into an ISO
+   * country code.
    *
-   * @param latitude  decimal latitude as string
+   * @param latitude decimal latitude as string
    * @param longitude decimal longitude as string
-   * @param country   country as interpreted to sanity check coordinate
+   * @param country country as interpreted to sanity check coordinate
    *
    * @return the latitude and longitude as doubles, the country as an ISO code, and issues if any
-   * known errors were encountered in the interpretation (e.g. lat/lng reversed).
-   * Or all fields set to null if latitude or longitude are null
+   *         known errors were encountered in the interpretation (e.g. lat/lng reversed). Or all
+   *         fields set to null if latitude or longitude are null
    */
-  public OccurrenceParseResult<CoordinateResult> interpretCoordinate(String latitude, String longitude, String datum, final Country country) {
+  public OccurrenceParseResult<CoordinateResult> interpretCoordinate(String latitude, String longitude, String datum,
+      final Country country) {
     return verifyLatLon(CoordinateParseUtils.parseLatLng(latitude, longitude), datum, country);
   }
 
   /**
    * @param latLon a verbatim coordinate string containing both latitude and longitude
-   * @param country   country as interpreted to sanity check coordinate
+   * @param country country as interpreted to sanity check coordinate
    */
   public OccurrenceParseResult<CoordinateResult> interpretCoordinate(String latLon, String datum, final Country country) {
     return verifyLatLon(CoordinateParseUtils.parseVerbatimCoordinates(latLon), datum, country);
   }
 
-  private OccurrenceParseResult<CoordinateResult> verifyLatLon(final OccurrenceParseResult<LatLng> parsedLatLon, final String datum, final Country country) {
+  private OccurrenceParseResult<CoordinateResult> verifyLatLon(final OccurrenceParseResult<LatLng> parsedLatLon, final String datum,
+      final Country country) {
     // use original as default
     Country finalCountry = country;
     final Set<OccurrenceIssue> issues = EnumSet.noneOf(OccurrenceIssue.class);
@@ -146,7 +153,8 @@ public class CoordinateInterpreter {
 
     // interpret geodetic datum and reproject if needed
     // the reprojection will keep the original values even if it failed with issues
-    OccurrenceParseResult<LatLng> projectedLatLon = Wgs84Projection.reproject(parsedLatLon.getPayload().getLat(), parsedLatLon.getPayload().getLng(), datum);
+    OccurrenceParseResult<LatLng> projectedLatLon =
+        Wgs84Projection.reproject(parsedLatLon.getPayload().getLat(), parsedLatLon.getPayload().getLng(), datum);
     issues.addAll(projectedLatLon.getIssues());
 
     LatLng coord = projectedLatLon.getPayload();
@@ -195,13 +203,15 @@ public class CoordinateInterpreter {
     }
 
     return OccurrenceParseResult.success(interpretedLatLon.getConfidence(),
-                               new CoordinateResult(interpretedLatLon.getPayload(), finalCountry),  issues);
+        new CoordinateResult(interpretedLatLon.getPayload(), finalCountry), issues);
   }
 
   /**
-   * @return true if the given country (or its oft-confused neighbours) is one of the potential countries given
+   * @return true if the given country (or its oft-confused neighbours) is one of the potential
+   *         countries given
    */
-  private static Country matchCountry(Country country, List<Country> potentialCountries, Set<OccurrenceIssue> issues, boolean identityTransform) {
+  private static Country matchCountry(Country country, List<Country> potentialCountries, Set<OccurrenceIssue> issues,
+      boolean identityTransform) {
     // If we don't have a supplied country, just return the first
     if (country == null && potentialCountries.size() > 0) {
       return potentialCountries.get(0);
@@ -241,16 +251,15 @@ public class CoordinateInterpreter {
   }
 
   /**
-   * Checks if the country and latitude belongs to Antarctica.
-   * Rule: country must be Country.ANTARCTICA or null and
-   * latitude must be less than (south of) {@link #ANTARCTICA_LATITUDE}
+   * Checks if the country and latitude belongs to Antarctica. Rule: country must be
+   * Country.ANTARCTICA or null and latitude must be less than (south of) {@link #ANTARCTICA_LATITUDE}
    * but not less than -90°.
    *
    * @param latitude
    * @param country null allowed
    * @return
    */
-  private static boolean isAntarctica(Double latitude, @Nullable Country country){
+  private static boolean isAntarctica(Double latitude, @Nullable Country country) {
     if (latitude == null) {
       return false;
     }
@@ -259,8 +268,8 @@ public class CoordinateInterpreter {
   }
 
   /**
-   * It's theoretically possible that the webservice could respond with more than one country, though it's not
-   * known under what conditions that might happen.
+   * It's theoretically possible that the webservice could respond with more than one country, though
+   * it's not known under what conditions that might happen.
    *
    * It happens when we are within 100m of a border, then both countries are returned.
    */
@@ -269,9 +278,7 @@ public class CoordinateInterpreter {
 
     Double latitude = coord.getLat();
     Double longitude = coord.getLng();
-    if (latitude == null || longitude == null
-            || latitude < -90 || latitude > 90
-            || longitude < -180 || longitude > 180) {
+    if (latitude == null || longitude == null || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
       // Don't bother sending the request.
       return Collections.emptyList();
     }
@@ -291,8 +298,7 @@ public class CoordinateInterpreter {
           }
         }
         LOG.debug("Countries are {}", countries);
-      }
-      else if (lookups.size() == 0 && isAntarctica(coord.getLat(), null)) {
+      } else if (lookups.size() == 0 && isAntarctica(coord.getLat(), null)) {
         // If no country is returned from the geocode, add Antarctica if we're sufficiently far south
         countries.add(Country.ANTARCTICA);
       }

@@ -1,35 +1,34 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.parsing.response_file;
 
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import com.google.common.io.Resources;
 import org.apache.commons.io.Charsets;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
 import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.io.Resources;
 
 public class ResponseSchemaDetectorTest {
 
@@ -77,16 +76,14 @@ public class ResponseSchemaDetectorTest {
 
   @Test
   public void testTapirDwc1_4() throws IOException {
-    String xml = Resources
-      .toString(Resources.getResource("response_schema/tapir_dwc_1_4_contains_unrecorded.xml"), Charsets.UTF_8);
+    String xml = Resources.toString(Resources.getResource("response_schema/tapir_dwc_1_4_contains_unrecorded.xml"), Charsets.UTF_8);
     OccurrenceSchemaType result = detector.detectSchema(xml);
     assertEquals(OccurrenceSchemaType.DWC_1_4, result);
   }
 
   @Test
   public void testTapirDwc1_4_2() throws IOException {
-    String xml = Resources
-      .toString(Resources.getResource("response_schema/tapir_dwc_1_4_s2.xml"), Charsets.UTF_8);
+    String xml = Resources.toString(Resources.getResource("response_schema/tapir_dwc_1_4_s2.xml"), Charsets.UTF_8);
     OccurrenceSchemaType result = detector.detectSchema(xml);
     assertEquals(OccurrenceSchemaType.DWC_1_4, result);
   }

@@ -1,23 +1,24 @@
 package org.gbif.occurrence.persistence.zookeeper;
 
-import org.gbif.api.exception.ServiceUnavailableException;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
+import org.gbif.api.exception.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 
 /**
- * Manages locks in zookeeper on dataset keys (uuids). Initial use is for the purposes of creating new occurrence keys.
- * Note that this class is not thread-safe: each thread should create its own instance of this class (although they
- * can (and should) all share the same CuratorFramework instance).
+ * Manages locks in zookeeper on dataset keys (uuids). Initial use is for the purposes of creating
+ * new occurrence keys. Note that this class is not thread-safe: each thread should create its own
+ * instance of this class (although they can (and should) all share the same CuratorFramework
+ * instance).
  */
 public class ZookeeperLockManager {
 
@@ -40,8 +41,8 @@ public class ZookeeperLockManager {
   }
 
   /**
-   * Get a lock for the passed in dataset. If the lock has already been taken, or there is any error in the process
-   * of acquiring the lock, false will be returned.
+   * Get a lock for the passed in dataset. If the lock has already been taken, or there is any error
+   * in the process of acquiring the lock, false will be returned.
    *
    * @param datasetKey the dataset on which to lock
    *
@@ -73,8 +74,8 @@ public class ZookeeperLockManager {
    *
    * @param datasetKey the dataset on which to lock
    *
-   * @throws org.gbif.api.exception.ServiceUnavailableException
-   *          if there is an error communicating with Zookeeper
+   * @throws org.gbif.api.exception.ServiceUnavailableException if there is an error communicating
+   *         with Zookeeper
    */
   public void waitForLock(String datasetKey) {
     checkNotNull(datasetKey);
@@ -94,7 +95,8 @@ public class ZookeeperLockManager {
   }
 
   /**
-   * Release a held lock on a dataset. There is no danger in calling this method if the lock is not held.
+   * Release a held lock on a dataset. There is no danger in calling this method if the lock is not
+   * held.
    *
    * @param datasetKey the dataset for which the held lock should be released
    */

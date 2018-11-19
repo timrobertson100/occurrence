@@ -1,23 +1,23 @@
 package org.gbif.occurrence.download.conf;
 
+import java.io.IOException;
+import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.gbif.api.model.occurrence.DownloadFormat;
 import org.gbif.occurrence.common.download.DownloadUtils;
 import org.gbif.occurrence.download.inject.DownloadWorkflowModule;
 import org.gbif.utils.file.properties.PropertiesUtil;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.CommonConfigurationKeys;
 
 /**
- * Occurrence download workflow configuration.
- * Contains the configuration settings that are accessible for all the executions of the download workflow.
- * The configuration setting are read from the file DownloadWorkflowModule.CONF_FILE or are passed as constructor
- * parameter as java Properties class.
+ * Occurrence download workflow configuration. Contains the configuration settings that are
+ * accessible for all the executions of the download workflow. The configuration setting are read
+ * from the file DownloadWorkflowModule.CONF_FILE or are passed as constructor parameter as java
+ * Properties class.
  */
 public class WorkflowConfiguration {
 
@@ -67,7 +67,7 @@ public class WorkflowConfiguration {
 
   /**
    *
-   * @return  registry API url
+   * @return registry API url
    */
   public String getRegistryWsUrl() {
     Preconditions.checkNotNull(settings);
@@ -92,8 +92,8 @@ public class WorkflowConfiguration {
     Preconditions.checkNotNull(settings);
     Preconditions.checkNotNull(downloadKey);
     // download link needs to be constructed
-    return settings.getProperty(DownloadWorkflowModule.DefaultSettings.DOWNLOAD_LINK_KEY)
-      .replace(DownloadUtils.DOWNLOAD_ID_PLACEHOLDER, downloadKey);
+    return settings.getProperty(DownloadWorkflowModule.DefaultSettings.DOWNLOAD_LINK_KEY).replace(DownloadUtils.DOWNLOAD_ID_PLACEHOLDER,
+        downloadKey);
   }
 
   /**

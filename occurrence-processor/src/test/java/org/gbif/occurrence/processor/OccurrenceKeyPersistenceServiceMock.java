@@ -1,13 +1,13 @@
 package org.gbif.occurrence.processor;
 
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 
 import com.beust.jcommander.internal.Sets;
 import com.google.common.collect.Maps;
@@ -24,7 +24,8 @@ public class OccurrenceKeyPersistenceServiceMock implements OccurrenceKeyPersist
     Integer id = null;
     for (UniqueIdentifier uniqueId : uniqueIdentifiers) {
       id = cache.get(uniqueId.getUniqueString());
-      if (id != null) break;
+      if (id != null)
+        break;
     }
 
     if (id != null) {
@@ -49,7 +50,8 @@ public class OccurrenceKeyPersistenceServiceMock implements OccurrenceKeyPersist
   @Override
   public KeyLookupResult generateKey(Set<UniqueIdentifier> uniqueIdentifiers) {
     KeyLookupResult result = findKey(uniqueIdentifiers);
-    if (result != null) return result;
+    if (result != null)
+      return result;
 
     int id = ++lastId;
     for (UniqueIdentifier uniqueId : uniqueIdentifiers) {

@@ -1,12 +1,11 @@
 package org.gbif.occurrence.cli.dataset.commands;
 
-import org.gbif.cli.Command;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.InterpretDatasetMessage;
-
 import java.io.IOException;
 import java.util.UUID;
 
+import org.gbif.cli.Command;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.InterpretDatasetMessage;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

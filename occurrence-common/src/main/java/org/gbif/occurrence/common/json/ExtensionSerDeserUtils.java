@@ -1,15 +1,11 @@
 package org.gbif.occurrence.common.json;
 
-import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.terms.jackson.TermKeyDeserializer;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.base.Throwables;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.DeserializationConfig;
@@ -22,8 +18,12 @@ import org.codehaus.jackson.map.module.SimpleModule;
 import org.codehaus.jackson.map.ser.std.SerializerBase;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.type.JavaType;
+import org.gbif.dwc.terms.Term;
+import org.gbif.dwc.terms.jackson.TermKeyDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
 
 /**
  * Utility class for common operations while persisting and retrieving extension objects.
@@ -44,8 +44,7 @@ public class ExtensionSerDeserUtils {
     MAPPER.setSerializationConfig(MAPPER.getSerializationConfig().withSerializationInclusion(Inclusion.ALWAYS));
     TypeFactory typeFactory = MAPPER.getTypeFactory();
     LIST_MAP_TERMS_TYPE =
-      typeFactory.constructCollectionType(List.class,
-        typeFactory.constructMapType(Map.class, Term.class, String.class));
+        typeFactory.constructCollectionType(List.class, typeFactory.constructMapType(Map.class, Term.class, String.class));
     SimpleModule extensionsModule = new SimpleModule("Verbatim", Version.unknownVersion());
     extensionsModule.addSerializer(new InnerTermMapListSerializer());
     extensionsModule.addKeyDeserializer(Term.class, new TermKeyDeserializer());
@@ -64,8 +63,7 @@ public class ExtensionSerDeserUtils {
     }
 
     @Override
-    public void serialize(List<Map<Term, String>> value, JsonGenerator jgen, SerializerProvider provider)
-      throws IOException {
+    public void serialize(List<Map<Term, String>> value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
       if ((value == null || value.isEmpty()) && provider.getConfig().isEnabled(Feature.WRITE_EMPTY_JSON_ARRAYS)) {
         jgen.writeStartArray();
         jgen.writeEndArray();
@@ -93,7 +91,7 @@ public class ExtensionSerDeserUtils {
   public static String toJson(List<Map<Term, String>> extensionValues) {
     try {
       return MAPPER.writeValueAsString(extensionValues);
-    } catch (IOException  e) {
+    } catch (IOException e) {
       LOG.error(DEFAULT_ERROR_MSG, e);
       Throwables.propagate(e);
     }

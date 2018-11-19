@@ -5,7 +5,8 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 
 /**
- * An implementation of KeyBuilder to provide keys for use as secondary indexes to occurrences in HBase.
+ * An implementation of KeyBuilder to provide keys for use as secondary indexes to occurrences in
+ * HBase.
  */
 public class OccurrenceKeyBuilder implements KeyBuilder {
 

@@ -1,5 +1,8 @@
 package org.gbif.occurrence.persistence.zookeeper;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -8,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -17,8 +19,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Lists;
 
 public class ZookeeperLockManagerTest {
 
@@ -30,7 +31,7 @@ public class ZookeeperLockManagerTest {
   public static void setUp() throws Exception {
     SERVER = new TestingServer();
     CURATOR = CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(SERVER.getConnectString())
-      .retryPolicy(new RetryNTimes(1, 1000)).build();
+        .retryPolicy(new RetryNTimes(1, 1000)).build();
     CURATOR.start();
     ZOO_LOCK_MGR = new ZookeeperLockManager(CURATOR);
   }
@@ -70,7 +71,7 @@ public class ZookeeperLockManagerTest {
     UUID uuid = UUID.randomUUID();
     assertTrue(ZOO_LOCK_MGR.getLock(uuid.toString()));
     List<Future<Boolean>> futures = Lists.newArrayList();
-    for (int i=0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
       FutureTask<Boolean> future = new FutureTask<Boolean>(new LockGrabber(uuid));
       future.run();
       futures.add(future);

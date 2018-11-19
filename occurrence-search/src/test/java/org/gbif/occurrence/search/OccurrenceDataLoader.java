@@ -1,5 +1,18 @@
 package org.gbif.occurrence.search;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.commons.beanutils.PropertyUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.gbif.api.model.common.MediaObject;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.util.VocabularyUtils;
@@ -15,27 +28,6 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.common.json.MediaSerDeserUtils;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
-import com.google.common.io.Resources;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.supercsv.cellprocessor.Optional;
@@ -48,18 +40,26 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 import org.supercsv.util.CsvContext;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
+import com.google.common.io.Resources;
+
 /**
- * Utility class that loads and processes occurrence records read from a CSV file.
- * The expected columns in that file are:
+ * Utility class that loads and processes occurrence records read from a CSV file. The expected
+ * columns in that file are:
  * "key","altitude","basisOfRecord","catalogNumber","classKey","clazz","collectionCode","dataProviderId",
  * "dataResourceId","datasetKey","depth","occurrenceId","family","familyKey","genus",
  * "genusKey","institutionCode","country","continent","kingdom","kingdomKey","latitude","longitude","modified",
  * "occurrenceMonth","taxonKey","occurrenceDate","order","orderKey","otherIssue",
  * "publishingOrgKey","phylum","phylumKey","scientificName","species","speciesKey",
  * "unitQualifier","year","locality","county","stateProvince","continent",
- * "collectorName","collectorNumber","identifierName", "identificationDate".
- * Each cvs line is interpreted into an Occurrence object; to process each object a predicate or list of predicates are
- * passed as parameters to the function loadOccurrences.
+ * "collectorName","collectorNumber","identifierName", "identificationDate". Each cvs line is
+ * interpreted into an Occurrence object; to process each object a predicate or list of predicates
+ * are passed as parameters to the function loadOccurrences.
  */
 public class OccurrenceDataLoader {
 
@@ -87,9 +87,8 @@ public class OccurrenceDataLoader {
     public Set<OccurrenceIssue> execute(Object value, CsvContext context) {
       Set<OccurrenceIssue> occurrenceIssues = Sets.newHashSet();
       try {
-        Set<String> issues = MAPPER.readValue(value.toString(), new TypeReference<Set<String>>() {
-        });
-        if(issues != null && !issues.isEmpty()) {
+        Set<String> issues = MAPPER.readValue(value.toString(), new TypeReference<Set<String>>() {});
+        if (issues != null && !issues.isEmpty()) {
           for (String issueStr : issues) {
             occurrenceIssues.add(VocabularyUtils.lookupEnum(issueStr, OccurrenceIssue.class));
           }
@@ -229,136 +228,78 @@ public class OccurrenceDataLoader {
 
 
   // List of processors, a processor is defined for each column
-  private final static CellProcessor[] CELL_PROCESSORS = new CellProcessor[] {
-    new ParseInt(), // key
-    new Optional(new ParseDouble()), // elevation
-    new Optional(new BasisOfRecordProcessor()), // basisOfRecord
-    new Optional(), // catalogNumber
-    new Optional(new ParseInt()), // classKey
-    new Optional(), // clazz
-    new Optional(), // collectionCode
-    new Optional(new UUIDProcessor()), // datasetKey
-    new Optional(new ParseDouble()),// depth
-    new Optional(),// occurrenceId
-    new Optional(),// family
-    new Optional(new ParseInt()),// familyKey
-    new Optional(),// genus
-    new Optional(new ParseInt()),// genusKey
-    new Optional(),// institutionCode
-    new Optional(new CountryProcessor()),// country
-    new Optional(),// kingdom
-    new Optional(new ParseInt()),// kingdomKey
-    new Optional(new ParseDouble()),// latitude
-    new Optional(new ParseDouble()),// longitude
-    new Optional(new ParseDate(DATE_FORMAT)),// lastInterpreted
-    new Optional(new ParseInt()),// month
-    new Optional(new ParseInt()),// taxonKey
-    new Optional(new ParseDate(DATE_FORMAT)),// eventDate
-    new Optional(),// order
-    new Optional(new ParseInt()),// orderKey
-    new Optional(new UUIDProcessor()),// publishingOrgKey
-    new Optional(),// phylum
-    new Optional(new ParseInt()),// phylumKey
-    new Optional(),// scientificName
-    new Optional(),// species
-    new Optional(new ParseInt()),// speciesKey
-    new Optional(),// unitQualifier
-    new Optional(new ParseInt()),// year
-    new Optional(),// locality
-    new Optional(),// county
-    new Optional(),// stateProvince
-    new Optional(new ContinentProcessor()),// continent
-    new Optional(),// collectorName
-    new Optional(),// recordNumber
-    new Optional(),// identifierName
-    new Optional(new ParseDate(DATE_FORMAT)),// identificationDate
-    new Optional(new TypeStatusProcessor()),// typeStatus
-    new Optional(new MediaListProcessor()),// List<Media> in JSON
-    new Optional(new EstablishmentMeansProcessor()),// establishmentMeans.
-    new Optional(new IssueProcessor()),// issues.
-    new Optional(),// organismId
-    new Optional(),// waterBody
-    new Optional(new EndpointTypeProcessor()), // protocol
-    new Optional(new LicenseProcessor()), // license
-    new Optional(new ParseInt()) // crawlId
+  private final static CellProcessor[] CELL_PROCESSORS = new CellProcessor[] {new ParseInt(), // key
+      new Optional(new ParseDouble()), // elevation
+      new Optional(new BasisOfRecordProcessor()), // basisOfRecord
+      new Optional(), // catalogNumber
+      new Optional(new ParseInt()), // classKey
+      new Optional(), // clazz
+      new Optional(), // collectionCode
+      new Optional(new UUIDProcessor()), // datasetKey
+      new Optional(new ParseDouble()), // depth
+      new Optional(), // occurrenceId
+      new Optional(), // family
+      new Optional(new ParseInt()), // familyKey
+      new Optional(), // genus
+      new Optional(new ParseInt()), // genusKey
+      new Optional(), // institutionCode
+      new Optional(new CountryProcessor()), // country
+      new Optional(), // kingdom
+      new Optional(new ParseInt()), // kingdomKey
+      new Optional(new ParseDouble()), // latitude
+      new Optional(new ParseDouble()), // longitude
+      new Optional(new ParseDate(DATE_FORMAT)), // lastInterpreted
+      new Optional(new ParseInt()), // month
+      new Optional(new ParseInt()), // taxonKey
+      new Optional(new ParseDate(DATE_FORMAT)), // eventDate
+      new Optional(), // order
+      new Optional(new ParseInt()), // orderKey
+      new Optional(new UUIDProcessor()), // publishingOrgKey
+      new Optional(), // phylum
+      new Optional(new ParseInt()), // phylumKey
+      new Optional(), // scientificName
+      new Optional(), // species
+      new Optional(new ParseInt()), // speciesKey
+      new Optional(), // unitQualifier
+      new Optional(new ParseInt()), // year
+      new Optional(), // locality
+      new Optional(), // county
+      new Optional(), // stateProvince
+      new Optional(new ContinentProcessor()), // continent
+      new Optional(), // collectorName
+      new Optional(), // recordNumber
+      new Optional(), // identifierName
+      new Optional(new ParseDate(DATE_FORMAT)), // identificationDate
+      new Optional(new TypeStatusProcessor()), // typeStatus
+      new Optional(new MediaListProcessor()), // List<Media> in JSON
+      new Optional(new EstablishmentMeansProcessor()), // establishmentMeans.
+      new Optional(new IssueProcessor()), // issues.
+      new Optional(), // organismId
+      new Optional(), // waterBody
+      new Optional(new EndpointTypeProcessor()), // protocol
+      new Optional(new LicenseProcessor()), // license
+      new Optional(new ParseInt()) // crawlId
   };
 
 
   // Column headers
-  private final static String[] HEADER = new String[] {
-    "key",
-    "elevation",
-    "basisOfRecord",
-    "catalogNumber",
-    "classKey",
-    "clazz",
-    "collectionCode",
-    "datasetKey",
-    "depth",
-    "occurrenceId",
-    "family",
-    "familyKey",
-    "genus",
-    "genusKey",
-    "institutionCode",
-    "country",
-    "kingdom",
-    "kingdomKey",
-    "decimalLatitude",
-    "decimalLongitude",
-    "lastInterpreted",
-    "month",
-    "taxonKey",
-    "eventDate",
-    "order",
-    "orderKey",
-    "publishingOrgKey",
-    "phylum",
-    "phylumKey",
-    "scientificName",
-    "species",
-    "speciesKey",
-    "unitQualifier",
-    "year",
-    "locality",
-    "county",
-    "stateProvince",
-    "continent",
-    "recordedBy",
-    "recordNumber",
-    "identifiedBy",
-    "dateIdentified",
-    "typeStatus",
-    "media",
-    "establishmentMeans",
-    "issues",
-    "organismID",
-    "waterBody",
-    "protocol",
-    "license",
-    "crawlId"
-  };
+  private final static String[] HEADER = new String[] {"key", "elevation", "basisOfRecord", "catalogNumber", "classKey", "clazz",
+      "collectionCode", "datasetKey", "depth", "occurrenceId", "family", "familyKey", "genus", "genusKey", "institutionCode", "country",
+      "kingdom", "kingdomKey", "decimalLatitude", "decimalLongitude", "lastInterpreted", "month", "taxonKey", "eventDate", "order",
+      "orderKey", "publishingOrgKey", "phylum", "phylumKey", "scientificName", "species", "speciesKey", "unitQualifier", "year", "locality",
+      "county", "stateProvince", "continent", "recordedBy", "recordNumber", "identifiedBy", "dateIdentified", "typeStatus", "media",
+      "establishmentMeans", "issues", "organismID", "waterBody", "protocol", "license", "crawlId"};
 
 
   // Verbatim field names
-  private final static Set<String> VERBATIM_FIELDS = new ImmutableSet.Builder<String>().add(
-    "catalogNumber",
-    "collectionCode",
-    "occurrenceId",
-    "institutionCode",
-    "unitQualifier",
-    "locality",
-    "county",
-    "stateProvince",
-    "recordedBy",
-    "recordNumber",
-    "identifiedBy",
-    "organismID").build();
+  private final static Set<String> VERBATIM_FIELDS =
+      new ImmutableSet.Builder<String>().add("catalogNumber", "collectionCode", "occurrenceId", "institutionCode", "unitQualifier",
+          "locality", "county", "stateProvince", "recordedBy", "recordNumber", "identifiedBy", "organismID").build();
 
 
   /**
-   * Reads a CSV file and produces occurrence records for each line.
-   * Each occurrence object is processed by the list of processors.
+   * Reads a CSV file and produces occurrence records for each line. Each occurrence object is
+   * processed by the list of processors.
    *
    * @param fileName CSV file
    * @param processors list of processors(predicates) that consume occurrence objects
@@ -367,9 +308,7 @@ public class OccurrenceDataLoader {
     ICsvMapReader reader = null;
     int line = 1;
     try {
-      reader =
-        new CsvMapReader(new FileReader(new File(Resources.getResource(fileName).toURI())),
-          CsvPreference.STANDARD_PREFERENCE);
+      reader = new CsvMapReader(new FileReader(new File(Resources.getResource(fileName).toURI())), CsvPreference.STANDARD_PREFERENCE);
       reader.getHeader(true);
       Map<String, Object> occurrenceMap;
       while ((occurrenceMap = reader.read(HEADER, CELL_PROCESSORS)) != null) {

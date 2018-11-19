@@ -1,24 +1,26 @@
 package org.gbif.occurrence.persistence.api;
 
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
+
 import javax.annotation.Nullable;
+
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
 
 import com.google.common.base.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Represents an occurrence "fragment" from one of our publishers, either XML from any of our supported schemas (listed
- * in OccurrenceSchemaType) or JSON from a DarwinCore Archive. In most cases it represents one occurrence record - the
- * exception is ABCD 2, in which multiple Identification elements may exist (within the xml data) which we interpret as
- * distinct, multiple occurrences within this one fragment. In the ABCD 2 multiples case the resulting Fragments can
- * only be differentiated by the scientific name within each Identification, which is stored here and in subsequent
- * occurrence objects (VerbatimOccurrence and Occurrence) as the UnitQualifier.
+ * Represents an occurrence "fragment" from one of our publishers, either XML from any of our
+ * supported schemas (listed in OccurrenceSchemaType) or JSON from a DarwinCore Archive. In most
+ * cases it represents one occurrence record - the exception is ABCD 2, in which multiple
+ * Identification elements may exist (within the xml data) which we interpret as distinct, multiple
+ * occurrences within this one fragment. In the ABCD 2 multiples case the resulting Fragments can
+ * only be differentiated by the scientific name within each Identification, which is stored here
+ * and in subsequent occurrence objects (VerbatimOccurrence and Occurrence) as the UnitQualifier.
  *
  * @see OccurrenceSchemaType
  */
@@ -36,18 +38,9 @@ public class Fragment {
   private EndpointType protocol;
   private Long created;
 
-  public Fragment(
-    UUID datasetKey,
-    @Nullable byte[] data,
-    @Nullable byte[] dataHash,
-    @Nullable FragmentType fragmentType,
-    @Nullable EndpointType protocol,
-    @Nullable Date harvestedDate,
-    @Nullable Integer crawlId,
-    @Nullable OccurrenceSchemaType xmlSchema,
-    @Nullable String unitQualifier,
-    @Nullable Long created)
-  {
+  public Fragment(UUID datasetKey, @Nullable byte[] data, @Nullable byte[] dataHash, @Nullable FragmentType fragmentType,
+      @Nullable EndpointType protocol, @Nullable Date harvestedDate, @Nullable Integer crawlId, @Nullable OccurrenceSchemaType xmlSchema,
+      @Nullable String unitQualifier, @Nullable Long created) {
     this.datasetKey = checkNotNull(datasetKey, "datasetKey can't be null");
     if (data != null) {
       this.data = Arrays.copyOf(data, data.length);
@@ -158,9 +151,8 @@ public class Fragment {
 
   @Override
   public int hashCode() {
-    return Objects
-      .hashCode(key, datasetKey, data, dataHash, unitQualifier, fragmentType, harvestedDate, crawlId, xmlSchema,
-                protocol, created);
+    return Objects.hashCode(key, datasetKey, data, dataHash, unitQualifier, fragmentType, harvestedDate, crawlId, xmlSchema, protocol,
+        created);
   }
 
   @Override
@@ -172,20 +164,18 @@ public class Fragment {
       return false;
     }
     final Fragment other = (Fragment) obj;
-    return Objects.equal(this.key, other.key) && Objects.equal(this.datasetKey, other.datasetKey) && Objects
-      .equal(this.data, other.data) && Objects.equal(this.dataHash, other.dataHash) && Objects
-             .equal(this.unitQualifier, other.unitQualifier) && Objects.equal(this.fragmentType, other.fragmentType)
-           && Objects.equal(this.harvestedDate, other.harvestedDate) && Objects.equal(this.crawlId, other.crawlId)
-           && Objects.equal(this.xmlSchema, other.xmlSchema) && Objects.equal(this.protocol, other.protocol) && Objects
-      .equal(this.created, other.created);
+    return Objects.equal(this.key, other.key) && Objects.equal(this.datasetKey, other.datasetKey) && Objects.equal(this.data, other.data)
+        && Objects.equal(this.dataHash, other.dataHash) && Objects.equal(this.unitQualifier, other.unitQualifier)
+        && Objects.equal(this.fragmentType, other.fragmentType) && Objects.equal(this.harvestedDate, other.harvestedDate)
+        && Objects.equal(this.crawlId, other.crawlId) && Objects.equal(this.xmlSchema, other.xmlSchema)
+        && Objects.equal(this.protocol, other.protocol) && Objects.equal(this.created, other.created);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("key", key).add("datasetKey", datasetKey).add("data", data)
-      .add("dataHash", dataHash).add("unitQualifier", unitQualifier).add("fragmentType", fragmentType)
-      .add("harvestedDate", harvestedDate).add("crawlId", crawlId).add("xmlSchema", xmlSchema).add("protocol", protocol)
-      .add("created", created).toString();
+    return Objects.toStringHelper(this).add("key", key).add("datasetKey", datasetKey).add("data", data).add("dataHash", dataHash)
+        .add("unitQualifier", unitQualifier).add("fragmentType", fragmentType).add("harvestedDate", harvestedDate).add("crawlId", crawlId)
+        .add("xmlSchema", xmlSchema).add("protocol", protocol).add("created", created).toString();
   }
 
   public enum FragmentType {

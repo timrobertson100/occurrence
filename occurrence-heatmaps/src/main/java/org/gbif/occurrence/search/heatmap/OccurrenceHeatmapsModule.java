@@ -1,10 +1,10 @@
 package org.gbif.occurrence.search.heatmap;
 
-import org.gbif.common.search.solr.SolrModule;
-import org.gbif.common.search.solr.SolrConfig;
-import org.gbif.service.guice.PrivateServiceModule;
-
 import java.util.Properties;
+
+import org.gbif.common.search.solr.SolrConfig;
+import org.gbif.common.search.solr.SolrModule;
+import org.gbif.service.guice.PrivateServiceModule;
 
 /**
  * Occurrence search guice module.

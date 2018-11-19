@@ -1,5 +1,9 @@
 package org.gbif.occurrence.download.query;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
 import org.gbif.api.model.occurrence.predicate.ConjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.DisjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.EqualsPredicate;
@@ -13,13 +17,9 @@ import org.gbif.api.model.occurrence.predicate.NotPredicate;
 import org.gbif.api.model.occurrence.predicate.Predicate;
 import org.gbif.api.model.occurrence.predicate.WithinPredicate;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
-
-import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import com.google.common.collect.Lists;
 
 public class SolrQueryVisitorTest {
 
@@ -83,8 +83,7 @@ public class SolrQueryVisitorTest {
   public void testInPredicate() throws QueryBuildingException {
     Predicate p = new InPredicate(PARAM, Lists.newArrayList("value_1", "value_2", "value_3"));
     String query = visitor.getQuery(p);
-    assertThat(query,
-      equalTo("((catalog_number:value_1) OR (catalog_number:value_2) OR (catalog_number:value_3))"));
+    assertThat(query, equalTo("((catalog_number:value_1) OR (catalog_number:value_2) OR (catalog_number:value_3))"));
   }
 
   @Test

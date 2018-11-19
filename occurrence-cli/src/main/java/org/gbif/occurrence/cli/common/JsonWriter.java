@@ -7,8 +7,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
 /**
- * Simple writer to serialize {@link Object} as JSON into a file.
- * This class holds a shared {@link ObjectMapper} instance.
+ * Simple writer to serialize {@link Object} as JSON into a file. This class holds a shared
+ * {@link ObjectMapper} instance.
  */
 public class JsonWriter {
 
@@ -19,12 +19,13 @@ public class JsonWriter {
 
   /**
    * Serialize an {@link Object} to JSON into a file.
+   * 
    * @param outputFilepath
    * @param obj
    * @throws IOException
    */
   public static void objectToJsonFile(String outputFilepath, Object obj) throws IOException {
-    //creates folder structure (if required)
+    // creates folder structure (if required)
     File reportFile = new File(outputFilepath);
     if (reportFile.getParentFile() != null && !reportFile.getParentFile().exists()) {
       reportFile.getParentFile().mkdirs();
@@ -34,6 +35,7 @@ public class JsonWriter {
 
   /**
    * Serialize an {@link Object} to JSON into {@link String}.
+   * 
    * @param obj
    * @return
    * @throws IOException

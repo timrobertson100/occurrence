@@ -2,7 +2,6 @@ package org.gbif.occurrence.processor.interpreting.util;
 
 import org.gbif.common.parsers.geospatial.CellIdUtils;
 import org.gbif.common.parsers.geospatial.UnableToGenerateCellIdException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +14,7 @@ public class CellIdCalculator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CellIdCalculator.class);
 
-  private CellIdCalculator() {
-  }
+  private CellIdCalculator() {}
 
   /**
    * Calculates the cell id for the given lat, lng.

@@ -3,9 +3,9 @@ package org.gbif.occurrence.persistence.api;
 import com.google.common.base.Objects;
 
 /**
- * The result of attempting to insert a new Fragment. The usual case will be that the key is created as expected. It is
- * possible that a race could mean that another snippet with the same unique identifiers creates the key first, making
- * this an update.
+ * The result of attempting to insert a new Fragment. The usual case will be that the key is created
+ * as expected. It is possible that a race could mean that another snippet with the same unique
+ * identifiers creates the key first, making this an update.
  */
 public class FragmentCreationResult {
 

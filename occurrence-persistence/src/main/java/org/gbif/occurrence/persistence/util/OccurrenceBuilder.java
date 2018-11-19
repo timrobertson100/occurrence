@@ -1,6 +1,21 @@
 package org.gbif.occurrence.persistence.util;
 
-import com.google.common.base.Splitter;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
+import javax.validation.ValidationException;
+
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.model.common.Identifier;
 import org.gbif.api.model.common.MediaObject;
 import org.gbif.api.model.occurrence.Occurrence;
@@ -34,28 +49,14 @@ import org.gbif.occurrence.common.json.MediaSerDeserUtils;
 import org.gbif.occurrence.persistence.api.Fragment;
 import org.gbif.occurrence.persistence.hbase.Columns;
 import org.gbif.occurrence.persistence.hbase.ExtResultReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
-import javax.validation.ValidationException;
-
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A utility class to build object models from the HBase occurrence "row".
@@ -66,32 +67,29 @@ public class OccurrenceBuilder {
 
   public static final String LIST_SEPARATOR = ";";
 
-  //Splits ; separate values
-  private static final Splitter LIST_SPLITTER =  Splitter.on(LIST_SEPARATOR).omitEmptyStrings().trimResults();
+  // Splits ; separate values
+  private static final Splitter LIST_SPLITTER = Splitter.on(LIST_SEPARATOR).omitEmptyStrings().trimResults();
 
   // TODO: move these maps to Classification, Term or RankUtils
-  public static final Map<Rank, Term> rank2taxonTerm =
-    ImmutableMap.<Rank, Term>builder().put(Rank.KINGDOM, DwcTerm.kingdom).put(Rank.PHYLUM, DwcTerm.phylum)
-      .put(Rank.CLASS, DwcTerm.class_).put(Rank.ORDER, DwcTerm.order).put(Rank.FAMILY, DwcTerm.family)
+  public static final Map<Rank, Term> rank2taxonTerm = ImmutableMap.<Rank, Term>builder().put(Rank.KINGDOM, DwcTerm.kingdom)
+      .put(Rank.PHYLUM, DwcTerm.phylum).put(Rank.CLASS, DwcTerm.class_).put(Rank.ORDER, DwcTerm.order).put(Rank.FAMILY, DwcTerm.family)
       .put(Rank.GENUS, DwcTerm.genus).put(Rank.SUBGENUS, DwcTerm.subgenus).put(Rank.SPECIES, GbifTerm.species).build();
 
   public static final Map<Rank, Term> rank2KeyTerm =
-    ImmutableMap.<Rank, Term>builder().put(Rank.KINGDOM, GbifTerm.kingdomKey).put(Rank.PHYLUM, GbifTerm.phylumKey)
-      .put(Rank.CLASS, GbifTerm.classKey).put(Rank.ORDER, GbifTerm.orderKey).put(Rank.FAMILY, GbifTerm.familyKey)
-      .put(Rank.GENUS, GbifTerm.genusKey).put(Rank.SUBGENUS, GbifTerm.subgenusKey)
-      .put(Rank.SPECIES, GbifTerm.speciesKey).build();
+      ImmutableMap.<Rank, Term>builder().put(Rank.KINGDOM, GbifTerm.kingdomKey).put(Rank.PHYLUM, GbifTerm.phylumKey)
+          .put(Rank.CLASS, GbifTerm.classKey).put(Rank.ORDER, GbifTerm.orderKey).put(Rank.FAMILY, GbifTerm.familyKey)
+          .put(Rank.GENUS, GbifTerm.genusKey).put(Rank.SUBGENUS, GbifTerm.subgenusKey).put(Rank.SPECIES, GbifTerm.speciesKey).build();
 
   // should never be instantiated
-  private OccurrenceBuilder() {
-  }
+  private OccurrenceBuilder() {}
 
   /**
    * Transforms a String value into a list of UUIDs.
    */
   private static List<UUID> getListUuid(Result row, Term column) {
     String uuids = ExtResultReader.getString(row, column);
-    return uuids == null ? null : StreamSupport.stream(LIST_SPLITTER.split(uuids).spliterator(), false)
-            .map(UUID::fromString).collect(Collectors.toList());
+    return uuids == null ? null
+        : StreamSupport.stream(LIST_SPLITTER.split(uuids).spliterator(), false).map(UUID::fromString).collect(Collectors.toList());
   }
 
   /**
@@ -130,7 +128,8 @@ public class OccurrenceBuilder {
     String rawSchema = ExtResultReader.getString(result, GbifInternalTerm.xmlSchema);
     OccurrenceSchemaType schema;
     if (rawSchema == null) {
-      // this is typically called just before updating the fragment, meaning schemaType will then be correctly set
+      // this is typically called just before updating the fragment, meaning schemaType will then be
+      // correctly set
       LOG.debug("Fragment with key [{}] has no schema type - assuming DWCA.", key);
       schema = OccurrenceSchemaType.DWCA;
     } else {
@@ -141,13 +140,10 @@ public class OccurrenceBuilder {
 
     Fragment frag;
     if (schema == null || schema == OccurrenceSchemaType.DWCA) {
-      frag =
-        new Fragment(datasetKey, data, dataHash, Fragment.FragmentType.JSON, protocol, harvestedDate, crawlId, schema,
-          null, created);
+      frag = new Fragment(datasetKey, data, dataHash, Fragment.FragmentType.JSON, protocol, harvestedDate, crawlId, schema, null, created);
     } else {
-      frag =
-        new Fragment(datasetKey, data, dataHash, Fragment.FragmentType.XML, protocol, harvestedDate, crawlId, schema,
-          unitQualifier, created);
+      frag = new Fragment(datasetKey, data, dataHash, Fragment.FragmentType.XML, protocol, harvestedDate, crawlId, schema, unitQualifier,
+          created);
     }
     frag.setKey(key);
 
@@ -184,10 +180,8 @@ public class OccurrenceBuilder {
       occ.setTaxonRank(ExtResultReader.getEnum(row, DwcTerm.taxonRank, Rank.class));
       occ.setTaxonomicStatus(ExtResultReader.getEnum(row, DwcTerm.taxonomicStatus, TaxonomicStatus.class));
       for (Rank r : Rank.DWC_RANKS) {
-        ClassificationUtils
-          .setHigherRankKey(occ, r, ExtResultReader.getInteger(row, OccurrenceBuilder.rank2KeyTerm.get(r)));
-        ClassificationUtils
-          .setHigherRank(occ, r, ExtResultReader.getString(row, OccurrenceBuilder.rank2taxonTerm.get(r)));
+        ClassificationUtils.setHigherRankKey(occ, r, ExtResultReader.getInteger(row, OccurrenceBuilder.rank2KeyTerm.get(r)));
+        ClassificationUtils.setHigherRank(occ, r, ExtResultReader.getString(row, OccurrenceBuilder.rank2taxonTerm.get(r)));
       }
 
       // other java properties
@@ -238,7 +232,8 @@ public class OccurrenceBuilder {
       occ.setIssues(extractIssues(row));
       occ.setMedia(buildMedia(row));
 
-      //It  should be replaced by License.fromString(value).orNull() but conflicts of Guava versions avoid its usage
+      // It should be replaced by License.fromString(value).orNull() but conflicts of Guava versions avoid
+      // its usage
       occ.setLicense(VocabularyUtils.lookupEnum(ExtResultReader.getString(row, DcTerm.license), License.class));
 
       return occ;

@@ -1,14 +1,14 @@
 package org.gbif.occurrence.download.hive;
 
-import org.gbif.dwc.terms.Term;
-
 import javax.annotation.concurrent.Immutable;
+
+import org.gbif.dwc.terms.Term;
 
 import com.google.common.base.Objects;
 
 /**
- * A field within the definition encapsulates the information linking the Hive field, the Term in the
- * enumeration and the type for the Hive table.
+ * A field within the definition encapsulates the information linking the Hive field, the Term in
+ * the enumeration and the type for the Hive table.
  */
 @Immutable
 public class Field {
@@ -30,14 +30,15 @@ public class Field {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
 
     Field that = (Field) o;
 
-    return Objects.equal(this.hiveField, that.hiveField) &&
-           Objects.equal(this.hiveDataType, that.hiveDataType) &&
-           Objects.equal(this.term, that.term);
+    return Objects.equal(this.hiveField, that.hiveField) && Objects.equal(this.hiveDataType, that.hiveDataType)
+        && Objects.equal(this.term, that.term);
   }
 
   @Override

@@ -1,23 +1,17 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.parsing.response_file;
-
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.occurrence.constants.ExtractionSimpleXPaths;
-import org.gbif.occurrence.constants.ResponseElementEnum;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,10 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.occurrence.constants.ExtractionSimpleXPaths;
+import org.gbif.occurrence.constants.ResponseElementEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * Primary purpose of this class is, given a raw occurrence record serialized to String from XML,
@@ -52,7 +47,8 @@ public class ResponseSchemaDetector {
     for (String elem : elements) {
       result = xml.contains(elem);
       LOG.debug("Xml contains [{}] is [{}]", elem, result);
-      if (!result) return result;
+      if (!result)
+        return result;
     }
 
     return result;
@@ -69,7 +65,8 @@ public class ResponseSchemaDetector {
       }
     }
 
-    if (result == null) LOG.warn("Could not determine schema for xml [{}]", xml);
+    if (result == null)
+      LOG.warn("Could not determine schema for xml [{}]", xml);
 
     return result;
   }

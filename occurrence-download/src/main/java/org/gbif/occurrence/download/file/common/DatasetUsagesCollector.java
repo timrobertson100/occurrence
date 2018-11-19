@@ -1,12 +1,12 @@
 package org.gbif.occurrence.download.file.common;
 
-import org.gbif.api.vocabulary.License;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.gbif.api.vocabulary.License;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
@@ -19,7 +19,8 @@ public class DatasetUsagesCollector {
 
   private Map<UUID, Long> datasetUsages = Maps.newHashMap();
 
-  // we simply keep the String used to identify the licenses to avoid the conversion to License each time
+  // we simply keep the String used to identify the licenses to avoid the conversion to License each
+  // time
   private Set<String> datasetLicensesString = Sets.newHashSet();
   private Set<License> datasetLicenses = Sets.newHashSet();
 
@@ -28,13 +29,13 @@ public class DatasetUsagesCollector {
    */
   public void incrementDatasetUsage(String datasetKey) {
     if (datasetKey != null) {
-      datasetUsages.compute(UUID.fromString(datasetKey), (key, count) -> (count == null) ? 1L : count +1);
+      datasetUsages.compute(UUID.fromString(datasetKey), (key, count) -> (count == null) ? 1L : count + 1);
     }
   }
 
   /**
-   * Increments in 1 the number of records coming from the dataset (if any) parameter.
-   * Record the license.
+   * Increments in 1 the number of records coming from the dataset (if any) parameter. Record the
+   * license.
    *
    * @param datasetKey
    * @param license
@@ -42,9 +43,9 @@ public class DatasetUsagesCollector {
   public void collectDatasetUsage(String datasetKey, String license) {
     incrementDatasetUsage(datasetKey);
 
-    if(license != null && !datasetLicensesString.contains(license)) {
+    if (license != null && !datasetLicensesString.contains(license)) {
       Optional<License> l = License.fromString(license);
-      if(l.isPresent()) {
+      if (l.isPresent()) {
         datasetLicensesString.add(license);
         datasetLicenses.add(l.get());
       }
@@ -56,10 +57,10 @@ public class DatasetUsagesCollector {
    */
   public void sumUsages(Map<UUID, Long> fromDatasetUsages) {
     datasetUsages = Stream.concat(datasetUsages.entrySet().stream(), fromDatasetUsages.entrySet().stream())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, Long::sum));
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, Long::sum));
   }
 
-  public void mergeLicenses(Set<License> licenses){
+  public void mergeLicenses(Set<License> licenses) {
     // we don't really need to update datasetLicensesString
     datasetLicenses.addAll(licenses);
   }
@@ -73,9 +74,10 @@ public class DatasetUsagesCollector {
 
   /**
    * Dataset licenses: all distinct licenses used in the download.
+   * 
    * @return
    */
-  public Set<License> getDatasetLicenses(){
+  public Set<License> getDatasetLicenses() {
     return datasetLicenses;
   }
 }

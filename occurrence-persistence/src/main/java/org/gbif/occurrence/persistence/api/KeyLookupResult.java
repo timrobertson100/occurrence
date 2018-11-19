@@ -3,8 +3,8 @@ package org.gbif.occurrence.persistence.api;
 import com.google.common.base.Objects;
 
 /**
- * Wraps the result of looking up an Occurrence key in order to provide information on whether the key was created for
- * this request or not.
+ * Wraps the result of looking up an Occurrence key in order to provide information on whether the
+ * key was created for this request or not.
  */
 public class KeyLookupResult {
 

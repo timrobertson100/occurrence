@@ -1,19 +1,19 @@
 package org.gbif.metrics.ws.client;
 
+import java.io.IOException;
+
 import org.gbif.api.service.occurrence.OccurrenceDatasetIndexService;
 import org.gbif.metrics.ws.client.guice.MetricsWsClientModule;
 import org.gbif.occurrence.ws.OccurrenceWsListener;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.ws.client.BaseResourceTest;
 import org.gbif.ws.client.guice.UrlBindingModule;
-
-import java.io.IOException;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * A simple Grizzly based WS IT test
@@ -42,12 +42,12 @@ public class OccurrenceDatasetIndexWsClientIT extends BaseResourceTest {
 
   @Before
   public void init() throws IOException {
-    // This uses UrlBindingModule to dynamically set the named property (metrics.ws.url) taking into account that the
+    // This uses UrlBindingModule to dynamically set the named property (metrics.ws.url) taking into
+    // account that the
     // port might have been set at runtime with system properties (hence the metrics-ws.url is omitted
     // in the properties)
-    Injector clientInjector = Guice.createInjector(
-      new UrlBindingModule(getBaseURI().toString() + CONTEXT, "metrics.ws.url"),
-      new MetricsWsClientModule(PropertiesUtil.loadProperties(PROPERTIES_FILE)));
+    Injector clientInjector = Guice.createInjector(new UrlBindingModule(getBaseURI().toString() + CONTEXT, "metrics.ws.url"),
+        new MetricsWsClientModule(PropertiesUtil.loadProperties(PROPERTIES_FILE)));
     wsClient = clientInjector.getInstance(OccurrenceDatasetIndexService.class);
   }
 }

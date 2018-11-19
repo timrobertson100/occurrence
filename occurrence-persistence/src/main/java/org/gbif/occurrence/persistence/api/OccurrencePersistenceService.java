@@ -1,28 +1,30 @@
 package org.gbif.occurrence.persistence.api;
 
-import org.gbif.api.service.occurrence.OccurrenceService;
-
 import java.util.Iterator;
 
+import org.gbif.api.service.occurrence.OccurrenceService;
+
 /**
- * A convenience interface to avoid exposing writing and other, expensive methods at the public api level.
+ * A convenience interface to avoid exposing writing and other, expensive methods at the public api
+ * level.
  */
 public interface OccurrencePersistenceService extends OccurrenceService, OccurrenceWriter {
 
   /**
-   * Returns an iterator over the occurrence keys that match the given column name and value. Note that this Iterator
-   * will probably be backed by a connection to a datasource (e.g. HBase) and there is the possibility that the
-   * connection will fail and/or timeout. If that should happen a runtime
-   * {@link org.gbif.api.exception.ServiceUnavailableException} will be thrown. To guarantee that any held resources
-   * are properly released, make sure to iterate until getNext() returns false.
+   * Returns an iterator over the occurrence keys that match the given column name and value. Note
+   * that this Iterator will probably be backed by a connection to a datasource (e.g. HBase) and there
+   * is the possibility that the connection will fail and/or timeout. If that should happen a runtime
+   * {@link org.gbif.api.exception.ServiceUnavailableException} will be thrown. To guarantee that any
+   * held resources are properly released, make sure to iterate until getNext() returns false.
    *
    * @param columnValue the value to match
    * @param columnName the column to check for the columnValue
    *
    * @return an Iterator over the occurrence keys matching the requested column
    *
-   * //TODO: this seems to throw PersistenceException in code not ServiceUnavailableException
-   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection fails
+   *         //TODO: this seems to throw PersistenceException in code not ServiceUnavailableException
+   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection
+   *         fails
    */
   Iterator<Integer> getKeysByColumn(byte[] columnValue, String columnName);
 

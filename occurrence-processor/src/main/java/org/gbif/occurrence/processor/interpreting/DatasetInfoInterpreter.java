@@ -1,5 +1,18 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.api.model.Constants.EBIRD_DATASET_KEY;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Network;
@@ -10,15 +23,8 @@ import org.gbif.common.parsers.core.OccurrenceParseResult;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.registry.ws.client.DatasetWsClient;
 import org.gbif.registry.ws.client.OrganizationWsClient;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -27,15 +33,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.WebResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.gbif.api.model.Constants.EBIRD_DATASET_KEY;
 
 /**
- * This is not an Interpreter. It's just a wrapper around the webservice calls to look up dataset info that is included
- * in occurrence records.
+ * This is not an Interpreter. It's just a wrapper around the webservice calls to look up dataset
+ * info that is included in occurrence records.
  */
 public class DatasetInfoInterpreter implements Serializable {
 
@@ -73,26 +74,23 @@ public class DatasetInfoInterpreter implements Serializable {
   private final OrganizationWsClient orgClient;
 
   private final LoadingCache<UUID, Organization> orgCache =
-    CacheBuilder.newBuilder().maximumSize(5000).expireAfterAccess(15, TimeUnit.MINUTES)
-      .build(new CacheLoader<UUID, Organization>() {
+      CacheBuilder.newBuilder().maximumSize(5000).expireAfterAccess(15, TimeUnit.MINUTES).build(new CacheLoader<UUID, Organization>() {
 
         @Override
         public Organization load(UUID key) throws Exception {
           return orgClient.get(key);
-       }
-    });
+        }
+      });
 
   // The repetitive nature of our data encourages use of a light cache to reduce WS load
   private final LoadingCache<UUID, DatasetCacheData> datasetCache =
-    CacheBuilder.newBuilder().maximumSize(50000).expireAfterAccess(15, TimeUnit.MINUTES)
-      .build(new CacheLoader<UUID, DatasetCacheData>() {
+      CacheBuilder.newBuilder().maximumSize(50000).expireAfterAccess(15, TimeUnit.MINUTES).build(new CacheLoader<UUID, DatasetCacheData>() {
 
         @Override
         public DatasetCacheData load(UUID key) throws Exception {
           Dataset dataset = datasetClient.get(key);
           if (dataset != null) {
-            return new DatasetCacheData(dataset, datasetClient.listNetworks(key),
-                                        orgCache.get(dataset.getPublishingOrganizationKey()));
+            return new DatasetCacheData(dataset, datasetClient.listNetworks(key), orgCache.get(dataset.getPublishingOrganizationKey()));
           }
           return null;
         }
@@ -141,12 +139,12 @@ public class DatasetInfoInterpreter implements Serializable {
       occ.setPublishingCountry(country);
     }
 
-    // By GBIF policy, records are licensed at dataset level (i.e. don't change this to use dwc:license).
+    // By GBIF policy, records are licensed at dataset level (i.e. don't change this to use
+    // dwc:license).
     Optional.ofNullable(datasetCacheData.dataset.getLicense()).ifPresent(occ::setLicense);
     Optional.ofNullable(datasetCacheData.dataset.getInstallationKey()).ifPresent(occ::setInstallationKey);
-    Optional.ofNullable(datasetCacheData.networks).ifPresent(networks ->
-        occ.setNetworkKeys(networks.stream().map(Network::getKey).collect(Collectors.toList()))
-    );
+    Optional.ofNullable(datasetCacheData.networks)
+        .ifPresent(networks -> occ.setNetworkKeys(networks.stream().map(Network::getKey).collect(Collectors.toList())));
   }
 
   /**

@@ -1,28 +1,29 @@
 package org.gbif.occurrence.download.oozie;
 
+import java.util.Properties;
+
+import org.apache.curator.framework.CuratorFramework;
 import org.gbif.occurrence.download.conf.WorkflowConfiguration;
 import org.gbif.occurrence.download.file.DownloadJobConfiguration;
 import org.gbif.occurrence.download.file.DownloadMaster;
 import org.gbif.occurrence.download.inject.DownloadWorkflowModule;
 import org.gbif.utils.file.properties.PropertiesUtil;
-
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
+
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Class that encapsulates the process of creating the occurrence files from Solr/HBase.
- * To start the process
+ * Class that encapsulates the process of creating the occurrence files from Solr/HBase. To start
+ * the process
  */
 public class FromSolrDownloadAction {
 
@@ -33,32 +34,24 @@ public class FromSolrDownloadAction {
   /**
    * Private constructor.
    */
-  private FromSolrDownloadAction(){
-    //Instances of this class are not allowed
+  private FromSolrDownloadAction() {
+    // Instances of this class are not allowed
   }
 
   /**
-   * Executes the download creation process.
-   * All the arguments are required and expected in the following order:
-   * 0. downloadFormat: output format
-   * 1. solrQuery: Solr query to produce to be used to retrieve the results.
-   * 2. downloadKey: occurrence download identifier.
-   * 3. filter: filter predicate.
-   * 4. downloadTableName: base table/file name.
+   * Executes the download creation process. All the arguments are required and expected in the
+   * following order: 0. downloadFormat: output format 1. solrQuery: Solr query to produce to be used
+   * to retrieve the results. 2. downloadKey: occurrence download identifier. 3. filter: filter
+   * predicate. 4. downloadTableName: base table/file name.
    */
   public static void main(String[] args) throws Exception {
     Properties settings = PropertiesUtil.loadProperties(DownloadWorkflowModule.CONF_FILE);
     settings.setProperty(DownloadWorkflowModule.DynamicSettings.DOWNLOAD_FORMAT_KEY, args[0]);
     WorkflowConfiguration workflowConfiguration = new WorkflowConfiguration(settings);
-    run(workflowConfiguration, new DownloadJobConfiguration.Builder().withSolrQuery(args[1])
-          .withDownloadKey(args[2])
-          .withFilter(args[3])
-          .withDownloadTableName(args[4])
-          .withSourceDir(workflowConfiguration.getTempDir())
-          .withIsSmallDownload(true)
-          .withDownloadFormat(workflowConfiguration.getDownloadFormat())
-          .withUser(args[5])
-          .build());
+    run(workflowConfiguration,
+        new DownloadJobConfiguration.Builder().withSolrQuery(args[1]).withDownloadKey(args[2]).withFilter(args[3])
+            .withDownloadTableName(args[4]).withSourceDir(workflowConfiguration.getTempDir()).withIsSmallDownload(true)
+            .withDownloadFormat(workflowConfiguration.getDownloadFormat()).withUser(args[5]).build());
 
   }
 
@@ -110,4 +103,3 @@ public class FromSolrDownloadAction {
   }
 
 }
-

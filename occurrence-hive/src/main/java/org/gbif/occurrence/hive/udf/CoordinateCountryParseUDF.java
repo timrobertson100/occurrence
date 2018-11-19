@@ -1,21 +1,10 @@
 package org.gbif.occurrence.hive.udf;
 
-import org.gbif.api.vocabulary.Country;
-import org.gbif.api.vocabulary.OccurrenceIssue;
-import org.gbif.common.parsers.core.OccurrenceParseResult;
-import org.gbif.common.parsers.core.ParseResult;
-import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
-import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
-import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
-import org.gbif.occurrence.processor.interpreting.result.CoordinateResult;
-
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import com.beust.jcommander.internal.Lists;
-import com.google.common.base.Strings;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -24,15 +13,25 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.gbif.api.vocabulary.Country;
+import org.gbif.api.vocabulary.OccurrenceIssue;
+import org.gbif.common.parsers.core.OccurrenceParseResult;
+import org.gbif.common.parsers.core.ParseResult;
+import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
+import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
+import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
+import org.gbif.occurrence.processor.interpreting.result.CoordinateResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.internal.Lists;
+import com.google.common.base.Strings;
+
 /**
- * A UDF that uses the GBIF API to verify coordinates look sensible.
- * If coordinates aren't available then country is interpreted only.
- * If coordinates are present, then country and coordinates are returned only if they don't contradict, otherwise they
- * are BOTH dropped.
- * Note: This is used for the GBIF EU BON analysis.
+ * A UDF that uses the GBIF API to verify coordinates look sensible. If coordinates aren't available
+ * then country is interpreted only. If coordinates are present, then country and coordinates are
+ * returned only if they don't contradict, otherwise they are BOTH dropped. Note: This is used for
+ * the GBIF EU BON analysis.
  */
 @Description(name = "parseCoordinates", value = "_FUNC_(apiUrl, latitude, longitude, verbatim_country)")
 public class CoordinateCountryParseUDF extends GenericUDF {
@@ -57,7 +56,7 @@ public class CoordinateCountryParseUDF extends GenericUDF {
 
   private void init(URI apiWs) {
     if (locInterpreter == null) {
-      synchronized (lock) {    // while we were waiting for the lock, another thread may have instantiated the object
+      synchronized (lock) { // while we were waiting for the lock, another thread may have instantiated the object
         if (locInterpreter == null) {
           LOG.info("Create new coordinate & location interpreter using API at {}", apiWs);
           ApiClientConfiguration cfg = new ApiClientConfiguration();
@@ -88,8 +87,8 @@ public class CoordinateCountryParseUDF extends GenericUDF {
 
     List<Object> result = Lists.newArrayList(3);
 
-    if (arguments[1].get() == null || arguments[2].get() == null
-      || Strings.isNullOrEmpty(arguments[1].get().toString()) || Strings.isNullOrEmpty(arguments[2].get().toString())) {
+    if (arguments[1].get() == null || arguments[2].get() == null || Strings.isNullOrEmpty(arguments[1].get().toString())
+        || Strings.isNullOrEmpty(arguments[2].get().toString())) {
       result.add(null);
       result.add(null);
       result.add(iso); // no coords to dispute the iso
@@ -99,13 +98,14 @@ public class CoordinateCountryParseUDF extends GenericUDF {
     String latitude = converters[1].convert(arguments[1].get()).toString();
     String longitude = converters[2].convert(arguments[2].get()).toString();
 
-    // while we have interpreted the country to try and pass something sensible to the CoordinateInterpreter,
+    // while we have interpreted the country to try and pass something sensible to the
+    // CoordinateInterpreter,
     // it will not infer countries if we pass in UNKNOWN, as it likes NULL.
     interpretedCountry = Country.UNKNOWN == interpretedCountry ? null : interpretedCountry;
 
     // LOG.info("Parsing lat[{}], lng[{}], country[{}]", latitude, longitude, interpretedCountry);
-    OccurrenceParseResult<CoordinateResult> response = getCoordInterpreter(api)
-      .interpretCoordinate(latitude, longitude, null, interpretedCountry);
+    OccurrenceParseResult<CoordinateResult> response =
+        getCoordInterpreter(api).interpretCoordinate(latitude, longitude, null, interpretedCountry);
 
     if (response != null && response.isSuccessful() && !hasSpatialIssue(response.getIssues())) {
       CoordinateResult cc = response.getPayload();
@@ -151,14 +151,11 @@ public class CoordinateCountryParseUDF extends GenericUDF {
 
     converters = new ObjectInspectorConverters.Converter[arguments.length];
     for (int i = 0; i < arguments.length; i++) {
-      converters[i] = ObjectInspectorConverters
-        .getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+      converters[i] = ObjectInspectorConverters.getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
     }
 
-    return ObjectInspectorFactory
-      .getStandardStructObjectInspector(Arrays.asList("latitude", "longitude", "country"), Arrays
-        .<ObjectInspector>asList(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
-          PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
-          PrimitiveObjectInspectorFactory.javaStringObjectInspector));
+    return ObjectInspectorFactory.getStandardStructObjectInspector(Arrays.asList("latitude", "longitude", "country"),
+        Arrays.<ObjectInspector>asList(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
+            PrimitiveObjectInspectorFactory.javaDoubleObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector));
   }
 }

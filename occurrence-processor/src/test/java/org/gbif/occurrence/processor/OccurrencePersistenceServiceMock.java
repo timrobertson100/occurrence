@@ -1,15 +1,16 @@
 package org.gbif.occurrence.processor;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.occurrence.persistence.api.Fragment;
 import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
 import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
 
 import com.google.common.collect.Maps;
 

@@ -1,5 +1,11 @@
 package org.gbif.occurrence.ws;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.bval.guice.ValidationModule;
 import org.gbif.checklistbank.ws.client.guice.ChecklistBankWsClientModule;
 import org.gbif.identity.inject.IdentityAccessModule;
 import org.gbif.occurrence.download.service.OccurrenceDownloadServiceModule;
@@ -16,16 +22,10 @@ import org.gbif.ws.server.guice.GbifServletListener;
 import org.gbif.ws.server.guice.WsAuthModule;
 import org.gbif.ws.server.guice.WsJerseyModuleConfiguration;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.apache.bval.guice.ValidationModule;
 
 public class OccurrenceWsListener extends GbifServletListener {
 
@@ -37,9 +37,7 @@ public class OccurrenceWsListener extends GbifServletListener {
 
   public OccurrenceWsListener() throws IOException {
     super(PropertiesUtil.readFromFile(ConfUtils.getAppConfFile(APP_CONF_FILE)),
-            new WsJerseyModuleConfiguration()
-                    .resourcePackages(PACKAGES)
-                    .useAuthenticationFilter(IdentityFilter.class));
+        new WsJerseyModuleConfiguration().resourcePackages(PACKAGES).useAuthenticationFilter(IdentityFilter.class));
   }
 
   @Override
@@ -52,8 +50,7 @@ public class OccurrenceWsListener extends GbifServletListener {
   protected List<Module> getModules(Properties properties) {
     List<Module> modules = Lists.newArrayList();
     // client stuff
-    modules.add(new SingleUserAuthModule(properties.getProperty(DOWNLOAD_USER_KEY),
-                                         properties.getProperty(DOWNLOAD_PASSWORD_KEY)));
+    modules.add(new SingleUserAuthModule(properties.getProperty(DOWNLOAD_USER_KEY), properties.getProperty(DOWNLOAD_PASSWORD_KEY)));
     modules.add(new RegistryWsClientModule(properties));
     modules.add(new ChecklistBankWsClientModule(properties));
     // others

@@ -1,5 +1,13 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+
 import org.gbif.api.model.common.MediaObject;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
@@ -9,18 +17,10 @@ import org.gbif.dwc.terms.AcTerm;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
+import org.junit.Test;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.Maps;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -34,9 +34,8 @@ public class MultiMediaInterpreterTest {
     VerbatimOccurrence v = new VerbatimOccurrence();
     Occurrence o = new Occurrence();
 
-    v.setVerbatimField(
-      DwcTerm.associatedMedia,
-      "http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg, http://www.flickr.com/photos/70939559@N02/7039524065.png");
+    v.setVerbatimField(DwcTerm.associatedMedia,
+        "http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg, http://www.flickr.com/photos/70939559@N02/7039524065.png");
     MultiMediaInterpreter.interpretMedia(v, o);
 
     assertEquals(2, o.getMedia().size());
@@ -86,8 +85,7 @@ public class MultiMediaInterpreterTest {
     assertEquals("Moayed Bahajjaj", o.getMedia().get(0).getCreator());
     assertEquals("2012-03-29", ISO.format(o.getMedia().get(0).getCreated()));
     assertEquals("http://www.flickr.com/photos/70939559@N02/7039524065", o.getMedia().get(0).getReferences().toString());
-    assertEquals("http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg", o.getMedia().get(0).getIdentifier()
-      .toString());
+    assertEquals("http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg", o.getMedia().get(0).getIdentifier().toString());
   }
 
   @Test
@@ -129,22 +127,22 @@ public class MultiMediaInterpreterTest {
     assertEquals("http://creativecommons.org/licenses/by-nc-sa/2.0/", o.getMedia().get(0).getLicense());
     assertEquals("Moayed Bahajjaj", o.getMedia().get(0).getCreator());
     assertEquals("2012-03-29", ISO.format(o.getMedia().get(0).getCreated()));
-    assertEquals("http://specify-attachments-saiab.saiab.ac.za/originals/sp6-3853933608872243693.att.JPG", o.getMedia().get(0).getIdentifier()
-            .toString());
+    assertEquals("http://specify-attachments-saiab.saiab.ac.za/originals/sp6-3853933608872243693.att.JPG",
+        o.getMedia().get(0).getIdentifier().toString());
   }
 
   /**
-   * If the information about the same image (same URI) is given in the core AND the extension we should use the one
-   * from the extension (richer data).
+   * If the information about the same image (same URI) is given in the core AND the extension we
+   * should use the one from the extension (richer data).
+   * 
    * @throws Exception
    */
   @Test
   public void testExtensionsPriority() throws Exception {
     VerbatimOccurrence v = new VerbatimOccurrence();
     Occurrence o = new Occurrence();
-    v.setVerbatimField(
-            DwcTerm.associatedMedia,
-            "http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg, http://www.flickr.com/photos/70939559@N02/7039524065.png");
+    v.setVerbatimField(DwcTerm.associatedMedia,
+        "http://farm8.staticflickr.com/7093/7039524065_3ed0382368.jpg, http://www.flickr.com/photos/70939559@N02/7039524065.png");
 
     List<Map<Term, String>> media = Lists.newArrayList();
     v.getExtensions().put(Extension.AUDUBON, media);

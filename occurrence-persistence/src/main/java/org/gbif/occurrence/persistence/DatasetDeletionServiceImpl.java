@@ -1,23 +1,23 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.occurrence.persistence.api.DatasetDeletionService;
-import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
-import org.gbif.occurrence.persistence.hbase.Columns;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.occurrence.persistence.api.DatasetDeletionService;
+import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
+import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
+import org.gbif.occurrence.persistence.hbase.Columns;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * An implementation of the DatasetDeletionService for deletion of datasets in HBase.
@@ -32,8 +32,7 @@ public class DatasetDeletionServiceImpl implements DatasetDeletionService {
   private final OccurrenceKeyPersistenceService occurrenceKeyService;
 
   @Inject
-  public DatasetDeletionServiceImpl(OccurrencePersistenceService occurrenceService,
-                                    OccurrenceKeyPersistenceService occurrenceKeyService) {
+  public DatasetDeletionServiceImpl(OccurrencePersistenceService occurrenceService, OccurrenceKeyPersistenceService occurrenceKeyService) {
     this.occurrenceService = checkNotNull(occurrenceService, "occurrenceService can't be null");
     this.occurrenceKeyService = checkNotNull(occurrenceKeyService, "occurrenceKeyService can't be null");
   }
@@ -51,9 +50,9 @@ public class DatasetDeletionServiceImpl implements DatasetDeletionService {
   }
 
   /**
-   * Deletes both the secondary indexes ("lookups") as well as the occurrence proper for the scan that matches the
-   * given column and value. Note any exceptions thrown during the deletions will cause this method to fail, leaving
-   * deletions in an incomplete state.
+   * Deletes both the secondary indexes ("lookups") as well as the occurrence proper for the scan that
+   * matches the given column and value. Note any exceptions thrown during the deletions will cause
+   * this method to fail, leaving deletions in an incomplete state.
    *
    * @param columnValue value to match
    * @param column interpreted column on which to match values
@@ -65,7 +64,8 @@ public class DatasetDeletionServiceImpl implements DatasetDeletionService {
     List<Integer> keys = Lists.newArrayListWithCapacity(KEYS_BATCH_SIZE);
     while (keyIterator.hasNext()) {
       int key = keyIterator.next();
-      // TODO: this is critical, but causes extreme performance problems (full scan of lookups per deleted key)
+      // TODO: this is critical, but causes extreme performance problems (full scan of lookups per deleted
+      // key)
       occurrenceKeyService.deleteKey(key, null);
       keys.add(key);
       if ((keys.size() % KEYS_BATCH_SIZE) == 0) {

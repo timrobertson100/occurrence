@@ -1,14 +1,14 @@
 package org.gbif.occurrence.processor;
 
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-import org.gbif.occurrence.persistence.api.Fragment;
-import org.gbif.occurrence.persistence.api.FragmentCreationResult;
-import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.persistence.api.Fragment;
+import org.gbif.occurrence.persistence.api.FragmentCreationResult;
+import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
+import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 
 public class FragmentPersistenceServiceMock implements FragmentPersistenceService {
 

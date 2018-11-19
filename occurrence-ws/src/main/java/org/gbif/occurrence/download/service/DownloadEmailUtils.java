@@ -1,14 +1,7 @@
 package org.gbif.occurrence.download.service;
 
-import org.gbif.api.model.common.GbifUser;
-import org.gbif.api.model.occurrence.Download;
-import org.gbif.api.model.occurrence.DownloadFormat;
-import org.gbif.api.model.occurrence.PredicateDownloadRequest;
-import org.gbif.api.model.occurrence.SqlDownloadRequest;
-import org.gbif.api.service.common.IdentityAccessService;
-import org.gbif.occurrence.download.service.freemarker.NiceDateTemplateMethodModel;
-import org.gbif.occurrence.query.HumanFilterBuilder;
-import org.gbif.occurrence.query.TitleLookup;
+import static freemarker.template.Configuration.VERSION_2_3_25;
+import static org.gbif.occurrence.download.service.Constants.NOTIFY_ADMIN;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
+
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -27,21 +21,28 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.gbif.api.model.common.GbifUser;
+import org.gbif.api.model.occurrence.Download;
+import org.gbif.api.model.occurrence.DownloadFormat;
+import org.gbif.api.model.occurrence.PredicateDownloadRequest;
+import org.gbif.api.model.occurrence.SqlDownloadRequest;
+import org.gbif.api.service.common.IdentityAccessService;
+import org.gbif.occurrence.download.service.freemarker.NiceDateTemplateMethodModel;
+import org.gbif.occurrence.query.HumanFilterBuilder;
+import org.gbif.occurrence.query.TitleLookup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.gbif.occurrence.download.service.Constants.NOTIFY_ADMIN;
-
-import static freemarker.template.Configuration.VERSION_2_3_25;
 
 
 /**
@@ -62,7 +63,7 @@ public class DownloadEmailUtils {
 
   @Inject
   public DownloadEmailUtils(@Named("mail.bcc") String bccAddresses, @Named("portal.url") String portalUrl,
-                            IdentityAccessService identityAccessService, Session session, TitleLookup titleLookup) {
+      IdentityAccessService identityAccessService, Session session, TitleLookup titleLookup) {
     this.identityAccessService = identityAccessService;
     this.titleLookup = titleLookup;
     this.bccAddresses = Sets.newHashSet(toInternetAddresses(EMAIL_SPLITTER.split(bccAddresses)));
@@ -114,13 +115,12 @@ public class DownloadEmailUtils {
   }
 
   /**
-   * Gets the list of notification addresses from the download object.
-   * If the list of addresses is empty, the email of the creator is used.
+   * Gets the list of notification addresses from the download object. If the list of addresses is
+   * empty, the email of the creator is used.
    */
   private List<Address> getNotificationAddresses(Download download) {
     List<Address> emails = Lists.newArrayList();
-    if (download.getRequest().getNotificationAddresses() == null
-        || download.getRequest().getNotificationAddresses().isEmpty()) {
+    if (download.getRequest().getNotificationAddresses() == null || download.getRequest().getNotificationAddresses().isEmpty()) {
       GbifUser user = identityAccessService.get(download.getRequest().getCreator());
       if (user != null) {
         try {

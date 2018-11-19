@@ -1,18 +1,17 @@
 package org.gbif.occurrence.download.file;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.apache.solr.client.solrj.SolrClient;
 import org.gbif.wrangler.lock.Lock;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Ints;
-import org.apache.solr.client.solrj.SolrClient;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Holds the job information about the work that each file writer job/thread has to do.
- * Examples of instances of this class are:
- * - query:*:* from: 200, to: 500, dataFile:occurrence.txt3.
- * - query:collector_name:juan from: 1000, to: 5500, dataFile:occurrence.txt99.
+ * Holds the job information about the work that each file writer job/thread has to do. Examples of
+ * instances of this class are: - query:*:* from: 200, to: 500, dataFile:occurrence.txt3. -
+ * query:collector_name:juan from: 1000, to: 5500, dataFile:occurrence.txt99.
  */
 public class DownloadFileWork implements Comparable<DownloadFileWork> {
 
@@ -35,16 +34,8 @@ public class DownloadFileWork implements Comparable<DownloadFileWork> {
   /**
    * Default constructor.
    */
-  public DownloadFileWork(
-    int from,
-    int to,
-    String baseDataFileName,
-    int jobId,
-    String query,
-    Lock lock,
-    SolrClient solrClient,
-    OccurrenceMapReader occurrenceMapReader
-  ) {
+  public DownloadFileWork(int from, int to, String baseDataFileName, int jobId, String query, Lock lock, SolrClient solrClient,
+      OccurrenceMapReader occurrenceMapReader) {
     checkArgument(to >= from, "'to' parameter should be greater than the 'from' argument");
     this.query = query;
     this.from = from;
@@ -148,22 +139,14 @@ public class DownloadFileWork implements Comparable<DownloadFileWork> {
     }
 
     DownloadFileWork that = (DownloadFileWork) obj;
-    return Objects.equal(this.baseDataFileName, that.baseDataFileName)
-           && Objects.equal(this.jobId, that.jobId)
-           && Objects.equal(this.query, that.query)
-           && Objects.equal(this.from, that.from)
-           && Objects.equal(this.to, that.to);
+    return Objects.equal(this.baseDataFileName, that.baseDataFileName) && Objects.equal(this.jobId, that.jobId)
+        && Objects.equal(this.query, that.query) && Objects.equal(this.from, that.from) && Objects.equal(this.to, that.to);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("from", from)
-      .add("to", to)
-      .add("baseDataFileName", baseDataFileName)
-      .add("jobId", jobId)
-      .add("query", query)
-      .toString();
+    return Objects.toStringHelper(this).add("from", from).add("to", to).add("baseDataFileName", baseDataFileName).add("jobId", jobId)
+        .add("query", query).toString();
   }
 
 }

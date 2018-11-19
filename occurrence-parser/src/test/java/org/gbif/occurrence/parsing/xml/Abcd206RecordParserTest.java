@@ -1,15 +1,14 @@
 package org.gbif.occurrence.parsing.xml;
 
-import org.gbif.occurrence.model.ImageRecord;
-import org.gbif.occurrence.model.RawOccurrenceRecord;
-import org.gbif.occurrence.model.TypificationRecord;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.List;
 
+import org.gbif.occurrence.model.ImageRecord;
+import org.gbif.occurrence.model.RawOccurrenceRecord;
+import org.gbif.occurrence.model.TypificationRecord;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class Abcd206RecordParserTest extends ParserTestCase {
 
@@ -42,7 +41,7 @@ public class Abcd206RecordParserTest extends ParserTestCase {
     String fileName = getClass().getResource("/responses/abcd206/abcd206_idtype.gz").getFile();
     RawOccurrenceRecord ror = setupRor(fileName).get(0);
 
-//    showIdentifiers(ror);
+    // showIdentifiers(ror);
     assertEquals(7, ror.getIdentifierRecords().size());
     assertEquals("0123456789ABCD", ror.getId());
   }
@@ -60,9 +59,8 @@ public class Abcd206RecordParserTest extends ParserTestCase {
   }
 
   /**
-   * TODO: add these tests
-   * public void testParseMultiIdentificationPreferredTrue()
-   * public void testParseNoIdentification()
+   * TODO: add these tests public void testParseMultiIdentificationPreferredTrue() public void
+   * testParseNoIdentification()
    */
   @Test
   public void testParseMultiIdentificationPreferredFalse() {
@@ -115,13 +113,12 @@ public class Abcd206RecordParserTest extends ParserTestCase {
     ImageRecord image = ror.getImageRecords().get(0);
     assertEquals("http://www.tierstimmenarchiv.de/recordings/Ailuroedus_buccoides_V2010_04_short.mp3", image.getUrl());
     assertEquals(
-      "http://www.tierstimmenarchiv.de/webinterface/contents/showdetails.php?edit=-1&unique_id=TSA:Ailuroedus_buccoides_V_2010_4_1&autologin=true",
-      image.getPageUrl());
+        "http://www.tierstimmenarchiv.de/webinterface/contents/showdetails.php?edit=-1&unique_id=TSA:Ailuroedus_buccoides_V_2010_4_1&autologin=true",
+        image.getPageUrl());
     assertEquals("CC BY-NC-ND (Attribution for non commercial use only and without derivative)", image.getRights());
 
     image = ror.getImageRecords().get(1);
-    assertEquals("http://biology.africamuseum.be/STERNAImages/Ornithology/SternaRMCADetails.php?image=_PHM7832",
-      image.getUrl());
+    assertEquals("http://biology.africamuseum.be/STERNAImages/Ornithology/SternaRMCADetails.php?image=_PHM7832", image.getUrl());
     assertEquals("zoomable image", image.getDescription());
   }
 

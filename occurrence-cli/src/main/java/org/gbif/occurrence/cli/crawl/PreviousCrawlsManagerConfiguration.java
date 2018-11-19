@@ -1,12 +1,12 @@
 package org.gbif.occurrence.cli.crawl;
 
-import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.occurrence.cli.common.HiveJdbcConfiguration;
-import org.gbif.occurrence.cli.common.SchedulingConfiguration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
+
+import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.occurrence.cli.common.HiveJdbcConfiguration;
+import org.gbif.occurrence.cli.common.SchedulingConfiguration;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;

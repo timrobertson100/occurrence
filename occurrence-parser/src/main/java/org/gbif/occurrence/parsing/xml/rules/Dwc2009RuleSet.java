@@ -1,14 +1,13 @@
 package org.gbif.occurrence.parsing.xml.rules;
 
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.RuleSet;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
 
 public class Dwc2009RuleSet extends AbstractDwcRuleSet implements RuleSet {
 

@@ -1,11 +1,11 @@
 package org.gbif.occurrence.processor.guice;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.occurrence.common.config.OccHBaseConfiguration;
 import org.gbif.occurrence.common.config.ZooKeeperConfiguration;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
@@ -34,11 +34,7 @@ public class ProcessorConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("api", api)
-      .add("hbase", hbase)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper).add("api", api).add("hbase", hbase)
+        .toString();
   }
 }

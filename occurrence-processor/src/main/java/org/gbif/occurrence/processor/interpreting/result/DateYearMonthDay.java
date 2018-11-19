@@ -7,7 +7,7 @@ import com.google.common.base.Objects;
 /**
  * The immutable result of a Date interpretation.
  */
-public class DateYearMonthDay{
+public class DateYearMonthDay {
   private final Date date;
   private final Integer year;
   private final Integer month;
@@ -67,10 +67,7 @@ public class DateYearMonthDay{
       return false;
     }
     final DateYearMonthDay other = (DateYearMonthDay) obj;
-    return Objects.equal(this.year, other.year)
-           && Objects.equal(this.month, other.month)
-           && Objects.equal(this.day, other.day)
-           && Objects.equal(this.time, other.time)
-           && Objects.equal(this.date, other.date);
+    return Objects.equal(this.year, other.year) && Objects.equal(this.month, other.month) && Objects.equal(this.day, other.day)
+        && Objects.equal(this.time, other.time) && Objects.equal(this.date, other.date);
   }
 }

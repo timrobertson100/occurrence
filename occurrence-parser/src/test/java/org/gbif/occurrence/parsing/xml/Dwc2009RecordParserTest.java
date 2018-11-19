@@ -1,11 +1,10 @@
 package org.gbif.occurrence.parsing.xml;
 
+import static org.junit.Assert.assertEquals;
+
 import org.gbif.occurrence.model.IdentifierRecord;
 import org.gbif.occurrence.model.RawOccurrenceRecord;
-
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class Dwc2009RecordParserTest extends ParserTestCase {
 

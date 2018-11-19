@@ -1,9 +1,11 @@
 package org.gbif.occurrence.download.file.specieslist;
 
 import static org.gbif.occurrence.download.file.OccurrenceMapReader.buildOccurrenceMap;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.converters.DateConverter;
 import org.gbif.dwc.terms.DcTerm;
@@ -14,8 +16,10 @@ import org.gbif.occurrence.download.file.common.SolrQueryProcessor;
 import org.gbif.occurrence.download.hive.DownloadTerms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.common.base.Throwables;
+
 import akka.actor.UntypedActor;
+
+import com.google.common.base.Throwables;
 
 public class SpeciesListDownloadActor extends UntypedActor {
   private static final Logger LOG = LoggerFactory.getLogger(SpeciesListDownloadActor.class);

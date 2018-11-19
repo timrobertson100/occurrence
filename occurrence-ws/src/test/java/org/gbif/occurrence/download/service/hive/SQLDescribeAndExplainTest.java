@@ -2,6 +2,7 @@ package org.gbif.occurrence.download.service.hive;
 
 import java.io.IOException;
 import java.util.List;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.gbif.occurrence.download.service.hive.Result.DescribeResult;
 import org.junit.Assert;
@@ -22,7 +23,7 @@ public class SQLDescribeAndExplainTest {
 
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
-  
+
   @Test
   public void testLegalExplain() {
     List<String> result = HiveSQL.Execute.explain("SELECT * FROM occurrence_hdfs");
@@ -36,16 +37,16 @@ public class SQLDescribeAndExplainTest {
     List<String> result = HiveSQL.Execute.explain("SELECT * FROM occurre");
     System.out.println(result);
   }
-  
+
   @Test
-  public void testValidDescribe() throws IOException  {
+  public void testValidDescribe() throws IOException {
     List<DescribeResult> result = HiveSQL.Execute.describe("occurrence_hdfs");
     Assert.assertTrue(!result.isEmpty());
     System.out.println(mapper.writeValueAsString(result));
   }
-  
+
   @Test
-  public void testInValidDescribe()  {
+  public void testInValidDescribe() {
     expectedEx.expect(RuntimeException.class);
     HiveSQL.Execute.describe("occurrence");
   }

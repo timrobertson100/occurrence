@@ -1,10 +1,9 @@
 package org.gbif.occurrence.download.file;
 
+import org.apache.hadoop.fs.Path;
 import org.gbif.api.model.occurrence.DownloadFormat;
 import org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants;
 import org.gbif.occurrence.download.file.dwca.TableSuffixes;
-
-import org.apache.hadoop.fs.Path;
 
 /**
  * Configuration of a small download execution.
@@ -28,12 +27,10 @@ public class DownloadJobConfiguration {
   private final DownloadFormat downloadFormat;
 
   /**
-   * Private constructor.
-   * Instances must be created using the Builder class.
+   * Private constructor. Instances must be created using the Builder class.
    */
-  private DownloadJobConfiguration(String downloadKey, String downloadTableName, String filter, String user,
-                                   boolean isSmallDownload, String sourceDir, String solrQuery,
-                                   DownloadFormat downloadFormat) {
+  private DownloadJobConfiguration(String downloadKey, String downloadTableName, String filter, String user, boolean isSmallDownload,
+      String sourceDir, String solrQuery, DownloadFormat downloadFormat) {
     this.downloadKey = downloadKey;
     this.filter = filter;
     this.user = user;
@@ -101,70 +98,58 @@ public class DownloadJobConfiguration {
   }
 
   /**
-   * Interpreted table/file name.
-   * This is used for DwcA downloads only, it varies if it's a small or big download.
-   * - big downloads format: sourceDir/downloadTableName_interpreted/
-   * - small downloads format: sourceDir/downloadKey/interpreted
+   * Interpreted table/file name. This is used for DwcA downloads only, it varies if it's a small or
+   * big download. - big downloads format: sourceDir/downloadTableName_interpreted/ - small downloads
+   * format: sourceDir/downloadKey/interpreted
    */
   public String getInterpretedDataFileName() {
-    return isSmallDownload
-      ? getDownloadTempDir() + DwcDownloadsConstants.INTERPRETED_FILENAME
-      : getDownloadTempDir(TableSuffixes.INTERPRETED_SUFFIX);
+    return isSmallDownload ? getDownloadTempDir() + DwcDownloadsConstants.INTERPRETED_FILENAME
+        : getDownloadTempDir(TableSuffixes.INTERPRETED_SUFFIX);
   }
 
   /**
-   * Verbatim table/file name.
-   * This is used for DwcA downloads only, it varies if it's a small or big download.
-   * - big downloads format: sourceDir/downloadTableName_verbatim/
-   * - small downloads format: sourceDir/downloadKey/verbatim
+   * Verbatim table/file name. This is used for DwcA downloads only, it varies if it's a small or big
+   * download. - big downloads format: sourceDir/downloadTableName_verbatim/ - small downloads format:
+   * sourceDir/downloadKey/verbatim
    */
   public String getVerbatimDataFileName() {
-    return isSmallDownload
-      ? getDownloadTempDir() + DwcDownloadsConstants.VERBATIM_FILENAME
-      : getDownloadTempDir(TableSuffixes.VERBATIM_SUFFIX);
+    return isSmallDownload ? getDownloadTempDir() + DwcDownloadsConstants.VERBATIM_FILENAME
+        : getDownloadTempDir(TableSuffixes.VERBATIM_SUFFIX);
   }
 
   /**
-   * Citation table/file name.
-   * This is used for DwcA downloads only, it varies if it's a small or big download.
-   * - big downloads format: sourceDir/downloadTableName_citation/
-   * - small downloads format: sourceDir/downloadKey/citation
+   * Citation table/file name. This is used for DwcA downloads only, it varies if it's a small or big
+   * download. - big downloads format: sourceDir/downloadTableName_citation/ - small downloads format:
+   * sourceDir/downloadKey/citation
    */
   public String getCitationDataFileName() {
-    return isSmallDownload
-      ? getDownloadTempDir() + DwcDownloadsConstants.CITATIONS_FILENAME
-      : getDownloadTempDir(TableSuffixes.CITATION_SUFFIX);
+    return isSmallDownload ? getDownloadTempDir() + DwcDownloadsConstants.CITATIONS_FILENAME
+        : getDownloadTempDir(TableSuffixes.CITATION_SUFFIX);
   }
 
   /**
-   * Multimedia table/file name.
-   * This is used for DwcA downloads only, it varies if it's a small or big download.
-   * - big downloads format: sourceDir/downloadTableName_multimedia/
-   * - small downloads format: sourceDir/downloadKey/multimedia
+   * Multimedia table/file name. This is used for DwcA downloads only, it varies if it's a small or
+   * big download. - big downloads format: sourceDir/downloadTableName_multimedia/ - small downloads
+   * format: sourceDir/downloadKey/multimedia
    */
   public String getMultimediaDataFileName() {
-    return isSmallDownload
-      ? getDownloadTempDir() + DwcDownloadsConstants.MULTIMEDIA_FILENAME
-      : getDownloadTempDir(TableSuffixes.MULTIMEDIA_SUFFIX);
+    return isSmallDownload ? getDownloadTempDir() + DwcDownloadsConstants.MULTIMEDIA_FILENAME
+        : getDownloadTempDir(TableSuffixes.MULTIMEDIA_SUFFIX);
   }
 
   /**
-   * Directory where downloads files will be temporary stored. The output varies for small and big downloads:
-   * - small downloads: sourceDir/downloadKey(suffix)/
-   * - big downloads: sourceDir/downloadTableName(suffix)/
+   * Directory where downloads files will be temporary stored. The output varies for small and big
+   * downloads: - small downloads: sourceDir/downloadKey(suffix)/ - big downloads:
+   * sourceDir/downloadTableName(suffix)/
    */
   public String getDownloadTempDir(String suffix) {
-    return (sourceDir
-            + Path.SEPARATOR
-            + (isSmallDownload ? downloadKey : downloadTableName)
-            + suffix
-            + Path.SEPARATOR).toLowerCase();
+    return (sourceDir + Path.SEPARATOR + (isSmallDownload ? downloadKey : downloadTableName) + suffix + Path.SEPARATOR).toLowerCase();
   }
 
   /**
-   * Directory where downloads files will be temporary stored. The output varies for small and big downloads:
-   * - small downloads: sourceDir/downloadKey/
-   * - big downloads: sourceDir/downloadTableName/
+   * Directory where downloads files will be temporary stored. The output varies for small and big
+   * downloads: - small downloads: sourceDir/downloadKey/ - big downloads:
+   * sourceDir/downloadTableName/
    */
   public String getDownloadTempDir() {
     return getDownloadTempDir("");
@@ -235,14 +220,8 @@ public class DownloadJobConfiguration {
      * Builds a new DownloadJobConfiguration instance.
      */
     public DownloadJobConfiguration build() {
-      return new DownloadJobConfiguration(downloadKey,
-                                          downloadTableName,
-                                          filter,
-                                          user,
-                                          isSmallDownload,
-                                          sourceDir,
-                                          solrQuery,
-                                          downloadFormat);
+      return new DownloadJobConfiguration(downloadKey, downloadTableName, filter, user, isSmallDownload, sourceDir, solrQuery,
+          downloadFormat);
     }
 
   }

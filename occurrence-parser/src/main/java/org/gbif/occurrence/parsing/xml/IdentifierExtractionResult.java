@@ -1,18 +1,19 @@
 package org.gbif.occurrence.parsing.xml;
 
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Set;
+
 import javax.annotation.Nullable;
+
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 
 import com.google.common.base.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Contains the set of {@link UniqueIdentifier} that were extracted from a raw fragment that each uniquely identify
- * that fragment. May also contain a unitQualifier for cases of multiple occurrences within a single fragment
- * (e.g. ABCD 2.06).
+ * Contains the set of {@link UniqueIdentifier} that were extracted from a raw fragment that each
+ * uniquely identify that fragment. May also contain a unitQualifier for cases of multiple
+ * occurrences within a single fragment (e.g. ABCD 2.06).
  */
 public class IdentifierExtractionResult {
 
@@ -47,7 +48,6 @@ public class IdentifierExtractionResult {
       return false;
     }
     final IdentifierExtractionResult other = (IdentifierExtractionResult) obj;
-    return Objects.equal(this.uniqueIdentifiers, other.uniqueIdentifiers) && Objects
-      .equal(this.unitQualifier, other.unitQualifier);
+    return Objects.equal(this.uniqueIdentifiers, other.uniqueIdentifiers) && Objects.equal(this.unitQualifier, other.unitQualifier);
   }
 }

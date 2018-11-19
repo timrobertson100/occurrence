@@ -10,9 +10,9 @@ import com.google.common.base.Preconditions;
 public class LicenseSelectors {
 
   /**
-   * Return a LicenseSelector implementation that will collect all licenses and return the most restrictive one
-   * based on the defaultLicense.
-   * Note that null and non-concrete licenses are ignored.
+   * Return a LicenseSelector implementation that will collect all licenses and return the most
+   * restrictive one based on the defaultLicense. Note that null and non-concrete licenses are
+   * ignored.
    *
    * @param defaultLicense the default (or base) license.
    */

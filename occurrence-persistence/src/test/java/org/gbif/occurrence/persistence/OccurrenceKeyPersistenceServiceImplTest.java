@@ -1,23 +1,15 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.common.identifier.HolyTriplet;
-import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
-import org.gbif.occurrence.persistence.hbase.Columns;
-import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
-import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -29,16 +21,24 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.common.identifier.HolyTriplet;
+import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
+import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
+import org.gbif.occurrence.persistence.hbase.Columns;
+import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
+import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
+import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class OccurrenceKeyPersistenceServiceImplTest {
 
@@ -61,7 +61,7 @@ public class OccurrenceKeyPersistenceServiceImplTest {
   private static final String NEW_UQ = "Abies siberica";
   private static final String DWC = "98098098-234asd-asdfa-234df";
   private static final String TRIPLET_KEY =
-    "2bc753d7-125d-41a1-b3a8-8edbd6777ec3|BGBM|Vascular Plants|00234-asdfa-234as-asdf-cvb|Abies alba";
+      "2bc753d7-125d-41a1-b3a8-8edbd6777ec3|BGBM|Vascular Plants|00234-asdfa-234as-asdf-cvb|Abies alba";
   private static final String DWC_KEY = "2bc753d7-125d-41a1-b3a8-8edbd6777ec3|98098098-234asd-asdfa-234df";
   private static HolyTriplet tripletId;
   private static PublisherProvidedUniqueIdentifier dwcId;
@@ -83,8 +83,7 @@ public class OccurrenceKeyPersistenceServiceImplTest {
     TEST_UTIL.createTable(OCCURRENCE_TABLE, CF);
 
     ZOOKEEPER_SERVER = new TestingServer();
-    CURATOR =
-      CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(ZOOKEEPER_SERVER.getConnectString())
+    CURATOR = CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(ZOOKEEPER_SERVER.getConnectString())
         .retryPolicy(new RetryNTimes(1, 1000)).build();
     CURATOR.start();
     ZOO_LOCK_PROVIDER = new ThreadLocalLockProvider(CURATOR);
@@ -316,7 +315,8 @@ public class OccurrenceKeyPersistenceServiceImplTest {
     ids.add(pubProvided1);
     ids.add(pubProvided2);
 
-    // generate 100 threads, all attempt to generate new key for same unique ids - ensure all return same value
+    // generate 100 threads, all attempt to generate new key for same unique ids - ensure all return
+    // same value
     List<KeyGeneratorThread> threads = Lists.newArrayList();
     for (int i = 0; i < 100; i++) {
       KeyGeneratorThread thread = new KeyGeneratorThread(ids);
@@ -336,12 +336,12 @@ public class OccurrenceKeyPersistenceServiceImplTest {
   public void testRaceForManyKeys() throws InterruptedException {
     UUID datasetKey = UUID.randomUUID();
 
-    // generate 100 threads, all attempt to generate new key for same unique ids - ensure all return same value
+    // generate 100 threads, all attempt to generate new key for same unique ids - ensure all return
+    // same value
     List<KeyGeneratorThread> threads = Lists.newArrayList();
     int threadCount = 100;
     for (int i = 0; i < threadCount; i++) {
-      PublisherProvidedUniqueIdentifier pubProvided =
-        new PublisherProvidedUniqueIdentifier(datasetKey, UUID.randomUUID().toString());
+      PublisherProvidedUniqueIdentifier pubProvided = new PublisherProvidedUniqueIdentifier(datasetKey, UUID.randomUUID().toString());
       Set<UniqueIdentifier> ids = Sets.newHashSet();
       ids.add(pubProvided);
       KeyGeneratorThread thread = new KeyGeneratorThread(ids);
@@ -357,8 +357,7 @@ public class OccurrenceKeyPersistenceServiceImplTest {
 
     // test counter table is at 2, then 100 + 1 for this test
     int expectedKey = 2 + threadCount + 1;
-    PublisherProvidedUniqueIdentifier pubProvided =
-      new PublisherProvidedUniqueIdentifier(datasetKey, UUID.randomUUID().toString());
+    PublisherProvidedUniqueIdentifier pubProvided = new PublisherProvidedUniqueIdentifier(datasetKey, UUID.randomUUID().toString());
     Set<UniqueIdentifier> ids = Sets.newHashSet();
     ids.add(pubProvided);
     assertEquals(expectedKey, occurrenceKeyService.generateKey(ids).getKey());

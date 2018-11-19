@@ -1,10 +1,12 @@
 package org.gbif.occurrence.download.file;
 
-import org.gbif.api.vocabulary.License;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
 import javax.annotation.Nullable;
+
+import org.gbif.api.vocabulary.License;
 
 import com.google.common.base.Objects;
 
@@ -26,8 +28,7 @@ public class Result implements Comparable<Result> {
     this(downloadFileWork, datasetUsages, null);
   }
 
-  public Result(DownloadFileWork downloadFileWork, Map<UUID, Long> datasetUsages,
-                @Nullable Set<License> datasetLicenses) {
+  public Result(DownloadFileWork downloadFileWork, Map<UUID, Long> datasetUsages, @Nullable Set<License> datasetLicenses) {
     this.downloadFileWork = downloadFileWork;
     this.datasetUsages = datasetUsages;
     this.datasetLicenses = datasetLicenses;

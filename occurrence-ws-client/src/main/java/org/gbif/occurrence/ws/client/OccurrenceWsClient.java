@@ -1,5 +1,9 @@
 package org.gbif.occurrence.ws.client;
 
+import static org.gbif.ws.paths.OccurrencePaths.FRAGMENT_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.VERBATIM_PATH;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.service.occurrence.OccurrenceService;
@@ -9,16 +13,10 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
-import static org.gbif.ws.paths.OccurrencePaths.FRAGMENT_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.VERBATIM_PATH;
-
 public class OccurrenceWsClient extends BaseWsGetClient<Occurrence, Integer> implements OccurrenceService {
 
-  private static final GenericType<VerbatimOccurrence> GT_VERBATIM_OCCURRENCE = new GenericType<VerbatimOccurrence>() {
-  };
-  private static final GenericType<String> GT_FRAGMENT = new GenericType<String>() {
-  };
+  private static final GenericType<VerbatimOccurrence> GT_VERBATIM_OCCURRENCE = new GenericType<VerbatimOccurrence>() {};
+  private static final GenericType<String> GT_FRAGMENT = new GenericType<String>() {};
 
 
   /**

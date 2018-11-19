@@ -3,6 +3,7 @@ package org.gbif.occurrence.download.file.specieslist;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
 import org.gbif.api.vocabulary.License;
 import org.gbif.occurrence.download.file.DownloadFileWork;
 import org.gbif.occurrence.download.file.Result;

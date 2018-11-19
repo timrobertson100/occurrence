@@ -2,12 +2,14 @@ package org.gbif.occurrence.cli.common;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+
 import javax.validation.constraints.NotNull;
 
-import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.beust.jcommander.Parameter;
 
 /**
  * Basic configuration for a service that can be scheduled.
@@ -25,15 +27,15 @@ public class SchedulingConfiguration {
 
 
   /**
-   * Parse and return {@link #startTime} as {@link LocalTime}.
-   * If {@link #startTime} can not be parsed or not provided, return {@code LocalTime.now()}
+   * Parse and return {@link #startTime} as {@link LocalTime}. If {@link #startTime} can not be parsed
+   * or not provided, return {@code LocalTime.now()}
    *
    * @return {@link #startTime} or {@code LocalTime.now()} if it can't be parsed
    */
   public LocalTime parseStartTime() {
     LocalTime t = LocalTime.now();
 
-    if(StringUtils.isBlank(startTime)){
+    if (StringUtils.isBlank(startTime)) {
       return t;
     }
 

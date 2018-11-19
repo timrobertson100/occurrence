@@ -1,12 +1,12 @@
 package org.gbif.occurrence.search.guice;
 
+import java.util.Properties;
+
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
 import org.gbif.common.search.solr.SolrConfig;
 import org.gbif.common.search.solr.SolrModule;
 import org.gbif.occurrence.search.OccurrenceSearchImpl;
 import org.gbif.service.guice.PrivateServiceModule;
-
-import java.util.Properties;
 
 /**
  * Occurrence search guice module.

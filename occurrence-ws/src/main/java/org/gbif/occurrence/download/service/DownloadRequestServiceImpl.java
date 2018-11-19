@@ -1,19 +1,16 @@
 /*
- * Copyright 2012 Global Biodiversity Information Facility (GBIF)
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2012 Global Biodiversity Information Facility (GBIF) Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You
+ * may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ * the License for the specific language governing permissions and limitations under the License.
  */
 package org.gbif.occurrence.download.service;
 
 import static org.gbif.occurrence.common.download.DownloadUtils.downloadLink;
 import static org.gbif.occurrence.download.service.Constants.NOTIFY_ADMIN;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,9 +26,11 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.validation.ValidationException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
@@ -49,6 +48,7 @@ import org.gbif.occurrence.download.service.workflow.DownloadWorkflowParametersB
 import org.gbif.ws.response.GbifResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Enums;
 import com.google.common.base.Optional;
@@ -70,31 +70,22 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
   // magic prefix for download keys to indicate these aren't real download files
   private static final String NON_DOWNLOAD_PREFIX = "dwca-";
 
-  protected static final Set<Download.Status> RUNNING_STATUSES = EnumSet.of(Download.Status.PREPARING,
-                                                                             Download.Status.RUNNING,
-                                                                             Download.Status.SUSPENDED);
+  protected static final Set<Download.Status> RUNNING_STATUSES =
+      EnumSet.of(Download.Status.PREPARING, Download.Status.RUNNING, Download.Status.SUSPENDED);
 
   /**
    * Map to provide conversions from oozie.Job.Status to Download.Status.
    */
   @VisibleForTesting
   protected static final ImmutableMap<Job.Status, Download.Status> STATUSES_MAP =
-    new ImmutableMap.Builder<Job.Status, Download.Status>()
-      .put(Job.Status.PREP, Download.Status.PREPARING)
-      .put(Job.Status.PREPPAUSED, Download.Status.PREPARING)
-      .put(Job.Status.PREMATER, Download.Status.PREPARING)
-      .put(Job.Status.PREPSUSPENDED, Download.Status.SUSPENDED)
-      .put(Job.Status.RUNNING, Download.Status.RUNNING)
-      .put(Job.Status.KILLED, Download.Status.KILLED)
-      .put(Job.Status.RUNNINGWITHERROR, Download.Status.RUNNING)
-      .put(Job.Status.DONEWITHERROR, Download.Status.FAILED)
-      .put(Job.Status.FAILED, Download.Status.FAILED)
-      .put(Job.Status.PAUSED, Download.Status.RUNNING)
-      .put(Job.Status.PAUSEDWITHERROR, Download.Status.RUNNING)
-      .put(Job.Status.SUCCEEDED, Download.Status.SUCCEEDED)
-      .put(Job.Status.SUSPENDED, Download.Status.SUSPENDED)
-      .put(Job.Status.SUSPENDEDWITHERROR, Download.Status.SUSPENDED)
-      .put(Job.Status.IGNORED, Download.Status.FAILED).build();
+      new ImmutableMap.Builder<Job.Status, Download.Status>().put(Job.Status.PREP, Download.Status.PREPARING)
+          .put(Job.Status.PREPPAUSED, Download.Status.PREPARING).put(Job.Status.PREMATER, Download.Status.PREPARING)
+          .put(Job.Status.PREPSUSPENDED, Download.Status.SUSPENDED).put(Job.Status.RUNNING, Download.Status.RUNNING)
+          .put(Job.Status.KILLED, Download.Status.KILLED).put(Job.Status.RUNNINGWITHERROR, Download.Status.RUNNING)
+          .put(Job.Status.DONEWITHERROR, Download.Status.FAILED).put(Job.Status.FAILED, Download.Status.FAILED)
+          .put(Job.Status.PAUSED, Download.Status.RUNNING).put(Job.Status.PAUSEDWITHERROR, Download.Status.RUNNING)
+          .put(Job.Status.SUCCEEDED, Download.Status.SUCCEEDED).put(Job.Status.SUSPENDED, Download.Status.SUSPENDED)
+          .put(Job.Status.SUSPENDEDWITHERROR, Download.Status.SUSPENDED).put(Job.Status.IGNORED, Download.Status.FAILED).build();
 
   private static final Counter SUCCESSFUL_DOWNLOADS = Metrics.newCounter(CallbackService.class, "successful_downloads");
   private static final Counter FAILED_DOWNLOADS = Metrics.newCounter(CallbackService.class, "failed_downloads");
@@ -112,13 +103,9 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
 
 
   @Inject
-  public DownloadRequestServiceImpl(OozieClient client,
-                                    @Named("oozie.default_properties") Map<String, String> defaultProperties,
-                                    @Named("ws.url") String wsUrl,
-                                    @Named("ws.mount") String wsMountDir,
-                                    OccurrenceDownloadService occurrenceDownloadService,
-                                    DownloadEmailUtils downloadEmailUtils,
-                                    DownloadLimitsService downloadLimitsService) {
+  public DownloadRequestServiceImpl(OozieClient client, @Named("oozie.default_properties") Map<String, String> defaultProperties,
+      @Named("ws.url") String wsUrl, @Named("ws.mount") String wsMountDir, OccurrenceDownloadService occurrenceDownloadService,
+      DownloadEmailUtils downloadEmailUtils, DownloadLimitsService downloadLimitsService) {
 
     this.client = client;
     this.wsUrl = wsUrl;
@@ -155,8 +142,8 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
       if (!downloadLimitsService.isInDownloadLimits(request.getCreator())) {
         throw new WebApplicationException(Response.status(GbifResponseStatus.ENHANCE_YOUR_CALM.getStatus()).build());
       }
-      String jobId = request.getFormat().equals(DownloadFormat.SQL)?
-                        runSqlDownload(request) : client.run(parametersBuilder.buildWorkflowParameters(request));
+      String jobId = request.getFormat().equals(DownloadFormat.SQL) ? runSqlDownload(request)
+          : client.run(parametersBuilder.buildWorkflowParameters(request));
       LOG.debug("Oozie job id is: [{}]", jobId);
       String downloadId = DownloadUtils.workflowToDownloadId(jobId);
       persistDownload(request, downloadId);
@@ -165,7 +152,7 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
       throw new ServiceUnavailableException("Failed to create download job", e);
     }
   }
-  
+
   /**
    * Executes the request as SQLDownload.
    */
@@ -173,7 +160,9 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
     SqlDownloadRequest sqlRequest = (SqlDownloadRequest) request;
     HiveSQL.Validate.Result result = new HiveSQL.Validate().apply(sqlRequest.getSql());
     if (!result.isOk()) {
-      throw new ValidationException(String.format("SQL validation failed because of : %s. Please try occurrence/download/request/sql/validate endpoint for more description.", result.issues()));
+      throw new ValidationException(String.format(
+          "SQL validation failed because of : %s. Please try occurrence/download/request/sql/validate endpoint for more description.",
+          result.issues()));
     }
     sqlRequest.setSql(result.transSql());
     BiFunction<String, String, Map.Entry<String, String>> entry = (key, value) -> new AbstractMap.SimpleEntry<>(key, value);
@@ -188,7 +177,8 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
   public InputStream getResult(String downloadKey) {
     String filename;
 
-    // avoid check for download in the registry if we have secret non download files with a magic prefix!
+    // avoid check for download in the registry if we have secret non download files with a magic
+    // prefix!
     if (downloadKey == null || !downloadKey.toLowerCase().startsWith(NON_DOWNLOAD_PREFIX)) {
       Download d = occurrenceDownloadService.get(downloadKey);
 
@@ -214,8 +204,7 @@ public class DownloadRequestServiceImpl implements DownloadRequestService, Callb
       return new FileInputStream(localFile);
 
     } catch (IOException e) {
-      throw new IllegalStateException(
-        "Failed to read download " + downloadKey + " from " + localFile.getAbsolutePath(), e);
+      throw new IllegalStateException("Failed to read download " + downloadKey + " from " + localFile.getAbsolutePath(), e);
     }
   }
 

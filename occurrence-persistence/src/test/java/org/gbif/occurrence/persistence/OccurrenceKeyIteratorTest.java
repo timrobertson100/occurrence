@@ -1,7 +1,6 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.occurrence.persistence.hbase.Columns;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -17,12 +16,12 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.occurrence.persistence.hbase.Columns;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class OccurrenceKeyIteratorTest {
 
@@ -81,8 +80,7 @@ public class OccurrenceKeyIteratorTest {
 
   private void addId(int key, String value, Table table) throws IOException {
     Put put = new Put(Bytes.toBytes(key));
-    put.addColumn(CF, Bytes.toBytes(Columns.column(GbifTerm.datasetKey)),
-      Bytes.toBytes(value));
+    put.addColumn(CF, Bytes.toBytes(Columns.column(GbifTerm.datasetKey)), Bytes.toBytes(value));
     table.put(put);
   }
 
@@ -98,7 +96,7 @@ public class OccurrenceKeyIteratorTest {
     scan.addColumn(CF, col);
     scan.setCaching(500);
     SingleColumnValueFilter filter =
-      new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL, Bytes.toBytes(DATASET_1.toString()));
+        new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL, Bytes.toBytes(DATASET_1.toString()));
     scan.setFilter(filter);
 
     Iterator<Integer> iterator = new OccurrenceKeyIterator(CONNECTION, TABLE_NAME.getNameAsString(), scan);
@@ -117,8 +115,8 @@ public class OccurrenceKeyIteratorTest {
     Scan scan = new Scan();
     scan.addColumn(CF, col);
     scan.setCaching(500);
-    SingleColumnValueFilter filter = new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL,
-                                                                 Bytes.toBytes(DATASET_1.toString()));
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL, Bytes.toBytes(DATASET_1.toString()));
     scan.setFilter(filter);
 
     Iterator<Integer> iterator = new OccurrenceKeyIterator(CONNECTION, TABLE_NAME.getNameAsString(), scan);
@@ -136,8 +134,8 @@ public class OccurrenceKeyIteratorTest {
     Scan scan = new Scan();
     scan.addColumn(CF, col);
     scan.setCaching(500);
-    SingleColumnValueFilter filter = new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL,
-                                                                 Bytes.toBytes(DATASET_3.toString()));
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(CF, col, CompareFilter.CompareOp.EQUAL, Bytes.toBytes(DATASET_3.toString()));
     scan.setFilter(filter);
 
     Iterator<Integer> iterator = new OccurrenceKeyIterator(CONNECTION, TABLE_NAME.getNameAsString(), scan);

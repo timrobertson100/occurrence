@@ -1,14 +1,13 @@
 package org.gbif.occurrence.cli.registry.sync;
 
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.GbifInternalTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.occurrence.persistence.hbase.Columns;
-
 import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.GbifInternalTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.occurrence.persistence.hbase.Columns;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

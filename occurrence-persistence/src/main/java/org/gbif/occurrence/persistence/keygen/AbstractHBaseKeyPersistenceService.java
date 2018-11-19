@@ -1,23 +1,14 @@
 package org.gbif.occurrence.persistence.keygen;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.common.identifier.OccurrenceKeyHelper;
-import org.gbif.occurrence.persistence.IllegalDataStateException;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.hbase.Columns;
-import org.gbif.occurrence.persistence.hbase.HBaseStore;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Delete;
@@ -31,14 +22,24 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.common.identifier.OccurrenceKeyHelper;
+import org.gbif.occurrence.persistence.IllegalDataStateException;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.hbase.Columns;
+import org.gbif.occurrence.persistence.hbase.HBaseStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
- * An abstract implementation of KeyPersistenceService that handles the finding and deleting of keys in HBase, but
- * leaves the generation of keys to sub-classes.
+ * An abstract implementation of KeyPersistenceService that handles the finding and deleting of keys
+ * in HBase, but leaves the generation of keys to sub-classes.
  */
 public abstract class AbstractHBaseKeyPersistenceService implements KeyPersistenceService<Integer> {
 
@@ -53,7 +54,7 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
   protected final KeyBuilder keyBuilder;
 
   public AbstractHBaseKeyPersistenceService(OccHBaseConfiguration cfg, Connection connection, KeyBuilder keyBuilder) {
-    lookupTableName =  TableName.valueOf(checkNotNull(cfg.lookupTable, "lookupTable can't be null"));
+    lookupTableName = TableName.valueOf(checkNotNull(cfg.lookupTable, "lookupTable can't be null"));
     this.connection = checkNotNull(connection, "tablePool can't be null");
     this.keyBuilder = checkNotNull(keyBuilder, "keyBuilder can't be null");
     lookupTableStore = new HBaseStore<String>(cfg.lookupTable, Columns.OCCURRENCE_COLUMN_FAMILY, connection);
@@ -86,7 +87,8 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
       }
     }
 
-    // go through all the returned keys and make sure they're all the same - if not, fail loudly (this means
+    // go through all the returned keys and make sure they're all the same - if not, fail loudly (this
+    // means
     // an inconsistency in the db that we can't resolve here)
     Integer resultKey = null;
     for (String uniqueString : lookupKeys) {
@@ -100,7 +102,8 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
       }
     }
 
-    // if we got an occurrenceKey as well as nulls, then we need to fill in the lookup table with the missing entries
+    // if we got an occurrenceKey as well as nulls, then we need to fill in the lookup table with the
+    // missing entries
     if (resultKey != null && gotNulls) {
       fillMissingKeys(lookupKeys, foundOccurrenceKeys, resultKey);
     }
@@ -137,13 +140,13 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
 
 
   /**
-   * Scans the lookup table for instances of the occurrenceKey and deletes those rows. It attempts to scope the scan
-   * for this occurrenceKey within the dataset of the original occurrence, but note that there is no guarantee that the
-   * original occurrence corresponding to this occurrenceKey still exists, so in the worst case this method will do a
-   * full table scan of the lookup table.
+   * Scans the lookup table for instances of the occurrenceKey and deletes those rows. It attempts to
+   * scope the scan for this occurrenceKey within the dataset of the original occurrence, but note
+   * that there is no guarantee that the original occurrence corresponding to this occurrenceKey still
+   * exists, so in the worst case this method will do a full table scan of the lookup table.
    *
    * @param occurrenceKey the key to delete
-   * @param datasetKey    the optional "scope" for the lookup (without it this method is very slow)
+   * @param datasetKey the optional "scope" for the lookup (without it this method is very slow)
    */
   @Override
   public void deleteKey(Integer occurrenceKey, @Nullable String datasetKey) {
@@ -155,7 +158,8 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
       rawDatasetKey = occurrenceTableStore.getString(occurrenceKey, Columns.column(GbifTerm.datasetKey));
     }
 
-    // scan the lookup table for all rows where the key matches our dataset prefix and the cell value is our
+    // scan the lookup table for all rows where the key matches our dataset prefix and the cell value is
+    // our
     // target occurrenceKey, then delete those rows
     Scan scan = new Scan();
     scan.addColumn(Columns.CF, Bytes.toBytes(Columns.LOOKUP_KEY_COLUMN));
@@ -166,13 +170,12 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
     } else {
       filters.add(new PrefixFilter(Bytes.toBytes(OccurrenceKeyHelper.buildKeyPrefix(rawDatasetKey))));
     }
-    Filter valueFilter = new SingleColumnValueFilter(Columns.CF, Bytes.toBytes(Columns.LOOKUP_KEY_COLUMN),
-                                                     CompareFilter.CompareOp.EQUAL, Bytes.toBytes(occurrenceKey));
+    Filter valueFilter = new SingleColumnValueFilter(Columns.CF, Bytes.toBytes(Columns.LOOKUP_KEY_COLUMN), CompareFilter.CompareOp.EQUAL,
+        Bytes.toBytes(occurrenceKey));
     filters.add(valueFilter);
     Filter filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters);
     scan.setFilter(filterList);
-    try (Table lookupTable = connection.getTable(lookupTableName);
-         ResultScanner resultScanner = lookupTable.getScanner(scan)) {
+    try (Table lookupTable = connection.getTable(lookupTableName); ResultScanner resultScanner = lookupTable.getScanner(scan)) {
       List<Delete> keysToDelete = Lists.newArrayList();
       for (Result result : resultScanner) {
         Delete delete = new Delete(result.getRow());
@@ -216,8 +219,7 @@ public abstract class AbstractHBaseKeyPersistenceService implements KeyPersisten
   }
 
 
-  private void fillMissingKeys(Set<String> lookupKeys, Map<String, Integer> foundOccurrenceKeys,
-                               Integer occurrenceKey) {
+  private void fillMissingKeys(Set<String> lookupKeys, Map<String, Integer> foundOccurrenceKeys, Integer occurrenceKey) {
     for (String lookupKey : lookupKeys) {
       if (!foundOccurrenceKeys.containsKey(lookupKey)) {
         lookupTableStore.putInt(lookupKey, Columns.LOOKUP_KEY_COLUMN, occurrenceKey);

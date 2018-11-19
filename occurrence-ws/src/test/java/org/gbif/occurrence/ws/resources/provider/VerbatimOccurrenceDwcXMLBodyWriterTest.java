@@ -1,24 +1,23 @@
 package org.gbif.occurrence.ws.resources.provider;
 
+import static junit.framework.TestCase.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import javax.ws.rs.ext.MessageBodyWriter;
+
+import org.apache.commons.io.IOUtils;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
-import org.gbif.occurrence.ws.provider.OccurrenceDwcXMLBodyWriter;
 import org.gbif.occurrence.ws.provider.OccurrenceVerbatimDwcXMLBodyWriter;
 import org.gbif.utils.file.FileUtils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import javax.ws.rs.ext.MessageBodyWriter;
-
-import com.google.common.base.CharMatcher;
-import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import com.google.common.base.CharMatcher;
 
 /**
  * Test for {@link OccurrenceVerbatimDwcXMLBodyWriter} behavior.
@@ -27,7 +26,7 @@ import static junit.framework.TestCase.assertEquals;
 public class VerbatimOccurrenceDwcXMLBodyWriterTest {
 
   @Test
-  public void testVerbatimOccurrenceXML() throws IOException{
+  public void testVerbatimOccurrenceXML() throws IOException {
     MessageBodyWriter<VerbatimOccurrence> occurrenceDwcXMLBodyWriter = new OccurrenceVerbatimDwcXMLBodyWriter();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     VerbatimOccurrence occ = new VerbatimOccurrence();

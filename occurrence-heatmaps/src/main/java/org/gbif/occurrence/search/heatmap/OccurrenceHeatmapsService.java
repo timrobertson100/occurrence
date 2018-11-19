@@ -1,20 +1,21 @@
 package org.gbif.occurrence.search.heatmap;
 
-import org.gbif.common.search.SearchException;
-import org.gbif.occurrence.search.OccurrenceSearchRequestBuilder;
-import org.gbif.occurrence.search.solr.OccurrenceSolrField;
-
 import java.io.IOException;
+
 import javax.annotation.Nullable;
 
-import com.google.inject.Inject;
 import org.apache.lucene.spatial.prefix.HeatmapFacetCounter;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.params.FacetParams;
+import org.gbif.common.search.SearchException;
+import org.gbif.occurrence.search.OccurrenceSearchRequestBuilder;
+import org.gbif.occurrence.search.solr.OccurrenceSolrField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
 
 public class OccurrenceHeatmapsService {
 
@@ -27,9 +28,9 @@ public class OccurrenceHeatmapsService {
   private final OccurrenceSearchRequestBuilder occurrenceSearchHeatmapRequestBuilder;
 
   @Inject
-  public OccurrenceHeatmapsService(SolrClient solrClient){
+  public OccurrenceHeatmapsService(SolrClient solrClient) {
     this.solrClient = solrClient;
-    occurrenceSearchHeatmapRequestBuilder = new OccurrenceSearchRequestBuilder(null,1,1,true);
+    occurrenceSearchHeatmapRequestBuilder = new OccurrenceSearchRequestBuilder(null, 1, 1, true);
   }
 
   public OccurrenceHeatmapResponse searchHeatMap(@Nullable OccurrenceHeatmapRequest request) {
@@ -41,7 +42,7 @@ public class OccurrenceHeatmapsService {
       solrQuery.add(FacetParams.FACET_HEATMAP, OccurrenceSolrField.COORDINATE.getFieldName());
       solrQuery.add(FacetParams.FACET_HEATMAP_LEVEL, Integer.toString(gridLevel(request.getZoom())));
       solrQuery.add(FacetParams.FACET_HEATMAP_MAX_CELLS, Integer.toString(HeatmapFacetCounter.MAX_ROWS_OR_COLUMNS));
-      if(request.getGeometry() != null) {
+      if (request.getGeometry() != null) {
         solrQuery.add(FacetParams.FACET_HEATMAP_GEOM, request.getGeometry());
       }
       LOG.debug("Solr heatmap query {}", solrQuery);
@@ -55,7 +56,7 @@ public class OccurrenceHeatmapsService {
 
 
   private static int gridLevel(int zoom) {
-    if( zoom < MIN_GRID_LEVEL){
+    if (zoom < MIN_GRID_LEVEL) {
       return MIN_GRID_LEVEL;
     } else if (zoom <= 6) {
       return MIN_GRID_LEVEL + 1;

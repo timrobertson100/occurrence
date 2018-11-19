@@ -1,16 +1,23 @@
 /*
- * Copyright 2012 Global Biodiversity Information Facility (GBIF)
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2012 Global Biodiversity Information Facility (GBIF) Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You
+ * may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ * the License for the specific language governing permissions and limitations under the License.
  */
 package org.gbif.occurrence.download.query;
+
+import static org.gbif.common.search.solr.QueryUtils.PARAMS_JOINER;
+import static org.gbif.common.search.solr.QueryUtils.parseQueryValue;
+import static org.gbif.common.search.solr.SolrConstants.GEO_INTERSECTS_QUERY_FMT;
+import static org.gbif.common.search.solr.SolrConstants.RANGE_FORMAT;
+import static org.gbif.occurrence.search.OccurrenceSearchRequestBuilder.QUERY_FIELD_MAPPING;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.Iterator;
 
 import org.gbif.api.model.occurrence.predicate.CompoundPredicate;
 import org.gbif.api.model.occurrence.predicate.ConjunctionPredicate;
@@ -31,37 +38,28 @@ import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.common.search.solr.SearchDateUtils;
 import org.gbif.common.search.solr.SolrConstants;
 import org.gbif.occurrence.search.solr.OccurrenceSolrField;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Date;
-import java.util.Iterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Throwables;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.gbif.common.search.solr.QueryUtils.PARAMS_JOINER;
-import static org.gbif.common.search.solr.QueryUtils.parseQueryValue;
-import static org.gbif.common.search.solr.SolrConstants.GEO_INTERSECTS_QUERY_FMT;
-import static org.gbif.common.search.solr.SolrConstants.RANGE_FORMAT;
-import static org.gbif.occurrence.search.OccurrenceSearchRequestBuilder.QUERY_FIELD_MAPPING;
 
 /**
- * This class builds clause for a Hive query from a {@link org.gbif.api.model.occurrence.predicate.Predicate} object.
+ * This class builds clause for a Hive query from a
+ * {@link org.gbif.api.model.occurrence.predicate.Predicate} object.
  * </p>
- * This is not thread-safe but one instance can be reused. It is package-local and should usually be accessed through
- * {@link org.gbif.api.service.occurrence.DownloadRequestService}. All {@code visit} methods have to be public for the
- * {@link Class#getMethod(String, Class[])} call to work. This is the primary reason for this class being
- * package-local.
+ * This is not thread-safe but one instance can be reused. It is package-local and should usually be
+ * accessed through {@link org.gbif.api.service.occurrence.DownloadRequestService}. All
+ * {@code visit} methods have to be public for the {@link Class#getMethod(String, Class[])} call to
+ * work. This is the primary reason for this class being package-local.
  * </p>
  * The only entry point into this class is the {@code getQuery} method!
  */
-// TODO: We should check somewhere for the length of the string to avoid possible attacks/oom situations (OCC-35)
+// TODO: We should check somewhere for the length of the string to avoid possible attacks/oom
+// situations (OCC-35)
 public class SolrQueryVisitor {
 
   private static final Logger LOG = LoggerFactory.getLogger(SolrQueryVisitor.class);
@@ -79,19 +77,16 @@ public class SolrQueryVisitor {
   private StringBuilder builder;
 
   /**
-   * Parses a geometry parameter in WKT format.
-   * If the parsed geometry is a polygon the produced query will be in INTERSECTS(wkt parameter) format.
-   * If the parsed geometry is a rectangle, the query is transformed into a range query using the southmost and
-   * northmost points.
+   * Parses a geometry parameter in WKT format. If the parsed geometry is a polygon the produced query
+   * will be in INTERSECTS(wkt parameter) format. If the parsed geometry is a rectangle, the query is
+   * transformed into a range query using the southmost and northmost points.
    */
   protected static String parseGeometryParam(String wkt) {
     try {
       Geometry geometry = new WKTReader().read(wkt);
       if (geometry.isRectangle()) {
         Envelope bbox = geometry.getEnvelopeInternal();
-        return String.format(RANGE_FORMAT,
-                             bbox.getMinY() + "," + bbox.getMinX(),
-                             bbox.getMaxY() + "," + bbox.getMaxX());
+        return String.format(RANGE_FORMAT, bbox.getMinY() + "," + bbox.getMinX(), bbox.getMaxY() + "," + bbox.getMaxX());
       }
       return String.format(GEO_INTERSECTS_QUERY_FMT, wkt);
     } catch (ParseException e) {
@@ -114,7 +109,8 @@ public class SolrQueryVisitor {
       visit(predicate);
       query = builder.toString();
     }
-    // Set to null to prevent old StringBuilders hanging around in case this class is reused somewhere else
+    // Set to null to prevent old StringBuilders hanging around in case this class is reused somewhere
+    // else
     builder = null;
     return query;
   }
@@ -186,8 +182,7 @@ public class SolrQueryVisitor {
   }
 
   public void visit(WithinPredicate within) {
-    builder.append(PARAMS_JOINER.join(OccurrenceSolrField.COORDINATE.getFieldName(),
-                                      parseGeometryParam(within.getGeometry())));
+    builder.append(PARAMS_JOINER.join(OccurrenceSolrField.COORDINATE.getFieldName(), parseGeometryParam(within.getGeometry())));
   }
 
   public void visit(IsNotNullPredicate predicate) throws QueryBuildingException {
@@ -196,9 +191,9 @@ public class SolrQueryVisitor {
   }
 
   /**
-   * Builds a list of predicates joined by 'op' statements.
-   * The final statement will look like this:
+   * Builds a list of predicates joined by 'op' statements. The final statement will look like this:
    * <p/>
+   * 
    * <pre>
    * ((predicate) op (predicate) ... op (predicate))
    * </pre>
@@ -239,8 +234,9 @@ public class SolrQueryVisitor {
   }
 
   /**
-   * Converts a value to the form expected by Hive/Hbase based on the OccurrenceSearchParameter.
-   * Most values pass by unaltered. Quotes are added for values that need to be quoted, escaping any existing quotes.
+   * Converts a value to the form expected by Hive/Hbase based on the OccurrenceSearchParameter. Most
+   * values pass by unaltered. Quotes are added for values that need to be quoted, escaping any
+   * existing quotes.
    *
    * @param param the type of parameter defining the expected type
    * @param value the original query value

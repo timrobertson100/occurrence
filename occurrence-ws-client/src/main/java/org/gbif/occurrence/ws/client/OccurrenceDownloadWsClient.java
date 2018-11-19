@@ -1,23 +1,24 @@
 package org.gbif.occurrence.ws.client;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.annotation.Nullable;
+import javax.ws.rs.core.MediaType;
+
+import org.codehaus.jackson.map.ObjectMapper;
 import org.gbif.api.model.occurrence.Download;
 import org.gbif.api.model.occurrence.DownloadRequest;
 import org.gbif.api.service.occurrence.DownloadRequestService;
 import org.gbif.ws.client.BaseWsGetClient;
 import org.gbif.ws.mixin.LicenseMixin;
 import org.gbif.ws.util.InputStreamUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import javax.annotation.Nullable;
-import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.ClientFilter;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Client-side implementation to the ChecklistService.

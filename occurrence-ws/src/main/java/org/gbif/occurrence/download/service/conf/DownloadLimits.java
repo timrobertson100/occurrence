@@ -1,6 +1,7 @@
 package org.gbif.occurrence.download.service.conf;
 
 import java.util.Iterator;
+
 import javax.inject.Inject;
 
 import com.google.common.base.Splitter;
@@ -9,7 +10,8 @@ import com.google.inject.name.Named;
 public class DownloadLimits {
 
   /**
-   * Amount of downloads that an user can execute simultaneously under certain amount of global downloads.
+   * Amount of downloads that an user can execute simultaneously under certain amount of global
+   * downloads.
    */
   public static class Limit {
 
@@ -49,9 +51,8 @@ public class DownloadLimits {
   }
 
   @Inject
-  public DownloadLimits(@Named("max_user_downloads") int maxUserDownloads,
-                        @Named("downloads_soft_limit") String softLimit,
-                        @Named("downloads_hard_limit") String hardLimit) {
+  public DownloadLimits(@Named("max_user_downloads") int maxUserDownloads, @Named("downloads_soft_limit") String softLimit,
+      @Named("downloads_hard_limit") String hardLimit) {
 
     Iterator<String> softLimits = COMMA_SPLITTER.split(softLimit).iterator();
     Iterator<String> hardLimits = COMMA_SPLITTER.split(hardLimit).iterator();
@@ -73,7 +74,6 @@ public class DownloadLimits {
   }
 
   public boolean violatesLimits(int userDownloads, int globalDownloads) {
-    return getSoftLimit().violatesLimit(userDownloads, globalDownloads)
-           && getHardLimit().violatesLimit(userDownloads, globalDownloads);
+    return getSoftLimit().violatesLimit(userDownloads, globalDownloads) && getHardLimit().violatesLimit(userDownloads, globalDownloads);
   }
 }

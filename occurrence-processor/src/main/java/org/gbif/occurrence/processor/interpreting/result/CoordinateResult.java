@@ -52,16 +52,13 @@ public class CoordinateResult {
       return false;
     }
     final CoordinateResult other = (CoordinateResult) obj;
-    return Objects.equal(this.latitude, other.latitude)
-           && Objects.equal(this.longitude, other.longitude)
-           && Objects.equal(this.country, other.country);
+    return Objects.equal(this.latitude, other.latitude) && Objects.equal(this.longitude, other.longitude)
+        && Objects.equal(this.country, other.country);
   }
 
   @Override
   public String toString() {
-    return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-        .append("country", getCountry())
-        .append("latitude", getLatitude())
+    return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("country", getCountry()).append("latitude", getLatitude())
         .append("longitude", getLongitude()).toString();
   }
 }

@@ -1,8 +1,8 @@
 package org.gbif.occurrence.constants;
 
 /**
- * These aren't all real XPaths but save setting up the full parse machinery in order to run real XPaths when quick
- * String searches for the goal strings are much faster.
+ * These aren't all real XPaths but save setting up the full parse machinery in order to run real
+ * XPaths when quick String searches for the goal strings are much faster.
  */
 public class ExtractionSimpleXPaths {
 

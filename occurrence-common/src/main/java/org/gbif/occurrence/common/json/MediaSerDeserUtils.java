@@ -1,21 +1,21 @@
 package org.gbif.occurrence.common.json;
 
-import org.gbif.api.model.common.MediaObject;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.type.CollectionType;
+import org.gbif.api.model.common.MediaObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 
 /**
  * Utility class to serialize and deserialize MediaObject instances from/to JSON.
@@ -34,8 +34,7 @@ public class MediaSerDeserUtils {
     MAPPER.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.ALWAYS);
   }
 
-  private static final CollectionType LIST_MEDIA_TYPE = MAPPER.getTypeFactory().constructCollectionType(List.class,
-    MediaObject.class);
+  private static final CollectionType LIST_MEDIA_TYPE = MAPPER.getTypeFactory().constructCollectionType(List.class, MediaObject.class);
 
 
   private MediaSerDeserUtils() {

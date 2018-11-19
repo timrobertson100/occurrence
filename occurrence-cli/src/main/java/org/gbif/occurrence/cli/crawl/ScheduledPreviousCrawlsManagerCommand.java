@@ -1,19 +1,19 @@
 package org.gbif.occurrence.cli.crawl;
 
+import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.occurrence.cli.common.JsonWriter;
-
-import java.io.IOException;
+import org.kohsuke.MetaInfServices;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.StringUtils;
-import org.kohsuke.MetaInfServices;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Commands to manage occurrence record from previous crawls in a scheduled task.
@@ -38,8 +38,8 @@ public class ScheduledPreviousCrawlsManagerCommand extends ServiceCommand {
   protected Service getService() {
     Injector injector = Guice.createInjector(new PreviousCrawlModule(config));
     messagePublisher = injector.getInstance(MessagePublisher.class);
-    return new ScheduledPreviousCrawlsManagerService(injector.getInstance(PreviousCrawlsManager.class),
-            this::printReport, config, this::cleanup);
+    return new ScheduledPreviousCrawlsManagerService(injector.getInstance(PreviousCrawlsManager.class), this::printReport, config,
+        this::cleanup);
   }
 
   private void cleanup() {
@@ -47,7 +47,8 @@ public class ScheduledPreviousCrawlsManagerCommand extends ServiceCommand {
   }
 
   /**
-   * Print the report to a file or to the console depending on {@link PreviousCrawlsManagerConfiguration}.
+   * Print the report to a file or to the console depending on
+   * {@link PreviousCrawlsManagerConfiguration}.
    *
    * @param report
    */

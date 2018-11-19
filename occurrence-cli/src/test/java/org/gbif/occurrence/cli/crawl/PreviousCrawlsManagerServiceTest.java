@@ -1,16 +1,15 @@
 package org.gbif.occurrence.cli.crawl;
 
-import org.gbif.api.model.crawler.FinishReason;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.gbif.api.model.crawler.FinishReason;
 import org.junit.Test;
-
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 
 /**
  * Unit tests related to {@link PreviousCrawlsManagerConfiguration}.
@@ -30,7 +29,7 @@ public class PreviousCrawlsManagerServiceTest {
     drci.setCrawlInfo(getCrawlInfoList(getCrawlInfo(1, 50), getCrawlInfo(2, 100)));
     assertEquals(150, drci.getRecordCount());
     assertFalse("No automatic deletion. Percentage of records to remove (33) higher than the configured threshold (30).",
-            pcms.shouldRunAutomaticDeletion(drci));
+        pcms.shouldRunAutomaticDeletion(drci));
   }
 
   /**

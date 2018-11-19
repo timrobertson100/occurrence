@@ -1,16 +1,15 @@
 package org.gbif.occurrence.parsing.xml.rules;
 
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
-import org.gbif.occurrence.model.Identification;
-import org.gbif.occurrence.model.ImageRecord;
-import org.gbif.occurrence.model.LinkRecord;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
 import org.apache.commons.digester.Digester;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
+import org.gbif.occurrence.model.Identification;
+import org.gbif.occurrence.model.ImageRecord;
+import org.gbif.occurrence.model.LinkRecord;
 
 public class Abcd206RuleSet extends AbstractRuleSet {
 
@@ -24,7 +23,7 @@ public class Abcd206RuleSet extends AbstractRuleSet {
 
   @Override
   public String getNamespaceURI() {
-    //TODO: should this be the real xml namespace and not just a flat string?
+    // TODO: should this be the real xml namespace and not just a flat string?
     return OccurrenceSchemaType.ABCD_2_0_6.toString();
   }
 

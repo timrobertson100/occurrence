@@ -2,7 +2,6 @@ package org.gbif.occurrence.cli.registry.service.sync;
 
 import org.gbif.cli.BaseCommand;
 import org.gbif.cli.Command;
-
 import org.kohsuke.MetaInfServices;
 
 /**

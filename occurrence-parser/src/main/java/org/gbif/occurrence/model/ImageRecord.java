@@ -1,28 +1,25 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.model;
-
-import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
-import org.gbif.occurrence.parsing.xml.PrioritizedProperty;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
+import org.gbif.occurrence.parsing.xml.PrioritizedProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +39,13 @@ public class ImageRecord extends PropertyPrioritizer implements Serializable {
   private String htmlForDisplay;
 
   /**
-   * Once this object has been populated by a Digester, there may be several PrioritizedProperties that
-   * need to be resolved, and thereby set the final value of the corresponding field on this object.
+   * Once this object has been populated by a Digester, there may be several PrioritizedProperties
+   * that need to be resolved, and thereby set the final value of the corresponding field on this
+   * object.
    */
   @Override
   public void resolvePriorities() {
-    for (Map.Entry<PrioritizedPropertyNameEnum,Set<PrioritizedProperty>> entry : prioritizedProps.entrySet()) {
+    for (Map.Entry<PrioritizedPropertyNameEnum, Set<PrioritizedProperty>> entry : prioritizedProps.entrySet()) {
       PrioritizedPropertyNameEnum name = entry.getKey();
       String result = findHighestPriority(prioritizedProps.get(name));
       switch (name) {
@@ -120,14 +118,12 @@ public class ImageRecord extends PropertyPrioritizer implements Serializable {
   }
 
   public boolean isEmpty() {
-    return StringUtils.isEmpty(rawImageType) && imageType == null && StringUtils.isEmpty(url) && StringUtils
-      .isEmpty(pageUrl) &&
-           StringUtils.isEmpty(description) && StringUtils.isEmpty(rights) && StringUtils.isEmpty(htmlForDisplay);
+    return StringUtils.isEmpty(rawImageType) && imageType == null && StringUtils.isEmpty(url) && StringUtils.isEmpty(pageUrl)
+        && StringUtils.isEmpty(description) && StringUtils.isEmpty(rights) && StringUtils.isEmpty(htmlForDisplay);
   }
 
   public String debugDump() {
-    return "ImageRecord [\nrawImageType=" + rawImageType + ",\nimageType=" + imageType + ",\nurl=" + url + ",\npageUrl="
-           + pageUrl + ",\ndescription=" + description + ",\nrights=" + rights + ",\nhtmlForDisplay=" + htmlForDisplay
-           + "]";
+    return "ImageRecord [\nrawImageType=" + rawImageType + ",\nimageType=" + imageType + ",\nurl=" + url + ",\npageUrl=" + pageUrl
+        + ",\ndescription=" + description + ",\nrights=" + rights + ",\nhtmlForDisplay=" + htmlForDisplay + "]";
   }
 }

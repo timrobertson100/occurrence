@@ -1,8 +1,9 @@
 package org.gbif.occurrence.download.file.simpleavro;
 
+import java.util.List;
+
 import org.gbif.occurrence.download.file.DownloadAggregator;
 import org.gbif.occurrence.download.file.Result;
-import java.util.List;
 
 /**
  * Combine the parts created by actor and combine them into single Avro file.
@@ -10,8 +11,8 @@ import java.util.List;
 public class SimpleAvroDownloadAggregator implements DownloadAggregator {
 
   /**
-   * Collects the results of each job.
-   * Iterates over the list of futures to collect individual results.
+   * Collects the results of each job. Iterates over the list of futures to collect individual
+   * results.
    */
   @Override
   public void aggregate(List<Result> results) {

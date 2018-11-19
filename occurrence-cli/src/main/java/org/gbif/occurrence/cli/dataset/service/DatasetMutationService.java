@@ -1,5 +1,7 @@
 package org.gbif.occurrence.cli.dataset.service;
 
+import java.util.Set;
+
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.occurrence.cli.dataset.DeleteDatasetListener;
@@ -8,16 +10,15 @@ import org.gbif.occurrence.cli.dataset.ParseDatasetListener;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.guice.OccurrencePersistenceModule;
 
-import java.util.Set;
-
 import com.beust.jcommander.internal.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 /**
- * Handles messages to parse a dataset (from xml/json to verbatim) and to interpret a dataset (from verbatim to
- * interpreted). Eventually should also handle deletions (which live in the delete package for now).
+ * Handles messages to parse a dataset (from xml/json to verbatim) and to interpret a dataset (from
+ * verbatim to interpreted). Eventually should also handle deletions (which live in the delete
+ * package for now).
  */
 public class DatasetMutationService extends AbstractIdleService {
 
@@ -38,20 +39,17 @@ public class DatasetMutationService extends AbstractIdleService {
 
     MessageListener listener = new MessageListener(config.messaging.getConnectionParameters());
     listener.listen(config.deleteDatasetQueueName, config.msgPoolSize,
-        new DeleteDatasetListener(keyService,
-        new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
+        new DeleteDatasetListener(keyService, new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
     listeners.add(listener);
 
     listener = new MessageListener(config.messaging.getConnectionParameters());
     listener.listen(config.interpretDatasetQueueName, config.msgPoolSize,
-      new InterpretDatasetListener(keyService,
-      new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
+        new InterpretDatasetListener(keyService, new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
     listeners.add(listener);
 
     listener = new MessageListener(config.messaging.getConnectionParameters());
     listener.listen(config.parseDatasetQueueName, config.msgPoolSize,
-        new ParseDatasetListener(keyService,
-        new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
+        new ParseDatasetListener(keyService, new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
     listeners.add(listener);
 
   }

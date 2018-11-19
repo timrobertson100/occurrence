@@ -1,13 +1,13 @@
 package org.gbif.occurrence.download.service;
 
+import java.security.AccessControlException;
+import java.security.Principal;
+
+import javax.ws.rs.core.SecurityContext;
+
 import org.gbif.api.model.occurrence.DownloadRequest;
 import org.gbif.ws.security.NotAllowedException;
 import org.gbif.ws.security.NotAuthenticatedException;
-
-import java.security.AccessControlException;
-import java.security.Principal;
-import javax.ws.rs.core.SecurityContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ public class DownloadSecurityUtil {
    * Private constructor.
    */
   private DownloadSecurityUtil() {
-    //empty constructor
+    // empty constructor
   }
 
   /**
@@ -34,10 +34,8 @@ public class DownloadSecurityUtil {
     // assert authenticated user is the same as in download
     Principal principal = assertUserAuthenticated(security);
     if (!principal.getName().equals(request.getCreator())) {
-      LOG.warn("Different user authenticated [{}] than download specifies [{}]", principal.getName(),
-               request.getCreator());
-      throw new NotAllowedException(principal.getName() + " not allowed to create download with creator "
-                                    + request.getCreator());
+      LOG.warn("Different user authenticated [{}] than download specifies [{}]", principal.getName(), request.getCreator());
+      throw new NotAllowedException(principal.getName() + " not allowed to create download with creator " + request.getCreator());
     }
   }
 

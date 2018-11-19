@@ -1,9 +1,9 @@
 package org.gbif.occurrence.cli.registry.service.sync;
 
-import org.gbif.common.messaging.config.MessagingConfiguration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import org.gbif.common.messaging.config.MessagingConfiguration;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;

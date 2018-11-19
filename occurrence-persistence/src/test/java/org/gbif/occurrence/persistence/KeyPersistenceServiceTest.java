@@ -1,11 +1,6 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
-import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
-import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,9 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -26,13 +18,21 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.guice.ThreadLocalLockProvider;
+import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
+import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
+import org.gbif.occurrence.persistence.keygen.ZkLockingKeyService;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 @Ignore("Extremely expensive, many threaded test.")
 public class KeyPersistenceServiceTest {
@@ -70,9 +70,7 @@ public class KeyPersistenceServiceTest {
     TEST_UTIL.createTable(OCCURRENCE_TABLE, CF);
 
     ZOOKEEPER_SERVER = new TestingServer();
-    CURATOR = CuratorFrameworkFactory.builder()
-        .namespace("hbasePersistence")
-        .connectString(ZOOKEEPER_SERVER.getConnectString())
+    CURATOR = CuratorFrameworkFactory.builder().namespace("hbasePersistence").connectString(ZOOKEEPER_SERVER.getConnectString())
         .retryPolicy(new RetryNTimes(1, 1000)).build();
     CURATOR.start();
     ZOO_LOCK_PROVIDER = new ThreadLocalLockProvider(CURATOR);
@@ -111,7 +109,8 @@ public class KeyPersistenceServiceTest {
   private void testContention(KeyPersistenceService kps) {
     String scope = UUID.randomUUID().toString();
 
-    // the constants A,B,C,D,E are meant to all refer to the same occurrence, used to introduce contention
+    // the constants A,B,C,D,E are meant to all refer to the same occurrence, used to introduce
+    // contention
 
     // generate 1M sets of uniqueStrings
     List<Set<String>> testSets = Lists.newArrayList();
@@ -144,10 +143,12 @@ public class KeyPersistenceServiceTest {
       testSets.add(uniqueStrings);
     }
 
-    // 1M produces abc [228571] bcd [171428] cde [142858] non [457143] so expect 457144 ids to be generated
-    //    System.out.println(
-    //      "got abc [" + abc + "] bcd [" + bcd + "] cde [" + cde + "] non [" + non + "] sum [" + (abc + bcd + cde + non)
-    //      + "]");
+    // 1M produces abc [228571] bcd [171428] cde [142858] non [457143] so expect 457144 ids to be
+    // generated
+    // System.out.println(
+    // "got abc [" + abc + "] bcd [" + bcd + "] cde [" + cde + "] non [" + non + "] sum [" + (abc + bcd
+    // + cde + non)
+    // + "]");
 
     // call generateKey for each of them, using X threads to do it concurrently
     int threadCount = 100;

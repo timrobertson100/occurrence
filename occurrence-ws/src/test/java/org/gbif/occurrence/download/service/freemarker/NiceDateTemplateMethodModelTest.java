@@ -1,10 +1,10 @@
 package org.gbif.occurrence.download.service.freemarker;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Date;
 
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class NiceDateTemplateMethodModelTest {
 

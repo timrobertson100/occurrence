@@ -1,5 +1,10 @@
 package org.gbif.occurrence.ws.client.mock;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.service.occurrence.OccurrenceService;
@@ -8,12 +13,7 @@ import org.gbif.api.vocabulary.Kingdom;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
 
 
 public class OccurrencePersistenceMockService implements OccurrenceService {

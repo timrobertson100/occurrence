@@ -1,5 +1,20 @@
 package org.gbif.occurrence.persistence;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.GbifTerm;
@@ -12,25 +27,11 @@ import org.gbif.occurrence.persistence.api.KeyLookupResult;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.hbase.RowUpdate;
 import org.gbif.occurrence.persistence.util.OccurrenceBuilder;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
-import javax.annotation.Nullable;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * Reads and writes Fragments to/from HBase.
@@ -45,18 +46,18 @@ public class FragmentPersistenceServiceImpl implements FragmentPersistenceServic
   private final OccurrenceKeyPersistenceService keyService;
 
   @Inject
-  public FragmentPersistenceServiceImpl(OccHBaseConfiguration cfg, Connection connection,
-                                        OccurrenceKeyPersistenceService keyService) {
+  public FragmentPersistenceServiceImpl(OccHBaseConfiguration cfg, Connection connection, OccurrenceKeyPersistenceService keyService) {
     occurrenceTableName = cfg.occTable;
     this.connection = connection;
     this.keyService = keyService;
   }
 
   /**
-   * Simple HBase get for given key. Note that OccurrenceBuilder could throw ValidationException if the underlying
-   * fragment is missing required fields.
+   * Simple HBase get for given key. Note that OccurrenceBuilder could throw ValidationException if
+   * the underlying fragment is missing required fields.
    *
-   * @param key the key of the fragment (Integer rather than int for use in methods/classes using generic types)
+   * @param key the key of the fragment (Integer rather than int for use in methods/classes using
+   *        generic types)
    *
    * @return the fragment or null if not found
    */
@@ -126,11 +127,11 @@ public class FragmentPersistenceServiceImpl implements FragmentPersistenceServic
   }
 
   /**
-   * Writes all fields of Fragment to the HBase table. Any field in the fragment that is
-   * empty will be deleted from the corresponding "column" in the HBase row.
+   * Writes all fields of Fragment to the HBase table. Any field in the fragment that is empty will be
+   * deleted from the corresponding "column" in the HBase row.
    *
    * @param occTable the HBase table to write to
-   * @param frag     the fragment to persist
+   * @param frag the fragment to persist
    *
    * @throws IOException if communicating with HBase fails
    */

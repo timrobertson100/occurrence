@@ -1,10 +1,11 @@
 package org.gbif.occurrence.parsing.xml.rules;
 
-import com.google.common.base.Objects;
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.digester.Rule;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+
+import com.google.common.base.Objects;
 
 public class SetLiteralRule extends Rule {
 

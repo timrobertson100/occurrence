@@ -1,5 +1,25 @@
 package org.gbif.occurrence.download.file;
 
+import static org.gbif.occurrence.common.download.DownloadUtils.DELIMETERS_MATCH_PATTERN;
+
+import java.io.IOException;
+import java.time.ZoneOffset;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.DwcTerm;
@@ -12,30 +32,11 @@ import org.gbif.occurrence.download.inject.DownloadWorkflowModule;
 import org.gbif.occurrence.persistence.hbase.Columns;
 import org.gbif.occurrence.persistence.hbase.ExtResultReader;
 
-import java.io.IOException;
-import java.time.ZoneOffset;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.beust.jcommander.internal.Sets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import static org.gbif.occurrence.common.download.DownloadUtils.DELIMETERS_MATCH_PATTERN;
 
 /**
  * Reads a occurrence record from HBase and return it in a Map<String,Object>.
@@ -74,9 +75,8 @@ public class OccurrenceMapReader {
         }
       }
       occurrence.put(GbifTerm.hasGeospatialIssues.simpleName(), Boolean.toString(hasGeospatialIssues(row)));
-      occurrence.put(GbifTerm.hasCoordinate.simpleName(),
-                     Boolean.toString(occurrence.get(DwcTerm.decimalLatitude.simpleName()) != null
-                                      && occurrence.get(DwcTerm.decimalLongitude.simpleName()) != null));
+      occurrence.put(GbifTerm.hasCoordinate.simpleName(), Boolean.toString(
+          occurrence.get(DwcTerm.decimalLatitude.simpleName()) != null && occurrence.get(DwcTerm.decimalLongitude.simpleName()) != null));
       occurrence.put(GbifTerm.repatriated.simpleName(), getRepatriated(row).orElse(null));
       return occurrence;
     }
@@ -108,9 +108,8 @@ public class OccurrenceMapReader {
         } else if (term == GbifTerm.hasGeospatialIssues) {
           occurrence.put(GbifTerm.hasGeospatialIssues.simpleName(), Boolean.toString(hasGeospatialIssues(row)));
         } else if (term == GbifTerm.hasCoordinate) {
-          occurrence.put(GbifTerm.hasCoordinate.simpleName(),
-                         Boolean.toString(occurrence.get(DwcTerm.decimalLatitude.simpleName()) != null
-                                          && occurrence.get(DwcTerm.decimalLongitude.simpleName()) != null));
+          occurrence.put(GbifTerm.hasCoordinate.simpleName(), Boolean.toString(occurrence.get(DwcTerm.decimalLatitude.simpleName()) != null
+              && occurrence.get(DwcTerm.decimalLongitude.simpleName()) != null));
         } else if (term == GbifTerm.repatriated) {
           occurrence.put(GbifTerm.repatriated.simpleName(), getRepatriated(row).orElse(null));
         } else if (!TermUtils.isComplexType(term)) {
@@ -125,8 +124,8 @@ public class OccurrenceMapReader {
    * Validates if the occurrence record it's a repatriated record.
    */
   private static Optional<String> getRepatriated(Result result) {
-    String publishingCountry = ExtResultReader.getString(result,Columns.column(GbifTerm.publishingCountry));
-    String countryCode = ExtResultReader.getString(result,Columns.column(DwcTerm.countryCode));
+    String publishingCountry = ExtResultReader.getString(result, Columns.column(GbifTerm.publishingCountry));
+    String countryCode = ExtResultReader.getString(result, Columns.column(DwcTerm.countryCode));
 
     if (publishingCountry != null && countryCode != null) {
       return Optional.of(Boolean.toString(publishingCountry.equalsIgnoreCase(countryCode)));
@@ -138,9 +137,8 @@ public class OccurrenceMapReader {
    * Extracts the media types from the hbase result.
    */
   private static String extractMediaTypes(Result result) {
-    Optional<byte[]> val = Optional.ofNullable(result.getValue(Columns.CF,
-                                                               Bytes.toBytes(Columns.column(Extension.MULTIMEDIA))));
-    return val.map( v -> SEMICOLON_JOINER.join(MediaSerDeserUtils.extractMediaTypes(v))).orElse("");
+    Optional<byte[]> val = Optional.ofNullable(result.getValue(Columns.CF, Bytes.toBytes(Columns.column(Extension.MULTIMEDIA))));
+    return val.map(v -> SEMICOLON_JOINER.join(MediaSerDeserUtils.extractMediaTypes(v))).orElse("");
   }
 
   /**
@@ -189,16 +187,14 @@ public class OccurrenceMapReader {
   }
 
   /**
-   * Cleans specials characters from a string value.
-   * Removes tabs, line breaks and new lines.
+   * Cleans specials characters from a string value. Removes tabs, line breaks and new lines.
    */
   private static String getCleanString(Result row, Term term) {
     return cleanString(ExtResultReader.getString(row, term));
   }
 
   /**
-   * Cleans specials characters from a string value.
-   * Removes tabs, line breaks and new lines.
+   * Cleans specials characters from a string value. Removes tabs, line breaks and new lines.
    */
   private static String getCleanVerbatimString(Result row, Term term) {
     return cleanString(ExtResultReader.getString(row, Columns.verbatimColumn(term)));
@@ -216,15 +212,13 @@ public class OccurrenceMapReader {
   }
 
   @Inject
-  public OccurrenceMapReader(@Named(DownloadWorkflowModule.DefaultSettings.OCC_HBASE_TABLE_KEY) String tableName,
-                             Connection connection) {
+  public OccurrenceMapReader(@Named(DownloadWorkflowModule.DefaultSettings.OCC_HBASE_TABLE_KEY) String tableName, Connection connection) {
     occurrenceTableName = tableName;
     this.connection = connection;
   }
 
   /**
-   * Reads an occurrence record from HBase into Map.
-   * The occurrence record
+   * Reads an occurrence record from HBase into Map. The occurrence record
    */
   public Result get(@Nonnull Integer key) throws IOException {
     Preconditions.checkNotNull(key, "Occurrence key can't be null");

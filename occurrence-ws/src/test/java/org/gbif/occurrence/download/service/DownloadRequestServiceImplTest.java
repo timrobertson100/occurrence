@@ -1,9 +1,9 @@
 package org.gbif.occurrence.download.service;
 
+import static org.junit.Assert.assertTrue;
+
 import org.apache.oozie.client.Job;
 import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
 
 public class DownloadRequestServiceImplTest {
 

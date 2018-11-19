@@ -1,11 +1,11 @@
 package org.gbif.occurrence.cli.crawl;
 
-import org.gbif.cli.service.ScheduledService;
-import org.gbif.occurrence.cli.common.DestroyCallback;
-
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
+
+import org.gbif.cli.service.ScheduledService;
+import org.gbif.occurrence.cli.common.DestroyCallback;
 
 /**
  * Service that runs {@link PreviousCrawlsManager} on a schedule.
@@ -23,10 +23,8 @@ public class ScheduledPreviousCrawlsManagerService extends ScheduledService {
    * @param reportHandler
    * @param config
    */
-  ScheduledPreviousCrawlsManagerService(PreviousCrawlsManager previousCrawlsManager,
-                                        Consumer<Object> reportHandler,
-                                        PreviousCrawlsManagerConfiguration config,
-                                        DestroyCallback destroyCallback){
+  ScheduledPreviousCrawlsManagerService(PreviousCrawlsManager previousCrawlsManager, Consumer<Object> reportHandler,
+      PreviousCrawlsManagerConfiguration config, DestroyCallback destroyCallback) {
     this.previousCrawlsManager = previousCrawlsManager;
     this.reportHandler = reportHandler;
     this.config = config;
@@ -50,6 +48,6 @@ public class ScheduledPreviousCrawlsManagerService extends ScheduledService {
 
   @Override
   protected int getIntervalInMinutes() {
-    return (int)(ChronoUnit.HOURS.getDuration().toMinutes() * config.scheduling.frequencyInHour);
+    return (int) (ChronoUnit.HOURS.getDuration().toMinutes() * config.scheduling.frequencyInHour);
   }
 }

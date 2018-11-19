@@ -4,12 +4,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
 /**
  * 
- * Contains classes to Read {@link java.sql.ResultSet}  of different types.
+ * Contains classes to Read {@link java.sql.ResultSet} of different types.
  *
  */
 public class Result {
@@ -36,7 +37,7 @@ public class Result {
   }
 
   public static class ReadDescribe implements Read<List<DescribeResult>> {
-    
+
     @Override
     public List<DescribeResult> apply(ResultSet resultset) {
       List<DescribeResult> results = Lists.newArrayList();
@@ -103,10 +104,8 @@ public class Result {
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append("{\"columnName\":\"").append(columnName)
-             .append("\", \"dataType\":\"").append(dataType)
-             .append("\", \"comment\":\"").append(comment)
-             .append("\"}");
+      builder.append("{\"columnName\":\"").append(columnName).append("\", \"dataType\":\"").append(dataType).append("\", \"comment\":\"")
+          .append(comment).append("\"}");
       return builder.toString();
     }
   }

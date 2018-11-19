@@ -1,17 +1,16 @@
 package org.gbif.occurrence;
 
-import org.gbif.occurrence.model.RawOccurrenceRecord;
-import org.gbif.occurrence.parsing.RawXmlOccurrence;
-import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.gbif.occurrence.model.RawOccurrenceRecord;
+import org.gbif.occurrence.parsing.RawXmlOccurrence;
+import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
 import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
 
 public class DigesterLogTest {
 

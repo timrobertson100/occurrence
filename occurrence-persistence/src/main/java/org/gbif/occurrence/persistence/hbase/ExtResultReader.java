@@ -1,36 +1,38 @@
 package org.gbif.occurrence.persistence.hbase;
 
-import org.gbif.api.util.VocabularyUtils;
-import org.gbif.dwc.terms.Term;
-import org.gbif.hbase.util.ResultReader;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
+
 import javax.annotation.Nullable;
 
-import com.google.common.base.Strings;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.api.util.VocabularyUtils;
+import org.gbif.dwc.terms.Term;
+import org.gbif.hbase.util.ResultReader;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Strings;
 
 /**
- * A convenience class for making things easier when reading the fields of an HBase result from the occurrence table.
+ * A convenience class for making things easier when reading the fields of an HBase result from the
+ * occurrence table.
  */
 public class ExtResultReader {
 
-  //Validation messages
+  // Validation messages
   private static final String ROW_CAN_T_BE_NULL_MSG = "row can't be null";
   private static final String COLUMN_CAN_T_BE_NULL_MSG = "column can't be null";
 
   private static String CF = Columns.OCCURRENCE_COLUMN_FAMILY;
+
   /**
    * Should never be instantiated.
    */
-  private ExtResultReader() {
-  }
+  private ExtResultReader() {}
 
   public static int getKey(Result row) {
     return Bytes.toInt(row.getRow());

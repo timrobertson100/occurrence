@@ -3,13 +3,14 @@
  */
 package org.gbif.metrics.ws.client;
 
+import java.util.Map;
+
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.gbif.api.service.occurrence.OccurrenceCountryIndexService;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.ws.client.BaseWsClient;
 import org.gbif.ws.client.QueryParamBuilder;
-
-import java.util.Map;
-import javax.ws.rs.core.MultivaluedMap;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedMap;
@@ -24,8 +25,7 @@ import com.sun.jersey.api.client.WebResource;
  */
 public class OccurrenceCountryIndexWsClient extends BaseWsClient implements OccurrenceCountryIndexService {
 
-  private static final GenericType<Map<Country, Long>> GENERIC_TYPE = new GenericType<Map<Country, Long>>() {
-  };
+  private static final GenericType<Map<Country, Long>> GENERIC_TYPE = new GenericType<Map<Country, Long>>() {};
 
   @Inject
   public OccurrenceCountryIndexWsClient(WebResource resource) {
@@ -34,14 +34,13 @@ public class OccurrenceCountryIndexWsClient extends BaseWsClient implements Occu
 
   @Override
   public Map<Country, Long> publishingCountriesForCountry(Country country) {
-    return getRequest(QueryParamBuilder.create("country", country.getIso2LetterCode()).build(),
-      "occurrence/counts/publishingCountries");
+    return getRequest(QueryParamBuilder.create("country", country.getIso2LetterCode()).build(), "occurrence/counts/publishingCountries");
   }
 
   @Override
   public Map<Country, Long> countriesForPublishingCountry(Country publishingCountry) {
     return getRequest(QueryParamBuilder.create("publishingCountry", publishingCountry.getIso2LetterCode()).build(),
-      "occurrence/counts/countries");
+        "occurrence/counts/countries");
   }
 
   /**
@@ -49,7 +48,6 @@ public class OccurrenceCountryIndexWsClient extends BaseWsClient implements Occu
    */
   private Map<Country, Long> getRequest(MultivaluedMap<String, String> params, String path) {
     final Map<Country, Long> res = get(GENERIC_TYPE, params, path);
-    return ImmutableSortedMap.copyOf(res,
-      Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
+    return ImmutableSortedMap.copyOf(res, Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
   }
 }

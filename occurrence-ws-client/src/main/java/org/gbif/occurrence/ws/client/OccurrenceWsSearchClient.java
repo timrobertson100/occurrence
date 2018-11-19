@@ -1,5 +1,24 @@
 package org.gbif.occurrence.ws.client;
 
+import static org.gbif.api.model.common.paging.PagingConstants.PARAM_LIMIT;
+import static org.gbif.api.model.common.search.SearchConstants.DEFAULT_SUGGEST_LIMIT;
+import static org.gbif.api.model.common.search.SearchConstants.QUERY_PARAM;
+import static org.gbif.ws.paths.OccurrencePaths.CATALOG_NUMBER_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.COLLECTION_CODE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.INSTITUTION_CODE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.LOCALITY_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_ID_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.ORGANISM_ID_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.RECORDED_BY_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.RECORD_NUMBER_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.STATE_PROVINCE_PATH;
+import static org.gbif.ws.paths.OccurrencePaths.WATER_BODY_PATH;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
@@ -7,47 +26,25 @@ import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
 import org.gbif.ws.client.BaseWsFacetedSearchClient;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
 import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
-import static org.gbif.api.model.common.paging.PagingConstants.PARAM_LIMIT;
-import static org.gbif.api.model.common.search.SearchConstants.DEFAULT_SUGGEST_LIMIT;
-import static org.gbif.api.model.common.search.SearchConstants.QUERY_PARAM;
-import static org.gbif.ws.paths.OccurrencePaths.CATALOG_NUMBER_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.COLLECTION_CODE_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.INSTITUTION_CODE_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.RECORDED_BY_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.RECORD_NUMBER_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.OCCURRENCE_ID_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.ORGANISM_ID_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.LOCALITY_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.WATER_BODY_PATH;
-import static org.gbif.ws.paths.OccurrencePaths.STATE_PROVINCE_PATH;
-
 /**
  * Ws client for {@link OccurrenceSearchService}.
  */
 public class OccurrenceWsSearchClient extends BaseWsFacetedSearchClient<Occurrence, OccurrenceSearchParameter, OccurrenceSearchRequest>
-  implements OccurrenceSearchService {
+    implements OccurrenceSearchService {
 
-  private static final String SEARCH_PATH ="search/";
+  private static final String SEARCH_PATH = "search/";
 
   // Response type.
   private static final GenericType<SearchResponse<Occurrence, OccurrenceSearchParameter>> GENERIC_TYPE =
-    new GenericType<SearchResponse<Occurrence, OccurrenceSearchParameter>>() {
-    };
+      new GenericType<SearchResponse<Occurrence, OccurrenceSearchParameter>>() {};
 
   // List<String> type
-  private static final GenericType<List<String>> LIST_OF_STRINGS_TYPE =
-    new GenericType<List<String>>() {
-    };
+  private static final GenericType<List<String>> LIST_OF_STRINGS_TYPE = new GenericType<List<String>>() {};
 
   /**
    * @param resource to the occurrence webapp
@@ -113,6 +110,6 @@ public class OccurrenceWsSearchClient extends BaseWsFacetedSearchClient<Occurren
   private List<String> suggestTerms(String resourceName, String prefix, @Nullable Integer limit) {
     String limitParam = Integer.toString(MoreObjects.firstNonNull(limit, DEFAULT_SUGGEST_LIMIT));
     return getResource(SEARCH_PATH + resourceName).queryParam(QUERY_PARAM, prefix).queryParam(PARAM_LIMIT, limitParam)
-      .get(LIST_OF_STRINGS_TYPE);
+        .get(LIST_OF_STRINGS_TYPE);
   }
 }

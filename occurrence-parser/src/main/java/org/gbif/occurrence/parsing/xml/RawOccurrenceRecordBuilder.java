@@ -1,20 +1,23 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.parsing.xml;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.occurrence.constants.PrioritizedPropertyNameEnum;
 import org.gbif.occurrence.model.Identification;
 import org.gbif.occurrence.model.IdentifierRecord;
@@ -23,23 +26,19 @@ import org.gbif.occurrence.model.LinkRecord;
 import org.gbif.occurrence.model.PropertyPrioritizer;
 import org.gbif.occurrence.model.RawOccurrenceRecord;
 import org.gbif.occurrence.model.TypificationRecord;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.beust.jcommander.internal.Lists;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.internal.Lists;
+
 /**
- * This object is the one that gets populated by Digester when parsing raw xml records into RawOccurrenceRecords.
- * Because some of the xml schemas allow multiple identification records, and we interpret each one as its own
- * RawOccurrenceRecord, this class needs to generate the correct number of RawOccurrenceRecords based on the input
- * xml.  In some schemas there are also different ways of representing the same data (eg decimal latitude vs text
- * latitude) and we prefer the more accurate version when we can get it.  If more than one representation for a given
- * property is populated we have to take the one with highest priority - a mechanism that is inherited from
+ * This object is the one that gets populated by Digester when parsing raw xml records into
+ * RawOccurrenceRecords. Because some of the xml schemas allow multiple identification records, and
+ * we interpret each one as its own RawOccurrenceRecord, this class needs to generate the correct
+ * number of RawOccurrenceRecords based on the input xml. In some schemas there are also different
+ * ways of representing the same data (eg decimal latitude vs text latitude) and we prefer the more
+ * accurate version when we can get it. If more than one representation for a given property is
+ * populated we have to take the one with highest priority - a mechanism that is inherited from
  * PropertyPrioritizer.
  */
 public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
@@ -85,7 +84,8 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
   private String unitQualifier;
 
   // year month and day may be set during parsing, but they will be reconciled into an occurrenceDate
-  // during generateRawOccurrenceRecords and that date string will be set on the resulting RawOccurrenceRecord(s).
+  // during generateRawOccurrenceRecords and that date string will be set on the resulting
+  // RawOccurrenceRecord(s).
   private String year;
   private String month;
   private String day;
@@ -110,7 +110,8 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
     occurrenceDate = reconcileDate(occurrenceDate, year, month, day);
     dateIdentified = reconcileDate(dateIdentified, yearIdentified, monthIdentified, dayIdentified);
 
-    // if multiple valid identifications, generate multiple RoRs and set UnitQualifier to Identification's SciName
+    // if multiple valid identifications, generate multiple RoRs and set UnitQualifier to
+    // Identification's SciName
     if (!identifications.isEmpty()) {
       if (identifications.size() == 1) {
         RawOccurrenceRecord bareBones = generateBareRor();
@@ -160,7 +161,8 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
       reconciledDate = year;
       if (!StringUtils.isEmpty(month)) {
         reconciledDate = reconciledDate + "-" + month;
-        if (!StringUtils.isEmpty(day)) reconciledDate = reconciledDate + "-" + day;
+        if (!StringUtils.isEmpty(day))
+          reconciledDate = reconciledDate + "-" + day;
       }
     }
 
@@ -234,7 +236,7 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
     if (typRec.isEmpty()) {
       LOG.debug("Got all nulls for new type - ignoring");
     } else {
-      LOG.debug("Got new typRec:\n {}",typRec.debugDump());
+      LOG.debug("Got new typRec:\n {}", typRec.debugDump());
       typificationRecords.add(typRec);
     }
 
@@ -264,12 +266,13 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
   }
 
   /**
-   * Once this object has been populated by a Digester, there may be several PrioritizedProperties that
-   * need to be resolved, and thereby set the final value of the corresponding field on this object.
+   * Once this object has been populated by a Digester, there may be several PrioritizedProperties
+   * that need to be resolved, and thereby set the final value of the corresponding field on this
+   * object.
    */
   @Override
   public void resolvePriorities() {
-    for (Map.Entry<PrioritizedPropertyNameEnum,Set<PrioritizedProperty>> property : prioritizedProps.entrySet()) {
+    for (Map.Entry<PrioritizedPropertyNameEnum, Set<PrioritizedProperty>> property : prioritizedProps.entrySet()) {
       String result = findHighestPriority(property.getValue());
       switch (property.getKey()) {
         case CATALOGUE_NUMBER:
@@ -637,10 +640,12 @@ public class RawOccurrenceRecordBuilder extends PropertyPrioritizer {
       result = year;
       if (!StringUtils.isEmpty(month)) {
         result = result + "-" + month;
-        if (!StringUtils.isEmpty(day)) result = result + "-" + day;
+        if (!StringUtils.isEmpty(day))
+          result = result + "-" + day;
       }
     }
-    if (result != null) this.dateIdentified = result;
+    if (result != null)
+      this.dateIdentified = result;
   }
 
   public void setDateIdentified(String dateIdentified) {

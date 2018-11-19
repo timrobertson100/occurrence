@@ -1,26 +1,25 @@
 package org.gbif.occurrence.ws.resources.provider;
 
+import static junit.framework.TestCase.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+
+import javax.ws.rs.ext.MessageBodyWriter;
+
+import org.apache.commons.io.IOUtils;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
-import org.gbif.occurrence.ws.provider.DwcXMLDocument;
 import org.gbif.occurrence.ws.provider.OccurrenceDwcXMLBodyWriter;
 import org.gbif.utils.file.FileUtils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import javax.ws.rs.ext.MessageBodyWriter;
-
-import com.google.common.base.CharMatcher;
-import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import com.google.common.base.CharMatcher;
 
 /**
  * Test for {@link OccurrenceDwcXMLBodyWriter} behavior.

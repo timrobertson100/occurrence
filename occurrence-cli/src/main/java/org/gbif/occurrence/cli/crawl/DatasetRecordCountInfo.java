@@ -1,11 +1,11 @@
 package org.gbif.occurrence.cli.crawl;
 
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.crawler.ProcessState;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.ProcessState;
 
 /**
  * Class holding different information about record counts for a dataset.
@@ -23,7 +23,7 @@ class DatasetRecordCountInfo {
 
   private List<DatasetCrawlInfo> crawlInfo = new ArrayList<>();
 
-  public DatasetRecordCountInfo(){}
+  public DatasetRecordCountInfo() {}
 
   public List<DatasetCrawlInfo> getCrawlInfo() {
     return crawlInfo;
@@ -31,6 +31,7 @@ class DatasetRecordCountInfo {
 
   /**
    * Set the {@link DatasetCrawlInfo} list and compute related variables.
+   * 
    * @param crawlInfo to be copied internally to a new list
    */
   public void setCrawlInfo(List<DatasetCrawlInfo> crawlInfo) {
@@ -76,28 +77,21 @@ class DatasetRecordCountInfo {
 
   private void computeCrawlData(List<DatasetCrawlInfo> crawlInfo) {
 
-    recordCount = crawlInfo.stream()
-            .mapToInt(DatasetCrawlInfo::getCount)
-            .sum();
+    recordCount = crawlInfo.stream().mapToInt(DatasetCrawlInfo::getCount).sum();
 
-    lastCrawlId = crawlInfo.stream()
-            .mapToInt(DatasetCrawlInfo::getCrawlId)
-            .max().orElse(-1);
+    lastCrawlId = crawlInfo.stream().mapToInt(DatasetCrawlInfo::getCrawlId).max().orElse(-1);
 
-    lastCrawlCount = crawlInfo.stream()
-            .mapToInt(DatasetCrawlInfo::getCount)
-            .max().orElse(0);
+    lastCrawlCount = crawlInfo.stream().mapToInt(DatasetCrawlInfo::getCount).max().orElse(0);
   }
 
   public double getPercentagePreviousCrawls() {
-    return 100 * (double)crawlInfo.stream()
-            .filter(dci -> dci.getCrawlId() != lastCrawlId)
-            .mapToInt(DatasetCrawlInfo::getCount)
-            .sum() / (double)recordCount;
+    return 100 * (double) crawlInfo.stream().filter(dci -> dci.getCrawlId() != lastCrawlId).mapToInt(DatasetCrawlInfo::getCount).sum()
+        / (double) recordCount;
   }
 
   /**
    * Return the highest crawlId
+   * 
    * @return id of the last (highest) crawl or -1 if no crawl.
    */
   public int getLastCrawlId() {
@@ -114,13 +108,8 @@ class DatasetRecordCountInfo {
 
   @Override
   public String toString() {
-    return "datasetKey: " + datasetKey +
-            ", lastCrawlId: " + lastCrawlId +
-            ", lastCrawlCount: " + lastCrawlCount +
-            ", recordCount: " + recordCount +
-            ", lastCrawlFragmentEmittedCount: " + lastCrawlFragmentEmittedCount +
-            ", finishReason: " + finishReason +
-            ", processStateOccurrence: " + processStateOccurrence +
-            ", crawlInfo: {" + crawlInfo + "}";
+    return "datasetKey: " + datasetKey + ", lastCrawlId: " + lastCrawlId + ", lastCrawlCount: " + lastCrawlCount + ", recordCount: "
+        + recordCount + ", lastCrawlFragmentEmittedCount: " + lastCrawlFragmentEmittedCount + ", finishReason: " + finishReason
+        + ", processStateOccurrence: " + processStateOccurrence + ", crawlInfo: {" + crawlInfo + "}";
   }
 }

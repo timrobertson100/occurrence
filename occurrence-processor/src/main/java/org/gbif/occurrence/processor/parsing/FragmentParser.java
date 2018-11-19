@@ -1,5 +1,12 @@
 package org.gbif.occurrence.processor.parsing;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.dwc.terms.DcTerm;
@@ -12,12 +19,6 @@ import org.gbif.occurrence.model.TypificationRecord;
 import org.gbif.occurrence.parsing.xml.XmlFragmentParser;
 import org.gbif.occurrence.persistence.api.Fragment;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
 import com.google.common.base.Strings;
@@ -26,23 +27,22 @@ import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 
 /**
- * A thin wrapper around the XmlFragmentParser from the occurrence-parser project, and the local JsonFragmentParser, in
- * order to produce VerbatimOccurrence objects from Fragments.
+ * A thin wrapper around the XmlFragmentParser from the occurrence-parser project, and the local
+ * JsonFragmentParser, in order to produce VerbatimOccurrence objects from Fragments.
  */
 public class FragmentParser {
 
   private static final Timer XML_PARSING_TIMER =
-    Metrics.newTimer(FragmentParser.class, "verb xml parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+      Metrics.newTimer(FragmentParser.class, "verb xml parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
   private static final Timer JSON_PARSING_TIMER =
-    Metrics.newTimer(FragmentParser.class, "verb json parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+      Metrics.newTimer(FragmentParser.class, "verb json parse time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
   // should not be instantiated
-  private FragmentParser() {
-  }
+  private FragmentParser() {}
 
   /**
-   * Parse the given fragment into a VerbatimOccurrence object.
-   * TODO: there is a lot of hacking here that should be refactored out with general rework of parsing project
+   * Parse the given fragment into a VerbatimOccurrence object. TODO: there is a lot of hacking here
+   * that should be refactored out with general rework of parsing project
    *
    * @param fragment containing parsing to be parsed
    *
@@ -56,8 +56,7 @@ public class FragmentParser {
       case XML:
         final TimerContext xmlContext = XML_PARSING_TIMER.time();
         try {
-          RawOccurrenceRecord ror =
-            XmlFragmentParser.parseRecord(fragment.getData(), fragment.getXmlSchema(), fragment.getUnitQualifier());
+          RawOccurrenceRecord ror = XmlFragmentParser.parseRecord(fragment.getData(), fragment.getXmlSchema(), fragment.getUnitQualifier());
           verbatim = buildVerbatim(ror, fragment);
         } finally {
           xmlContext.stop();
@@ -89,11 +88,11 @@ public class FragmentParser {
     v.setDatasetKey(frag.getDatasetKey());
     v.setLastCrawled(frag.getHarvestedDate());
     // these we don't have verb terms for yet
-//    set(v, DwcTerm.acceptedNameUsage, ror.getDayIdentified());
-//    set(v, DwcTerm.acceptedNameUsage, ror.getMonthIdentified());
-//    set(v, DwcTerm.acceptedNameUsage, ror.getYearIdentified());
-//    set(v, DwcTerm.acceptedNameUsage, ror.getIdentifierRecords());
-//    set(v, DwcTerm.acceptedNameUsage, ror.getLinkRecords());
+    // set(v, DwcTerm.acceptedNameUsage, ror.getDayIdentified());
+    // set(v, DwcTerm.acceptedNameUsage, ror.getMonthIdentified());
+    // set(v, DwcTerm.acceptedNameUsage, ror.getYearIdentified());
+    // set(v, DwcTerm.acceptedNameUsage, ror.getIdentifierRecords());
+    // set(v, DwcTerm.acceptedNameUsage, ror.getLinkRecords());
 
     set(v, GbifTerm.elevationAccuracy, ror.getAltitudePrecision());
     set(v, DwcTerm.scientificNameAuthorship, ror.getAuthor());

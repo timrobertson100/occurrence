@@ -15,9 +15,11 @@ import static org.gbif.ws.paths.OccurrencePaths.RECORDED_BY_PATH;
 import static org.gbif.ws.paths.OccurrencePaths.RECORD_NUMBER_PATH;
 import static org.gbif.ws.paths.OccurrencePaths.STATE_PROVINCE_PATH;
 import static org.gbif.ws.paths.OccurrencePaths.WATER_BODY_PATH;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,6 +30,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.DownloadFormat;
 import org.gbif.api.model.occurrence.DownloadRequest;
@@ -43,6 +46,7 @@ import org.gbif.occurrence.download.service.PredicateFactory;
 import org.gbif.ws.util.ExtraMediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -69,19 +73,16 @@ public class OccurrenceSearchResource {
   }
 
   @GET
-  public SearchResponse<Occurrence,OccurrenceSearchParameter> search(@Context OccurrenceSearchRequest request) {
-    LOG.debug("Executing query, parameters {}, limit {}, offset {}", request.getParameters(), request.getLimit(),
-              request.getOffset());
+  public SearchResponse<Occurrence, OccurrenceSearchParameter> search(@Context OccurrenceSearchRequest request) {
+    LOG.debug("Executing query, parameters {}, limit {}, offset {}", request.getParameters(), request.getLimit(), request.getOffset());
     return searchService.search(request);
   }
 
 
   @GET
   @Path("download")
-  public String download(@Context HttpServletRequest httpRequest,
-                         @QueryParam("notification_address") String emails,
-                         @QueryParam("format") String format,
-                         @Context SecurityContext securityContext) {
+  public String download(@Context HttpServletRequest httpRequest, @QueryParam("notification_address") String emails,
+      @QueryParam("format") String format, @Context SecurityContext securityContext) {
     String creator = assertUserAuthenticated(securityContext).getName();
     checkNotNullParameter("format", format);
     checkNotNullParameter("creator", creator);
@@ -91,7 +92,7 @@ public class OccurrenceSearchResource {
       String downloadKey = downloadRequestService.create(download);
       LOG.debug("Got key [{}] for new download", downloadKey);
       return downloadKey;
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       LOG.error("Error processing search-to-download request", ex);
       throw new WebApplicationException(Response.serverError().build());
     }
@@ -99,10 +100,8 @@ public class OccurrenceSearchResource {
 
   @GET
   @Path("predicate")
-  public DownloadRequest downloadPredicate(@Context HttpServletRequest httpRequest,
-                         @QueryParam("notification_address") String emails,
-                         @QueryParam("format") String format,
-                         @Context SecurityContext securityContext) {
+  public DownloadRequest downloadPredicate(@Context HttpServletRequest httpRequest, @QueryParam("notification_address") String emails,
+      @QueryParam("format") String format, @Context SecurityContext securityContext) {
     String creator = getUserName(securityContext);
     Set<String> notificationAddress = asSet(emails);
     DownloadFormat downloadFormat = Objects.isNull(format) ? DownloadFormat.SIMPLE_CSV : DownloadFormat.valueOf(format.toUpperCase());
@@ -110,14 +109,13 @@ public class OccurrenceSearchResource {
       String sql = httpRequest.getParameterMap().get("sql")[0];
       LOG.info("SQL build for passing to download [{}]", sql);
       return new SqlDownloadRequest(sql, creator, notificationAddress, true);
-    }
-    else {
+    } else {
       Predicate predicate = PredicateFactory.build(httpRequest.getParameterMap());
       LOG.info("Predicate build for passing to download [{}]", predicate);
       return new PredicateDownloadRequest(predicate, creator, notificationAddress, true, downloadFormat);
     }
   }
-  
+
   /**
    * Gets the user name from the security context.
    */
@@ -139,8 +137,8 @@ public class OccurrenceSearchResource {
    */
   private static void checkNotNullParameter(String paramName, String paramValue) {
     if (Strings.isNullOrEmpty(paramValue)) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-                                          .entity("Parameter " + paramName + " can't be null").build());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST).entity("Parameter " + paramName + " can't be null").build());
     }
   }
 
@@ -153,8 +151,7 @@ public class OccurrenceSearchResource {
 
   @GET
   @Path(COLLECTION_CODE_PATH)
-  public List<String> suggestCollectionCodes(@QueryParam(QUERY_PARAM) String prefix,
-                                             @QueryParam(PARAM_LIMIT) int limit) {
+  public List<String> suggestCollectionCodes(@QueryParam(QUERY_PARAM) String prefix, @QueryParam(PARAM_LIMIT) int limit) {
     LOG.debug("Executing collection codes suggest/search, query {}, limit {}", prefix, limit);
     return searchService.suggestCollectionCodes(prefix, limit);
   }
@@ -177,8 +174,7 @@ public class OccurrenceSearchResource {
 
   @GET
   @Path(INSTITUTION_CODE_PATH)
-  public List<String> suggestInstitutionCodes(@QueryParam(QUERY_PARAM) String prefix,
-                                              @QueryParam(PARAM_LIMIT) int limit) {
+  public List<String> suggestInstitutionCodes(@QueryParam(QUERY_PARAM) String prefix, @QueryParam(PARAM_LIMIT) int limit) {
     LOG.debug("Executing institution codes suggest/search, query {}, limit {}", prefix, limit);
     return searchService.suggestInstitutionCodes(prefix, limit);
   }

@@ -1,18 +1,18 @@
 package org.gbif.occurrence.persistence.util;
 
-import org.gbif.api.util.IsoDateParsingUtils.IsoDateFormat;
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.Term;
-import org.gbif.occurrence.common.json.ExtensionSerDeserUtils;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
+import org.gbif.api.util.IsoDateParsingUtils.IsoDateFormat;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.Term;
+import org.gbif.occurrence.common.json.ExtensionSerDeserUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 
 /**

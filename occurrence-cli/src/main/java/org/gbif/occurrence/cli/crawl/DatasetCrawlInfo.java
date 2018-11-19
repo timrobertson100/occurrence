@@ -8,7 +8,7 @@ class DatasetCrawlInfo {
   private int crawlId;
   private int count;
 
-  public DatasetCrawlInfo(){}
+  public DatasetCrawlInfo() {}
 
   public DatasetCrawlInfo(int crawlId, int count) {
     this.crawlId = crawlId;

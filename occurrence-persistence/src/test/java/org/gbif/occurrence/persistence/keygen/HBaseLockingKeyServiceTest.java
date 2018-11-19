@@ -1,9 +1,8 @@
 package org.gbif.occurrence.persistence.keygen;
 
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.persistence.IllegalDataStateException;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.hbase.Columns;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,9 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -21,6 +17,10 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.persistence.IllegalDataStateException;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.hbase.Columns;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,11 +28,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
-//@Ignore("As per http://dev.gbif.org/issues/browse/OCC-109")
+// @Ignore("As per http://dev.gbif.org/issues/browse/OCC-109")
 public class HBaseLockingKeyServiceTest {
 
   private static final String A = "a";
@@ -111,11 +111,12 @@ public class HBaseLockingKeyServiceTest {
     Put put = new Put(lookupKey1);
     put.addColumn(CF, Bytes.toBytes(Columns.LOOKUP_STATUS_COLUMN), Bytes.toBytes("ALLOCATED"));
     put.addColumn(CF, Bytes.toBytes(Columns.LOOKUP_KEY_COLUMN), Bytes.toBytes(2));
-    try(Table lookupTable = CONNECTION.getTable(TableName.valueOf(LOOKUP_TABLE))) {
+    try (Table lookupTable = CONNECTION.getTable(TableName.valueOf(LOOKUP_TABLE))) {
       lookupTable.put(put);
     }
 
-    // test: keygen attempt uses previous unique id and a new "occurrenceId", expects the existing key to be returned
+    // test: keygen attempt uses previous unique id and a new "occurrenceId", expects the existing key
+    // to be returned
     KeyLookupResult result = keyService.generateKey(ImmutableSet.of(triplet, "ABCD"), datasetKey);
     assertEquals(2, result.getKey());
     assertFalse(result.isCreated());
@@ -141,8 +142,7 @@ public class HBaseLockingKeyServiceTest {
     assertEquals(250, result.getKey());
 
     // first one claimed up to 300, then "died". On restart we claim 300 to 400.
-    HBaseLockingKeyService keyService2 =
-      new HBaseLockingKeyService(CFG, CONNECTION);
+    HBaseLockingKeyService keyService2 = new HBaseLockingKeyService(CFG, CONNECTION);
     for (int i = 0; i < 50; i++) {
       Set<String> uniqueIds = ImmutableSet.of("A" + i);
       result = keyService2.generateKey(uniqueIds, "boo");
@@ -160,7 +160,7 @@ public class HBaseLockingKeyServiceTest {
     Put put = new Put(lookupKey1);
     put.addColumn(CF, Bytes.toBytes(Columns.LOOKUP_LOCK_COLUMN), 0, lock1);
     put.addColumn(CF, Bytes.toBytes(Columns.LOOKUP_KEY_COLUMN), Bytes.toBytes(2));
-    try(Table lookupTable = CONNECTION.getTable(TableName.valueOf(LOOKUP_TABLE))) {
+    try (Table lookupTable = CONNECTION.getTable(TableName.valueOf(LOOKUP_TABLE))) {
       lookupTable.put(put);
       byte[] lock2 = Bytes.toBytes(UUID.randomUUID().toString());
       byte[] lookupKey2 = Bytes.toBytes(datasetKey + "|EFGH");
@@ -170,7 +170,6 @@ public class HBaseLockingKeyServiceTest {
       lookupTable.put(put);
       lookupTable.close();
     }
-
 
 
 
@@ -202,8 +201,7 @@ public class HBaseLockingKeyServiceTest {
     // test: gen id for one occ with both lookupkeys
     exception.expect(IllegalDataStateException.class);
     exception.expectMessage(
-      "Found inconsistent occurrence keys in looking up unique identifiers:[" + datasetKey + "|ABCD]=[1]["
-        + datasetKey + "|EFGH]=[2]");
+        "Found inconsistent occurrence keys in looking up unique identifiers:[" + datasetKey + "|ABCD]=[1][" + datasetKey + "|EFGH]=[2]");
     keyService.generateKey(ImmutableSet.of("ABCD", "EFGH"), datasetKey);
   }
 
@@ -239,10 +237,10 @@ public class HBaseLockingKeyServiceTest {
       lookupTable.put(put);
     }
 
-//    System.out.println("start at [" + System.currentTimeMillis() + "]");
+    // System.out.println("start at [" + System.currentTimeMillis() + "]");
     KeyLookupResult result = keyService.generateKey(ImmutableSet.of("ABCD"), datasetKey);
     assertEquals(1, result.getKey());
-//    System.out.println("end at [" + System.currentTimeMillis() + "]");
+    // System.out.println("end at [" + System.currentTimeMillis() + "]");
   }
 
   @Test

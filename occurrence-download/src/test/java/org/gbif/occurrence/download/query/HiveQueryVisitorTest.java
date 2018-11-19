@@ -1,5 +1,13 @@
 package org.gbif.occurrence.download.query;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
 import org.gbif.api.model.occurrence.predicate.ConjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.DisjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.EqualsPredicate;
@@ -19,18 +27,10 @@ import org.gbif.api.util.IsoDateParsingUtils.IsoDateFormat;
 import org.gbif.api.util.SearchTypeValidator;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.Language;
-
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import org.junit.Test;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 public class HiveQueryVisitorTest {
 
@@ -46,12 +46,11 @@ public class HiveQueryVisitorTest {
     Predicate before1989 = new LessThanOrEqualsPredicate(OccurrenceSearchParameter.YEAR, "1989");
     Predicate georeferencedPredicate = new EqualsPredicate(OccurrenceSearchParameter.HAS_COORDINATE, "true");
 
-    ConjunctionPredicate p =
-      new ConjunctionPredicate(Lists.newArrayList(aves, UK, passer, before1989, georeferencedPredicate));
+    ConjunctionPredicate p = new ConjunctionPredicate(Lists.newArrayList(aves, UK, passer, before1989, georeferencedPredicate));
     String where = visitor.getHiveQuery(p);
     assertEquals(
-      "(((taxonkey = 212 OR kingdomkey = 212 OR phylumkey = 212 OR classkey = 212 OR orderkey = 212 OR familykey = 212 OR genuskey = 212 OR subgenuskey = 212 OR specieskey = 212)) AND (countrycode = \'GB\') AND (lower(scientificname) LIKE lower(\'Passer%\')) AND (year <= 1989) AND (hascoordinate = true))",
-      where);
+        "(((taxonkey = 212 OR kingdomkey = 212 OR phylumkey = 212 OR classkey = 212 OR orderkey = 212 OR familykey = 212 OR genuskey = 212 OR subgenuskey = 212 OR specieskey = 212)) AND (countrycode = \'GB\') AND (lower(scientificname) LIKE lower(\'Passer%\')) AND (year <= 1989) AND (hascoordinate = true))",
+        where);
   }
 
   @Test
@@ -99,8 +98,8 @@ public class HiveQueryVisitorTest {
   public void testInPredicate() throws QueryBuildingException {
     Predicate p = new InPredicate(PARAM, Lists.newArrayList("value_1", "value_2", "value_3"));
     String query = visitor.getHiveQuery(p);
-    assertThat(query,
-      equalTo("((lower(catalognumber) = lower(\'value_1\')) OR (lower(catalognumber) = lower(\'value_2\')) OR (lower(catalognumber) = lower(\'value_3\')))"));
+    assertThat(query, equalTo(
+        "((lower(catalognumber) = lower(\'value_1\')) OR (lower(catalognumber) = lower(\'value_2\')) OR (lower(catalognumber) = lower(\'value_3\')))"));
   }
 
   @Test
@@ -190,26 +189,25 @@ public class HiveQueryVisitorTest {
    */
   private void testPartialDate(String value) throws QueryBuildingException {
     Range<Date> range = null;
-    if(SearchTypeValidator.isRange(value)){
+    if (SearchTypeValidator.isRange(value)) {
       range = IsoDateParsingUtils.parseDateRange(value);
     } else {
       Date lowerDate = IsoDateParsingUtils.parseDate(value);
       Date upperDate = null;
       IsoDateFormat isoDateFormat = IsoDateParsingUtils.getFirstDateFormatMatch(value);
-      if(IsoDateFormat.YEAR == isoDateFormat) {
+      if (IsoDateFormat.YEAR == isoDateFormat) {
         upperDate = IsoDateParsingUtils.toLastDayOfYear(lowerDate);
-      } else if(IsoDateFormat.YEAR_MONTH == isoDateFormat){
+      } else if (IsoDateFormat.YEAR_MONTH == isoDateFormat) {
         upperDate = IsoDateParsingUtils.toLastDayOfMonth(lowerDate);
       }
-      range = Range.closed(lowerDate,upperDate);
+      range = Range.closed(lowerDate, upperDate);
     }
 
-    Predicate p = new EqualsPredicate(OccurrenceSearchParameter.LAST_INTERPRETED,value);
+    Predicate p = new EqualsPredicate(OccurrenceSearchParameter.LAST_INTERPRETED, value);
 
     String query = visitor.getHiveQuery(p);
     assertThat(query, equalTo(String.format("((lastinterpreted >= %s) AND (lastinterpreted <= %s))",
-                                            String.valueOf(range.lowerEndpoint().getTime()),
-                                            String.valueOf(range.upperEndpoint().getTime()))));
+        String.valueOf(range.lowerEndpoint().getTime()), String.valueOf(range.upperEndpoint().getTime()))));
   }
 
   @Test

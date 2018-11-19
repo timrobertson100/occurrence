@@ -1,5 +1,14 @@
 package org.gbif.occurrence.cli.registry.sync;
 
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Organization;
@@ -8,28 +17,19 @@ import org.gbif.api.vocabulary.License;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.occurrence.persistence.hbase.ExtResultReader;
 
-import java.text.MessageFormat;
-import java.time.Instant;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.UUID;
-
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * The class is responsible to know the rules to determine if an Occurrence record should be updated or not after
- * a change coming from the Registry. It is also responsible to "mutate" an Occurrence object to its new state.
+ * The class is responsible to know the rules to determine if an Occurrence record should be updated
+ * or not after a change coming from the Registry. It is also responsible to "mutate" an Occurrence
+ * object to its new state.
  */
 public class RegistryBasedOccurrenceMutator {
 
   /**
-   * Check if a HBase {@link Result} representing an Occurrence requires an update based on a {@link Dataset} and
-   * an {@link Organization}.
-   * Note to devs: make sure the value you extract from {@link Result} is available in the Scan used.
+   * Check if a HBase {@link Result} representing an Occurrence requires an update based on a
+   * {@link Dataset} and an {@link Organization}. Note to devs: make sure the value you extract from
+   * {@link Result} is available in the Scan used.
    *
    * @param dataset
    * @param hbaseValues
@@ -49,9 +49,8 @@ public class RegistryBasedOccurrenceMutator {
 
     License recordLicense = ExtResultReader.getEnum(hbaseValues, DcTerm.license, License.class);
 
-    return !(Objects.equals(newPublishingOrgKey, publishingOrgKey) &&
-            Objects.equals(newHostCountry, hostCountry) &&
-            Objects.equals(dataset.getLicense(), recordLicense));
+    return !(Objects.equals(newPublishingOrgKey, publishingOrgKey) && Objects.equals(newHostCountry, hostCountry)
+        && Objects.equals(dataset.getLicense(), recordLicense));
   }
 
   /**
@@ -71,7 +70,8 @@ public class RegistryBasedOccurrenceMutator {
     // A change in license requires an update.
     if (currentDataset.getLicense() != null && !Objects.equals(currentDataset.getLicense(), newDataset.getLicense())) {
 
-      // New datasets are created as CC_BY_4_0, and very quickly updated to the actual license. This is odd, see
+      // New datasets are created as CC_BY_4_0, and very quickly updated to the actual license. This is
+      // odd, see
       // https://github.com/gbif/registry/issues/71
       // Until that is resolved, we don't create m/r sync jobs for datasets that are under 3 minutes old.
       Instant threeMinutesAgo = Instant.now().minusSeconds(180);
@@ -86,7 +86,8 @@ public class RegistryBasedOccurrenceMutator {
   }
 
   /**
-   * Check if changes on an organization should trigger an update of Occurrence records of all its datasets.
+   * Check if changes on an organization should trigger an update of Occurrence records of all its
+   * datasets.
    *
    * @param currentOrg
    * @param newOrg
@@ -102,6 +103,7 @@ public class RegistryBasedOccurrenceMutator {
 
   /**
    * Mutate the provided {@link Occurrence} based on information from the Registry.
+   * 
    * @param occurrence
    * @param dataset
    * @param publishingOrg
@@ -121,18 +123,17 @@ public class RegistryBasedOccurrenceMutator {
    * @param newDataset
    * @return
    */
-  public Optional<String> generateUpdateMessage(Organization currentOrg, Organization newOrg, Dataset currentDataset,
-                                                Dataset newDataset) {
+  public Optional<String> generateUpdateMessage(Organization currentOrg, Organization newOrg, Dataset currentDataset, Dataset newDataset) {
     StringJoiner joiner = new StringJoiner(",");
-    if(requiresUpdate(currentOrg, newOrg)) {
-      joiner.add(MessageFormat.format("Publishing Organization [{0}]: Country [{1}] -> [{2}]", currentOrg.getKey(),
-              currentOrg.getCountry(), newOrg.getCountry()));
+    if (requiresUpdate(currentOrg, newOrg)) {
+      joiner.add(MessageFormat.format("Publishing Organization [{0}]: Country [{1}] -> [{2}]", currentOrg.getKey(), currentOrg.getCountry(),
+          newOrg.getCountry()));
     }
 
-    if(requiresUpdate(currentDataset, newDataset)) {
-      joiner.add(MessageFormat.format("Dataset [{0}]: Publishing Organization [{1}] -> [{2}], " +
-              "License [{3}] -> [{4}]", currentDataset.getKey(), currentDataset.getPublishingOrganizationKey(),
-              newDataset.getPublishingOrganizationKey(), currentDataset.getLicense(), newDataset.getLicense()));
+    if (requiresUpdate(currentDataset, newDataset)) {
+      joiner.add(MessageFormat.format("Dataset [{0}]: Publishing Organization [{1}] -> [{2}], " + "License [{3}] -> [{4}]",
+          currentDataset.getKey(), currentDataset.getPublishingOrganizationKey(), newDataset.getPublishingOrganizationKey(),
+          currentDataset.getLicense(), newDataset.getLicense()));
     }
 
     return joiner.length() > 0 ? Optional.of(joiner.toString()) : Optional.empty();
@@ -149,10 +150,10 @@ public class RegistryBasedOccurrenceMutator {
    */
   public Optional<String> generateUpdateMessage(Dataset currentDataset, Dataset newDataset) {
     StringJoiner joiner = new StringJoiner(",");
-    if(requiresUpdate(currentDataset, newDataset)) {
-      joiner.add(MessageFormat.format("Dataset [{0}]: Publishing Organization [{1}] -> [{2}], " +
-          "License [{3}] -> [{4}]", currentDataset.getKey(), currentDataset.getPublishingOrganizationKey(),
-        newDataset.getPublishingOrganizationKey(), currentDataset.getLicense(), newDataset.getLicense()));
+    if (requiresUpdate(currentDataset, newDataset)) {
+      joiner.add(MessageFormat.format("Dataset [{0}]: Publishing Organization [{1}] -> [{2}], " + "License [{3}] -> [{4}]",
+          currentDataset.getKey(), currentDataset.getPublishingOrganizationKey(), newDataset.getPublishingOrganizationKey(),
+          currentDataset.getLicense(), newDataset.getLicense()));
     }
 
     return joiner.length() > 0 ? Optional.of(joiner.toString()) : Optional.empty();

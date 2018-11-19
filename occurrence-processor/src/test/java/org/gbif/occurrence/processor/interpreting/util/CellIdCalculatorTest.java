@@ -1,9 +1,9 @@
 package org.gbif.occurrence.processor.interpreting.util;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
 
 public class CellIdCalculatorTest {
 

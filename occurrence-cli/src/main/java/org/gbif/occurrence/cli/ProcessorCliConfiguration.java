@@ -1,11 +1,11 @@
 package org.gbif.occurrence.cli;
 
-import org.gbif.occurrence.cli.common.GangliaConfiguration;
-import org.gbif.occurrence.processor.guice.ProcessorConfiguration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import org.gbif.occurrence.cli.common.GangliaConfiguration;
+import org.gbif.occurrence.processor.guice.ProcessorConfiguration;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -31,11 +31,7 @@ public class ProcessorCliConfiguration extends ProcessorConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("super", super.toString())
-      .add("msgPoolSize", msgPoolSize)
-      .add("primaryQueueName", primaryQueueName)
-      .add("secondaryQueueName", secondaryQueueName)
-      .toString();
+    return Objects.toStringHelper(this).add("super", super.toString()).add("msgPoolSize", msgPoolSize)
+        .add("primaryQueueName", primaryQueueName).add("secondaryQueueName", secondaryQueueName).toString();
   }
 }

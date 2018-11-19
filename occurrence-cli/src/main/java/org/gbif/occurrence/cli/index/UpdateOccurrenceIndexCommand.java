@@ -2,9 +2,9 @@ package org.gbif.occurrence.cli.index;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
+import org.kohsuke.MetaInfServices;
 
 import com.google.common.util.concurrent.Service;
-import org.kohsuke.MetaInfServices;
 
 /**
  * Command for index updates and insertions processing.

@@ -1,27 +1,28 @@
 package org.gbif.occurrence.cli.dataset;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.IOException;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DeleteDatasetOccurrencesMessage;
 import org.gbif.common.messaging.api.messages.DeleteOccurrenceMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceDeletionReason;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Translates a DeleteDatasetOccurrencesMessage into one DeleteOccurrenceMessage for every occurrence in the dataset,
- * but only if the deletion reason is not NOT_IN_LAST_CRAWL, which doesn't make sense in this context.
+ * Translates a DeleteDatasetOccurrencesMessage into one DeleteOccurrenceMessage for every
+ * occurrence in the dataset, but only if the deletion reason is not NOT_IN_LAST_CRAWL, which
+ * doesn't make sense in this context.
  */
 public class DeleteDatasetListener extends AbstractMessageCallback<DeleteDatasetOccurrencesMessage> {
 
@@ -31,10 +32,9 @@ public class DeleteDatasetListener extends AbstractMessageCallback<DeleteDataset
   private final MessagePublisher messagePublisher;
 
   private final Timer processTimer =
-    Metrics.newTimer(DeleteDatasetListener.class, "dataset delete time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+      Metrics.newTimer(DeleteDatasetListener.class, "dataset delete time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
-  public DeleteDatasetListener(OccurrenceKeyPersistenceService occurrenceKeyService,
-    MessagePublisher messagePublisher) {
+  public DeleteDatasetListener(OccurrenceKeyPersistenceService occurrenceKeyService, MessagePublisher messagePublisher) {
     this.occurrenceKeyService = checkNotNull(occurrenceKeyService, "occurrenceKeyService can't be null");
     this.messagePublisher = checkNotNull(messagePublisher, "messagePublisher can't be null");
   }
@@ -55,8 +55,7 @@ public class DeleteDatasetListener extends AbstractMessageCallback<DeleteDataset
         try {
           messagePublisher.send(new DeleteOccurrenceMessage(key, message.getDeletionReason(), null, null));
         } catch (IOException e) {
-          LOG.warn("Could not send DeleteOccurrenceMessage for key [{}] while deleting dataset [{}]", key,
-                   message.getDatasetUuid(), e);
+          LOG.warn("Could not send DeleteOccurrenceMessage for key [{}] while deleting dataset [{}]", key, message.getDatasetUuid(), e);
         }
       }
     } finally {

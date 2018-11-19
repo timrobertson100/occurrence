@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import org.apache.commons.compress.utils.Lists;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -24,6 +25,7 @@ import org.gbif.occurrence.download.service.hive.validation.Rule;
 import org.gbif.occurrence.download.service.hive.validation.SQLShouldBeExecutableRule;
 import org.gbif.occurrence.download.service.hive.validation.StarForFieldsNotAllowedRule;
 import org.gbif.occurrence.download.service.hive.validation.TableNameShouldBeOccurrenceRule;
+
 import com.google.common.base.Throwables;
 
 /**
@@ -34,9 +36,10 @@ import com.google.common.base.Throwables;
 public class HiveSQL {
 
   private HiveSQL() {}
-  
+
   /**
    * Explains the query, in case it is not compilable throws RuntimeException.
+   * 
    * @param <T>
    */
   public static class Execute<T> implements BiFunction<String, Read<T>, T> {
@@ -70,13 +73,11 @@ public class HiveSQL {
    *
    */
   public static class Validate implements Function<String, HiveSQL.Validate.Result> {
-        
+
     protected static final String TAB = "\t";
-    protected static final List<Rule> RULES = Collections.unmodifiableList(Arrays.asList(new StarForFieldsNotAllowedRule(),
-                                                          new HavingClauseNotSupportedRule(),
-                                                          new OnlyPureSelectQueriesAllowedRule(),
-                                                          new OnlyOneSelectAllowedRule(),
-                                                          new TableNameShouldBeOccurrenceRule()));
+    protected static final List<Rule> RULES =
+        Collections.unmodifiableList(Arrays.asList(new StarForFieldsNotAllowedRule(), new HavingClauseNotSupportedRule(),
+            new OnlyPureSelectQueriesAllowedRule(), new OnlyOneSelectAllowedRule(), new TableNameShouldBeOccurrenceRule()));
 
     /**
      * Result of a SQL Query Validation.
@@ -89,10 +90,12 @@ public class HiveSQL {
       private final String transSql;
       private final String sqlHeader;
       private final QueryContext context;
+
       /**
        * Full constructor.
        */
-      public Result(String sql, String transSql, List<Issue> issues, List<String> queryExplanation, String sqlHeader, QueryContext context, boolean ok) {
+      public Result(String sql, String transSql, List<Issue> issues, List<String> queryExplanation, String sqlHeader, QueryContext context,
+          boolean ok) {
         this.sql = sql;
         this.transSql = transSql;
         this.issues = issues;
@@ -101,7 +104,7 @@ public class HiveSQL {
         this.explain = queryExplanation;
         this.context = context;
       }
-      
+
       @JsonProperty("sql")
       public String sql() {
         return sql;
@@ -131,7 +134,7 @@ public class HiveSQL {
       public String sqlHeader() {
         return sqlHeader;
       }
-      
+
       @JsonIgnore
       public QueryContext queryContext() {
         return context;
@@ -144,7 +147,8 @@ public class HiveSQL {
 
       QueryContext context = QueryContext.from(sql).onParseFail(issues::add);
       if (context.hasParseIssue()) {
-        return new Result(context.sql(), context.translatedQuery(), issues, Arrays.asList(SQLShouldBeExecutableRule.COMPILATION_ERROR), "", context, issues.isEmpty());
+        return new Result(context.sql(), context.translatedQuery(), issues, Arrays.asList(SQLShouldBeExecutableRule.COMPILATION_ERROR), "",
+            context, issues.isEmpty());
       }
 
       RULES.forEach(rule -> rule.apply(context).onViolation(issues::add));
@@ -153,7 +157,8 @@ public class HiveSQL {
       SQLShouldBeExecutableRule executableRule = new SQLShouldBeExecutableRule();
       executableRule.apply(context).onViolation(issues::add);
       String sqlHeader = String.join(TAB, context.selectFieldNames());
-      return new Result(context.sql(), context.translatedQuery(), issues, executableRule.explainValue(), sqlHeader, context, issues.isEmpty());
+      return new Result(context.sql(), context.translatedQuery(), issues, executableRule.explainValue(), sqlHeader, context,
+          issues.isEmpty());
     }
   }
 }

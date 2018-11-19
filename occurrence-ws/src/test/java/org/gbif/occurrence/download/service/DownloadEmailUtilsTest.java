@@ -3,9 +3,11 @@ package org.gbif.occurrence.download.service;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+
 import org.gbif.api.model.common.DOI;
 import org.gbif.api.model.occurrence.Download;
 import org.gbif.api.model.occurrence.DownloadFormat;
@@ -41,13 +43,13 @@ public class DownloadEmailUtilsTest {
     d.setRequest(req);
     String body = utils.buildBody(d, "success.ftl");
 
-    //System.out.println(body);
+    // System.out.println(body);
     assertNotNull(body);
 
 
     d.setStatus(Download.Status.FAILED);
     body = utils.buildBody(d, "error.ftl");
-    //System.out.println(body);
+    // System.out.println(body);
     assertNotNull(body);
   }
 }

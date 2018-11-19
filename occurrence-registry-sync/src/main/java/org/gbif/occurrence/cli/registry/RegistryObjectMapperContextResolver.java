@@ -1,6 +1,7 @@
 package org.gbif.occurrence.cli.registry;
 
 import java.util.Map;
+
 import javax.ws.rs.ext.ContextResolver;
 
 import org.codehaus.jackson.map.DeserializationConfig;
@@ -28,6 +29,7 @@ public class RegistryObjectMapperContextResolver implements ContextResolver<Obje
       MAPPER.getDeserializationConfig().addMixInAnnotations(classClassEntry.getKey(), classClassEntry.getValue());
     }
   }
+
   @Override
   public ObjectMapper getContext(Class<?> type) {
     return MAPPER;

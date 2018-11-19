@@ -1,5 +1,9 @@
 package org.gbif.occurrence.download.util;
 
+import java.io.IOException;
+import java.util.Properties;
+
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.gbif.api.service.registry.DatasetOccurrenceDownloadUsageService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.OccurrenceDownloadService;
@@ -11,9 +15,6 @@ import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
 import org.gbif.ws.mixin.Mixins;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,7 +23,6 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 /**
  * Utility class to create registry web service clients.
@@ -33,7 +33,7 @@ public class RegistryClientUtil {
 
   private final Injector injector;
 
-  private final  ApacheHttpClient httpClient;
+  private final ApacheHttpClient httpClient;
 
   /**
    * Creates an HTTP client.
@@ -62,8 +62,7 @@ public class RegistryClientUtil {
   public RegistryClientUtil() {
     try {
       httpClient = createHttpClient();
-      injector =
-        Guice.createInjector(createAuthModuleInstance(PropertiesUtil.loadProperties(DownloadWorkflowModule.CONF_FILE)));
+      injector = Guice.createInjector(createAuthModuleInstance(PropertiesUtil.loadProperties(DownloadWorkflowModule.CONF_FILE)));
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (IOException e) {
@@ -72,28 +71,27 @@ public class RegistryClientUtil {
   }
 
   /**
-   * Sets up a registry DatasetService client avoiding the use of guice as our gbif jackson libraries clash with the
-   * hadoop versions.
-   * Sets up an http client with a one minute timeout and http support only.
+   * Sets up a registry DatasetService client avoiding the use of guice as our gbif jackson libraries
+   * clash with the hadoop versions. Sets up an http client with a one minute timeout and http support
+   * only.
    */
   public DatasetService setupDatasetService(String uri) {
     return new DatasetWsClient(httpClient.resource(uri), injector.getInstance(ClientFilter.class));
   }
 
   /**
-   * Sets up a DatasetOccurrenceDownloadUsageService client avoiding the use of guice as our gbif jackson libraries
-   * clash with the hadoop versions.
-   * Sets up an http client with a one minute timeout and http support only.
+   * Sets up a DatasetOccurrenceDownloadUsageService client avoiding the use of guice as our gbif
+   * jackson libraries clash with the hadoop versions. Sets up an http client with a one minute
+   * timeout and http support only.
    */
   public DatasetOccurrenceDownloadUsageService setupDatasetUsageService(String uri) {
-    return new DatasetOccurrenceDownloadUsageWsClient(httpClient.resource(uri),
-                                                      injector.getInstance(ClientFilter.class));
+    return new DatasetOccurrenceDownloadUsageWsClient(httpClient.resource(uri), injector.getInstance(ClientFilter.class));
   }
 
   /**
-   * Sets up a OccurrenceDownloadService client avoiding the use of guice as our gbif jackson libraries
-   * clash with the hadoop versions.
-   * Sets up an http client with a one minute timeout and http support only.
+   * Sets up a OccurrenceDownloadService client avoiding the use of guice as our gbif jackson
+   * libraries clash with the hadoop versions. Sets up an http client with a one minute timeout and
+   * http support only.
    */
   public OccurrenceDownloadService setupOccurrenceDownloadService(String uri) {
     return new OccurrenceDownloadWsClient(httpClient.resource(uri), injector.getInstance(ClientFilter.class));
@@ -104,6 +102,6 @@ public class RegistryClientUtil {
    */
   private AbstractModule createAuthModuleInstance(Properties properties) {
     return new SingleUserAuthModule(properties.getProperty(DownloadWorkflowModule.DefaultSettings.DOWNLOAD_USER_KEY),
-                                    properties.getProperty(DownloadWorkflowModule.DefaultSettings.DOWNLOAD_PASSWORD_KEY));
+        properties.getProperty(DownloadWorkflowModule.DefaultSettings.DOWNLOAD_PASSWORD_KEY));
   }
 }

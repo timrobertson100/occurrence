@@ -1,9 +1,5 @@
 package org.gbif.occurrence.common.identifier;
 
-import org.gbif.occurrence.common.identifier.HolyTriplet;
-import org.gbif.occurrence.common.identifier.OccurrenceKeyHelper;
-import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
-
 import java.util.UUID;
 
 import org.junit.Assert;

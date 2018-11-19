@@ -1,16 +1,18 @@
 package org.gbif.occurrence.search.heatmap;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.util.SearchTypeValidator;
 import org.gbif.api.util.VocabularyUtils;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OccurrenceHeatmapRequestProvider {
 
@@ -25,7 +27,7 @@ public class OccurrenceHeatmapRequestProvider {
    * Making constructor private.
    */
   private OccurrenceHeatmapRequestProvider() {
-    //empty block
+    // empty block
   }
 
   /**
@@ -33,10 +35,10 @@ public class OccurrenceHeatmapRequestProvider {
    */
   private static String translateFilterValue(OccurrenceSearchParameter param, String value) {
     if (param == OccurrenceSearchParameter.GEOMETRY) {
-      try { //checks if the parameters is in WKT format
+      try { // checks if the parameters is in WKT format
         SearchTypeValidator.validate(OccurrenceSearchParameter.GEOMETRY, value);
         return value;
-      } catch (IllegalArgumentException ex) { //if not is WKT, assumes to be a POLYGON
+      } catch (IllegalArgumentException ex) { // if not is WKT, assumes to be a POLYGON
         return String.format(POLYGON_PATTERN, value);
       }
     }
@@ -60,17 +62,16 @@ public class OccurrenceHeatmapRequestProvider {
   }
 
   /**
-   * Iterates over the params map and adds to the search request the recognized parameters (i.e.: those that have a
-   * correspondent value in the P generic parameter).
-   * Empty (of all size) and null parameters are discarded.
+   * Iterates over the params map and adds to the search request the recognized parameters (i.e.:
+   * those that have a correspondent value in the P generic parameter). Empty (of all size) and null
+   * parameters are discarded.
    */
-  private static void setSearchParams(OccurrenceHeatmapRequest occurrenceHeatmapSearchRequest,
-                                      HttpServletRequest request) {
+  private static void setSearchParams(OccurrenceHeatmapRequest occurrenceHeatmapSearchRequest, HttpServletRequest request) {
     for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
       OccurrenceSearchParameter p = findSearchParam(entry.getKey());
       if (p != null) {
         for (String val : removeEmptyParameters(entry.getValue())) {
-          String translatedVal = translateFilterValue(p,val); //this transformation is require
+          String translatedVal = translateFilterValue(p, val); // this transformation is require
           SearchTypeValidator.validate(p, translatedVal);
           occurrenceHeatmapSearchRequest.addParameter(p, translatedVal);
         }
@@ -98,8 +99,8 @@ public class OccurrenceHeatmapRequestProvider {
 
 
   /**
-   * Removes all empty and null parameters from the list.
-   * Each value is trimmed(String.trim()) in order to remove all sizes of empty parameters.
+   * Removes all empty and null parameters from the list. Each value is trimmed(String.trim()) in
+   * order to remove all sizes of empty parameters.
    */
   private static List<String> removeEmptyParameters(String[] parameters) {
     List<String> cleanParameters = Lists.newArrayListWithCapacity(parameters.length);

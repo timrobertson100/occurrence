@@ -8,7 +8,8 @@ import com.google.common.base.Objects;
 import com.yammer.metrics.reporting.GangliaReporter;
 
 /**
- * A configuration class which holds the host and port to connect yammer metrics to a ganglia server.
+ * A configuration class which holds the host and port to connect yammer metrics to a ganglia
+ * server.
  */
 @SuppressWarnings("PublicField")
 public class GangliaConfiguration {

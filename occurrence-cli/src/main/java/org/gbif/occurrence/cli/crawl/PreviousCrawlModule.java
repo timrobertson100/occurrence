@@ -1,23 +1,24 @@
 package org.gbif.occurrence.cli.crawl;
 
+import java.io.IOException;
+import java.util.Properties;
+
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.occurrence.ws.client.OccurrenceWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.GbifApplicationAuthModule;
-
-import java.io.IOException;
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Guice module responsible to bind all dependencies required to run the {@link PreviousCrawlsManager}.
+ * Guice module responsible to bind all dependencies required to run the
+ * {@link PreviousCrawlsManager}.
  *
  */
 public class PreviousCrawlModule extends AbstractModule {
@@ -39,8 +40,7 @@ public class PreviousCrawlModule extends AbstractModule {
     properties.setProperty("occurrence.ws.url", config.occurrenceWsUrl);
     properties.setProperty("httpTimeout", "30000");
 
-    GbifApplicationAuthModule gbifApplicationAuthModule =
-            new GbifApplicationAuthModule(config.registry.appKey, config.registry.appSecret);
+    GbifApplicationAuthModule gbifApplicationAuthModule = new GbifApplicationAuthModule(config.registry.appKey, config.registry.appSecret);
     gbifApplicationAuthModule.setPrincipal(config.registry.username);
     install(gbifApplicationAuthModule);
 
@@ -49,7 +49,7 @@ public class PreviousCrawlModule extends AbstractModule {
     install(new OccurrenceWsClientModule(properties));
     install(new RegistryWsClientModule(properties));
 
-    //expose configuration
+    // expose configuration
     bind(PreviousCrawlsManagerConfiguration.class).toInstance(config);
     bind(PreviousCrawlsManager.class).in(Scopes.SINGLETON);
   }

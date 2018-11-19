@@ -4,8 +4,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+
 import org.gbif.api.model.common.GbifUserPrincipal;
 import org.gbif.api.model.occurrence.DownloadFormat;
 import org.gbif.api.model.occurrence.PredicateDownloadRequest;
@@ -57,8 +59,7 @@ public class DownloadResourceTest {
     when(sec.getUserPrincipal()).thenReturn(userP);
 
     resource = new DownloadResource(service, callbackService, downloadService);
-    dl = new PredicateDownloadRequest(new EqualsPredicate(OccurrenceSearchParameter.TAXON_KEY, "1"), USER, null, true,
-      DownloadFormat.DWCA);
+    dl = new PredicateDownloadRequest(new EqualsPredicate(OccurrenceSearchParameter.TAXON_KEY, "1"), USER, null, true, DownloadFormat.DWCA);
     when(service.create(dl)).thenReturn(JOB_ID);
   }
 

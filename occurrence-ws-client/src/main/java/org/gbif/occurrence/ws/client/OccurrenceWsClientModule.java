@@ -1,13 +1,13 @@
 package org.gbif.occurrence.ws.client;
 
+import java.util.Map;
+import java.util.Properties;
+
 import org.gbif.api.service.occurrence.DownloadRequestService;
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
 import org.gbif.api.service.occurrence.OccurrenceService;
 import org.gbif.ws.client.guice.GbifWsClientModule;
 import org.gbif.ws.mixin.Mixins;
-
-import java.util.Map;
-import java.util.Properties;
 
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -17,9 +17,10 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
 /**
- * A complete guice module that exposes the full occurrence API or a configurable subset.
- * In order to use this module an authentication module needs to be installed first, such as {@link org.gbif.ws.client.guice.AnonymousAuthModule}
- * for anonymous access or {@link org.gbif.ws.client.guice.GbifApplicationAuthModule} for trusted applications.
+ * A complete guice module that exposes the full occurrence API or a configurable subset. In order
+ * to use this module an authentication module needs to be installed first, such as
+ * {@link org.gbif.ws.client.guice.AnonymousAuthModule} for anonymous access or
+ * {@link org.gbif.ws.client.guice.GbifApplicationAuthModule} for trusted applications.
  */
 public class OccurrenceWsClientModule extends GbifWsClientModule {
 

@@ -1,7 +1,5 @@
 package org.gbif.occurrence.persistence;
 
-import org.gbif.service.exception.PersistenceException;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -13,12 +11,12 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.gbif.service.exception.PersistenceException;
 
 /**
- * Provides an iterator over occurrence keys for a given HBase scan. To guarantee that all resources are released after
- * use, please make sure to iterate over the entire result (until hasNext() returns false).
+ * Provides an iterator over occurrence keys for a given HBase scan. To guarantee that all resources
+ * are released after use, please make sure to iterate over the entire result (until hasNext()
+ * returns false).
  */
 public class OccurrenceKeyIterator implements Iterator<Integer>, AutoCloseable {
 
@@ -27,8 +25,8 @@ public class OccurrenceKeyIterator implements Iterator<Integer>, AutoCloseable {
   private boolean scannerClosed = false;
 
   /**
-   * Create the iterator from a given tablePool, for the specified occurrence table, and the given scan. Only the row
-   * keys for the returned scan are returned in calls to next().
+   * Create the iterator from a given tablePool, for the specified occurrence table, and the given
+   * scan. Only the row keys for the returned scan are returned in calls to next().
    *
    * @param connection the HBase connection
    * @param occurrenceTableName the occurrence table to scan

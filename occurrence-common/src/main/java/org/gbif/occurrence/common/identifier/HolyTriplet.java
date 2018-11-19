@@ -1,17 +1,19 @@
 package org.gbif.occurrence.common.identifier;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.UUID;
+
 import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * The original and still heavily used unique identifier for occurrence records, consisting of InstitutionCode,
- * CollectionCode, and CatalogNumber. It additionally includes an optional unitQualifier, a GBIF specific term used
- * for differentiating between multiple occurrences within a single ABCD 2.06 record.
+ * The original and still heavily used unique identifier for occurrence records, consisting of
+ * InstitutionCode, CollectionCode, and CatalogNumber. It additionally includes an optional
+ * unitQualifier, a GBIF specific term used for differentiating between multiple occurrences within
+ * a single ABCD 2.06 record.
  */
 public class HolyTriplet implements UniqueIdentifier {
 
@@ -24,11 +26,11 @@ public class HolyTriplet implements UniqueIdentifier {
   /**
    * Constructs the immutable triplet.
    *
-   * @throws IllegalArgumentException if institutionCode, collectionCode, or catalogNumber are null or empty
+   * @throws IllegalArgumentException if institutionCode, collectionCode, or catalogNumber are null or
+   *         empty
    * @throws NullPointerException if datasetKey is null
    */
-  public HolyTriplet(UUID datasetKey, String institutionCode, String collectionCode, String catalogNumber,
-    @Nullable String unitQualifier) {
+  public HolyTriplet(UUID datasetKey, String institutionCode, String collectionCode, String catalogNumber, @Nullable String unitQualifier) {
     this.datasetKey = checkNotNull(datasetKey, "datasetKey can't be null");
     checkArgument(institutionCode != null && !institutionCode.isEmpty(), "institutionCode can't be null or empty");
     checkArgument(collectionCode != null && !collectionCode.isEmpty(), "collectionCode can't be null or empty");
@@ -84,9 +86,8 @@ public class HolyTriplet implements UniqueIdentifier {
       return false;
     }
     final HolyTriplet other = (HolyTriplet) obj;
-    return Objects.equal(this.datasetKey, other.datasetKey) && Objects
-      .equal(this.institutionCode, other.institutionCode) && Objects.equal(this.collectionCode, other.collectionCode)
-           && Objects.equal(this.catalogNumber, other.catalogNumber) && Objects
-      .equal(this.unitQualifier, other.unitQualifier);
+    return Objects.equal(this.datasetKey, other.datasetKey) && Objects.equal(this.institutionCode, other.institutionCode)
+        && Objects.equal(this.collectionCode, other.collectionCode) && Objects.equal(this.catalogNumber, other.catalogNumber)
+        && Objects.equal(this.unitQualifier, other.unitQualifier);
   }
 }

@@ -1,24 +1,24 @@
 package org.gbif.occurrence.processor.messaging;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.messages.FragmentPersistedMessage;
 import org.gbif.occurrence.processor.FragmentProcessor;
 import org.gbif.occurrence.processor.VerbatimProcessor;
-
-import java.util.concurrent.TimeUnit;
+import org.slf4j.MDC;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
-import org.slf4j.MDC;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A MessageCallback implementation for FragmentPersistedMessages. Hands off to the VerbatimProcessor passed in during
- * construction.
+ * A MessageCallback implementation for FragmentPersistedMessages. Hands off to the
+ * VerbatimProcessor passed in during construction.
  */
 @Singleton
 public class FragmentPersistedListener extends AbstractMessageCallback<FragmentPersistedMessage> {
@@ -26,7 +26,7 @@ public class FragmentPersistedListener extends AbstractMessageCallback<FragmentP
   private final VerbatimProcessor verbatimProcessor;
 
   private final Timer processTimer =
-    Metrics.newTimer(FragmentProcessor.class, "verb process time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+      Metrics.newTimer(FragmentProcessor.class, "verb process time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
   @Inject
   public FragmentPersistedListener(VerbatimProcessor verbatimProcessor) {
@@ -41,7 +41,7 @@ public class FragmentPersistedListener extends AbstractMessageCallback<FragmentP
       MDC.put("datasetKey", message.getDatasetUuid().toString());
       MDC.put("attempt", String.valueOf(message.getAttempt()));
       verbatimProcessor.buildVerbatim(message.getOccurrenceKey(), message.getStatus(), true, message.getAttempt(),
-        message.getDatasetUuid());
+          message.getDatasetUuid());
     } finally {
       context.stop();
     }

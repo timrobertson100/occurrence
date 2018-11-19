@@ -1,18 +1,18 @@
 package org.gbif.occurrence.cli.crawl;
 
+import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.cli.BaseCommand;
 import org.gbif.cli.Command;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.occurrence.cli.common.JsonWriter;
-
-import java.io.IOException;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * Commands to manage occurrence record from previous crawls.
@@ -44,7 +44,7 @@ public class PreviousCrawlsManagerCommand extends BaseCommand {
 
     previousCrawlsManager.execute(this::printReport);
 
-    //ensure we close the messagePublisher
+    // ensure we close the messagePublisher
     if (messagePublisher != null) {
       messagePublisher.close();
     }
@@ -61,9 +61,9 @@ public class PreviousCrawlsManagerCommand extends BaseCommand {
       return false;
     }
 
-    if(!StringUtils.isBlank(config.datasetKey)) {
-      System.err.println("Note: --dataset-key is provided so --report-output-path will be ignored and --display-report will be "
-                         + "forced");
+    if (!StringUtils.isBlank(config.datasetKey)) {
+      System.err
+          .println("Note: --dataset-key is provided so --report-output-path will be ignored and --display-report will be " + "forced");
       config.reportOutputFilepath = null;
       config.displayReport = true;
     }
@@ -76,7 +76,8 @@ public class PreviousCrawlsManagerCommand extends BaseCommand {
   }
 
   /**
-   * Print the report to a file or to the console depending on {@link PreviousCrawlsManagerConfiguration}.
+   * Print the report to a file or to the console depending on
+   * {@link PreviousCrawlsManagerConfiguration}.
    *
    * @param report
    */
@@ -95,8 +96,3 @@ public class PreviousCrawlsManagerCommand extends BaseCommand {
   }
 
 }
-
-
-
-
-

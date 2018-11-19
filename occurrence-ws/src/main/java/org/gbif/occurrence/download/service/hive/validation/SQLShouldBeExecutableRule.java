@@ -2,6 +2,7 @@ package org.gbif.occurrence.download.service.hive.validation;
 
 import java.util.Collections;
 import java.util.List;
+
 import org.gbif.occurrence.download.service.hive.HiveSQL;
 import org.gbif.occurrence.download.service.hive.validation.Query.Issue;
 

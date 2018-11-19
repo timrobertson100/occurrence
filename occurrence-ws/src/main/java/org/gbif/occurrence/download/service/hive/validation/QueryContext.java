@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.avatica.util.Quoting;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -48,7 +49,9 @@ public class QueryContext {
   }
 
   private void update() {
-    if (!parseIssue.equals(Issue.NO_ISSUE)) { return; }
+    if (!parseIssue.equals(Issue.NO_ISSUE)) {
+      return;
+    }
 
     this.from = selectQueryObject.getFrom();
     this.selectFieldNames = selectQueryObject.getSelectList().getList().stream().map(SqlNode::toString).collect(Collectors.toList());
@@ -57,7 +60,7 @@ public class QueryContext {
         .map(list -> list.getList().stream().map(SqlNode::toString).collect(Collectors.toList()));
     this.having = Optional.ofNullable(selectQueryObject.getHaving()).map(SqlNode::toString);
     this.transSql = selectQueryObject.toSqlString(SqlDialect.DatabaseProduct.HIVE.getDialect()).getSql();
-}
+  }
 
   public static QueryContext from(String sql) {
     Objects.requireNonNull(sql);

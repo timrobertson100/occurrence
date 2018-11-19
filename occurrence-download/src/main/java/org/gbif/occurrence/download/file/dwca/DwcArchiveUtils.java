@@ -1,27 +1,27 @@
 package org.gbif.occurrence.download.file.dwca;
 
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.Archive;
-import org.gbif.dwc.ArchiveField;
-import org.gbif.dwc.ArchiveFile;
-import org.gbif.dwc.MetaDescriptorWriter;
-import org.gbif.occurrence.common.HiveColumnsUtils;
-import org.gbif.occurrence.common.TermUtils;
-
-import java.io.File;
-import java.io.IOException;
-
-import com.google.common.base.Charsets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.DESCRIPTOR_FILENAME;
 import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.INTERPRETED_FILENAME;
 import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.METADATA_FILENAME;
 import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.MULTIMEDIA_FILENAME;
 import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.VERBATIM_FILENAME;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.ArchiveField;
+import org.gbif.dwc.ArchiveFile;
+import org.gbif.dwc.MetaDescriptorWriter;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
+import org.gbif.occurrence.common.HiveColumnsUtils;
+import org.gbif.occurrence.common.TermUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
 
 /**
  * Utility class for Dwc archive handling during the download file creation.
@@ -32,8 +32,8 @@ public class DwcArchiveUtils {
   private static final String DEFAULT_DELIMITER = ";";
 
   /**
-   * Creates a new archive file description for a dwc archive and sets the id field to the column of gbifID.
-   * Used to generate the meta.xml with the help of the dwca-writer
+   * Creates a new archive file description for a dwc archive and sets the id field to the column of
+   * gbifID. Used to generate the meta.xml with the help of the dwca-writer
    */
   public static ArchiveFile createArchiveFile(String filename, Term rowType, Iterable<? extends Term> columns) {
     ArchiveFile af = buildBaseArchive(filename, rowType);

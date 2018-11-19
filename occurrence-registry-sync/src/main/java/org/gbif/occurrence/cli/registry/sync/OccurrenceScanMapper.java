@@ -1,32 +1,32 @@
 package org.gbif.occurrence.cli.registry.sync;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Organization;
 import org.gbif.common.messaging.api.messages.DeleteDatasetOccurrencesMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceDeletionReason;
 import org.gbif.common.messaging.api.messages.OccurrenceMutatedMessage;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * To be replaced by {@link OccurrenceRegistryMapper}
  *
- * A mapreduce Mapper that synchronizes occurrences with the registry. It checks for changes detected by
- * {@link RegistryBasedOccurrenceMutator} and dataset deletions. For organization changes the new values are written
- * to the occurrence HBase table via occurrence persistence, and then an OccurrenceMutatedMessage is sent. For dataset
- * deletions a DeleteDatasetMessage is sent.
+ * A mapreduce Mapper that synchronizes occurrences with the registry. It checks for changes
+ * detected by {@link RegistryBasedOccurrenceMutator} and dataset deletions. For organization
+ * changes the new values are written to the occurrence HBase table via occurrence persistence, and
+ * then an OccurrenceMutatedMessage is sent. For dataset deletions a DeleteDatasetMessage is sent.
  */
 public class OccurrenceScanMapper extends AbstractOccurrenceRegistryMapper {
 
@@ -84,14 +84,12 @@ public class OccurrenceScanMapper extends AbstractOccurrenceRegistryMapper {
       occurrencePersistenceService.update(updatedOcc);
 
       int crawlId = Bytes.toInt(values.getValue(SyncCommon.OCC_CF, SyncCommon.CI_COL));
-      OccurrenceMutatedMessage msg =
-        OccurrenceMutatedMessage.buildUpdateMessage(datasetKey, origOcc, updatedOcc, crawlId);
+      OccurrenceMutatedMessage msg = OccurrenceMutatedMessage.buildUpdateMessage(datasetKey, origOcc, updatedOcc, crawlId);
 
       try {
-        LOG.info(
-          "Sending update for key [{}], publishing org changed from [{}] to [{}] and host country from [{}] to [{}]",
-          datasetKey, origOcc.getPublishingOrgKey(), updatedOcc.getPublishingOrgKey(), origOcc.getPublishingCountry(),
-          updatedOcc.getPublishingCountry());
+        LOG.info("Sending update for key [{}], publishing org changed from [{}] to [{}] and host country from [{}] to [{}]", datasetKey,
+            origOcc.getPublishingOrgKey(), updatedOcc.getPublishingOrgKey(), origOcc.getPublishingCountry(),
+            updatedOcc.getPublishingCountry());
         messagePublisher.send(msg);
       } catch (IOException e) {
         LOG.warn("Failed to send update message", e);

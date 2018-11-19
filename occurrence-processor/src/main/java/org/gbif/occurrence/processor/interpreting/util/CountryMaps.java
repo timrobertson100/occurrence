@@ -1,23 +1,18 @@
 package org.gbif.occurrence.processor.interpreting.util;
 
-import org.gbif.api.vocabulary.Country;
-import org.gbif.api.vocabulary.OccurrenceIssue;
-import org.gbif.common.parsers.geospatial.CellIdUtils;
-import org.gbif.common.parsers.geospatial.LatLng;
-import org.gbif.common.parsers.geospatial.UnableToGenerateCellIdException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import org.gbif.api.vocabulary.Country;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Maps of countries that are commonly confused, or are considered equivalent.
@@ -29,12 +24,12 @@ public class CountryMaps {
   private static final String CONFUSED_COUNTRY_FILE = "confused-country-pairs.txt";
 
   /*
-   Some countries are commonly mislabeled and are close to correct, so we want to accommodate them, e.g. Northern
-   Ireland mislabeled as Ireland (should be GB). Add comma separated pairs of acceptable country swaps in the
-   confused_country_pairs.txt file. Entries will be made in both directions (e.g. IE->GB, GB->IE). Multiple entries per
-   country are allowed (e.g. AB,CD and AB,EF).
-   This *overrides* the provided country, and includes an issue.
-  */
+   * Some countries are commonly mislabeled and are close to correct, so we want to accommodate them,
+   * e.g. Northern Ireland mislabeled as Ireland (should be GB). Add comma separated pairs of
+   * acceptable country swaps in the confused_country_pairs.txt file. Entries will be made in both
+   * directions (e.g. IE->GB, GB->IE). Multiple entries per country are allowed (e.g. AB,CD and
+   * AB,EF). This *overrides* the provided country, and includes an issue.
+   */
   private static final Map<Country, Set<Country>> CONFUSED_COUNTRIES = Maps.newHashMap();
   // And this is the same, but without the issue — we aren't exactly following ISO, but we accept it.
   private static final Map<Country, Set<Country>> EQUIVALENT_COUNTRIES = Maps.newHashMap();

@@ -6,10 +6,9 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
- * Request class for issuing heat map search request to the occurrence search service.
- * Warning:
+ * Request class for issuing heat map search request to the occurrence search service. Warning:
  */
-public class OccurrenceHeatmapRequest extends  OccurrenceSearchRequest {
+public class OccurrenceHeatmapRequest extends OccurrenceSearchRequest {
 
   private String geometry;
 
@@ -18,13 +17,13 @@ public class OccurrenceHeatmapRequest extends  OccurrenceSearchRequest {
   /**
    * Default empty constructor, required for serialization.
    */
-  public OccurrenceHeatmapRequest(){
-    super(0,0);
+  public OccurrenceHeatmapRequest() {
+    super(0, 0);
   }
 
   /**
-   * The region to compute the heatmap on, specified using the rectangle-range syntax or WKT.
-   * It defaults to the world. ex: ["-180 -90" TO "180 90"].
+   * The region to compute the heatmap on, specified using the rectangle-range syntax or WKT. It
+   * defaults to the world. ex: ["-180 -90" TO "180 90"].
    */
   public String getGeometry() {
     return geometry;
@@ -36,6 +35,7 @@ public class OccurrenceHeatmapRequest extends  OccurrenceSearchRequest {
 
   /**
    * Heatmap zoom/gridLevel level
+   * 
    * @return
    */
   public int getZoom() {
@@ -48,7 +48,7 @@ public class OccurrenceHeatmapRequest extends  OccurrenceSearchRequest {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("geometry", geometry).add("zoom",zoom).toString();
+    return MoreObjects.toStringHelper(this).add("geometry", geometry).add("zoom", zoom).toString();
   }
 
   @Override
@@ -61,8 +61,7 @@ public class OccurrenceHeatmapRequest extends  OccurrenceSearchRequest {
     }
 
     OccurrenceHeatmapRequest that = (OccurrenceHeatmapRequest) obj;
-    return Objects.equal(geometry, that.geometry)
-           && Objects.equal(zoom, that.zoom);
+    return Objects.equal(geometry, that.geometry) && Objects.equal(zoom, that.zoom);
   }
 
   @Override

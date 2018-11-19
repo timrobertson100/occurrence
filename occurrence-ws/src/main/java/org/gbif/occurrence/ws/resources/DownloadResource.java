@@ -1,21 +1,19 @@
 /*
- * Copyright 2012 Global Biodiversity Information Facility (GBIF)
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2012 Global Biodiversity Information Facility (GBIF) Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You
+ * may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ * the License for the specific language governing permissions and limitations under the License.
  */
 package org.gbif.occurrence.ws.resources;
 
 import static org.gbif.occurrence.download.service.DownloadSecurityUtil.assertLoginMatches;
+
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -30,6 +28,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+
 import org.apache.bval.guice.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.model.occurrence.DownloadFormat;
@@ -42,6 +41,7 @@ import org.gbif.occurrence.download.service.hive.HiveSQL;
 import org.gbif.ws.util.ExtraMediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -60,18 +60,18 @@ public class DownloadResource {
 
   // low quality of source to default to JSON
   private static final String OCT_STREAM_QS = ";qs=0.5";
-  
+
   private final DownloadRequestService requestService;
 
   private final OccurrenceDownloadService occurrenceDownloadService;
 
   private final CallbackService callbackService;
-  
+
   private Response describeCachedResponse;
 
   @Inject
   public DownloadResource(DownloadRequestService service, CallbackService callbackService,
-                          OccurrenceDownloadService occurrenceDownloadService) {
+      OccurrenceDownloadService occurrenceDownloadService) {
     requestService = service;
     this.callbackService = callbackService;
     this.occurrenceDownloadService = occurrenceDownloadService;
@@ -95,8 +95,7 @@ public class DownloadResource {
     downloadKey = StringUtils.removeEndIgnoreCase(downloadKey, ZIP_EXT);
 
     String extension = Optional.ofNullable(occurrenceDownloadService.get(downloadKey))
-                        .map(download -> (DownloadFormat.SIMPLE_AVRO == download.getRequest().getFormat())? AVRO_EXT : ZIP_EXT)
-                        .orElse(ZIP_EXT);
+        .map(download -> (DownloadFormat.SIMPLE_AVRO == download.getRequest().getFormat()) ? AVRO_EXT : ZIP_EXT).orElse(ZIP_EXT);
 
     LOG.debug("Get download data: [{}]", downloadKey);
     // suggest filename for download in http headers
@@ -116,23 +115,23 @@ public class DownloadResource {
   @Path("sql/validate")
   @Produces(MediaType.APPLICATION_JSON)
   public Response validateSQL(@QueryParam("sql") String sqlQuery) {
-    LOG.debug("Received validation request for sql query [{}]",sqlQuery);
-    HiveSQL.Validate.Result result =  new HiveSQL.Validate().apply(sqlQuery);
+    LOG.debug("Received validation request for sql query [{}]", sqlQuery);
+    HiveSQL.Validate.Result result = new HiveSQL.Validate().apply(sqlQuery);
     return Response.ok().type(MediaType.APPLICATION_JSON).entity(result).build();
   }
-  
+
   @GET
   @Path("sql/describe")
   @Produces(MediaType.APPLICATION_JSON)
   public Response describeSQL() {
     LOG.debug("Received describe request for sql ");
     if (Objects.isNull(describeCachedResponse)) {
-        this.describeCachedResponse = Response.ok().type(MediaType.APPLICATION_JSON)
-                                      .entity(HiveSQL.Execute.describe(OCCURRENCE_TABLE)).build();
+      this.describeCachedResponse =
+          Response.ok().type(MediaType.APPLICATION_JSON).entity(HiveSQL.Execute.describe(OCCURRENCE_TABLE)).build();
     }
     return describeCachedResponse;
   }
-  
+
   @POST
   @Produces({MediaType.TEXT_PLAIN})
   @Validate
@@ -145,7 +144,7 @@ public class DownloadResource {
     LOG.info("Created new download job with key [{}]", downloadKey);
     return downloadKey;
   }
-  
+
   @POST
   @Produces({MediaType.TEXT_PLAIN})
   @Validate

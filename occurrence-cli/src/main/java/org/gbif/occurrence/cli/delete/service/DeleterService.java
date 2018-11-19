@@ -27,13 +27,12 @@ public class DeleterService extends AbstractIdleService {
 
     config.ganglia.start();
 
-    OccurrenceDeletionService occurrenceDeletionService = new OccurrenceDeletionService(
-      inj.getInstance(OccurrencePersistenceService.class), inj.getInstance(OccurrenceKeyPersistenceService.class));
+    OccurrenceDeletionService occurrenceDeletionService = new OccurrenceDeletionService(inj.getInstance(OccurrencePersistenceService.class),
+        inj.getInstance(OccurrenceKeyPersistenceService.class));
 
     listener = new MessageListener(config.messaging.getConnectionParameters());
     listener.listen(config.queueName, config.msgPoolSize,
-      new DeleteOccurrenceListener(occurrenceDeletionService,
-      new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
+        new DeleteOccurrenceListener(occurrenceDeletionService, new DefaultMessagePublisher(config.messaging.getConnectionParameters())));
   }
 
   @Override

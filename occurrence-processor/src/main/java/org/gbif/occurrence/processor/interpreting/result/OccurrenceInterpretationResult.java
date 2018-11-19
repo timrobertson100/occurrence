@@ -1,10 +1,10 @@
 package org.gbif.occurrence.processor.interpreting.result;
 
-import org.gbif.api.model.occurrence.Occurrence;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.gbif.api.model.occurrence.Occurrence;
 
 public class OccurrenceInterpretationResult {
 

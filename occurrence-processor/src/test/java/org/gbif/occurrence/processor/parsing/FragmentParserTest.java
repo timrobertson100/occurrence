@@ -1,5 +1,17 @@
 package org.gbif.occurrence.processor.parsing;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.Charsets;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.Extension;
@@ -10,22 +22,10 @@ import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.persistence.api.Fragment;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import com.google.common.io.Resources;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.Charsets;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import com.google.common.io.Resources;
 
 public class FragmentParserTest {
 
@@ -42,8 +42,8 @@ public class FragmentParserTest {
   public void testAbcd206() {
     OccurrenceSchemaType schema = OccurrenceSchemaType.ABCD_2_0_6;
     UUID datasetKey = UUID.randomUUID();
-    Fragment frag = new Fragment(datasetKey, abcd206Single.getBytes(), DigestUtils.md5(abcd206Single.getBytes()),
-      Fragment.FragmentType.XML, EndpointType.BIOCASE, new Date(), 1, schema, null, null);
+    Fragment frag = new Fragment(datasetKey, abcd206Single.getBytes(), DigestUtils.md5(abcd206Single.getBytes()), Fragment.FragmentType.XML,
+        EndpointType.BIOCASE, new Date(), 1, schema, null, null);
     frag.setKey(1);
 
     VerbatimOccurrence got = FragmentParser.parse(frag);
@@ -71,16 +71,15 @@ public class FragmentParserTest {
     assertEquals("Tetraedron caudatum (Corda) Hansg.", got.getVerbatimField(GbifTerm.typifiedName));
 
     assertNotNull(got.getExtensions().get(Extension.MULTIMEDIA));
-    List<Map<Term,String>> mediaObjects = got.getExtensions().get(Extension.MULTIMEDIA);
+    List<Map<Term, String>> mediaObjects = got.getExtensions().get(Extension.MULTIMEDIA);
     assertEquals(2, mediaObjects.size());
-    Map<Term,String> medium = mediaObjects.get(0);
-    assertEquals("http://www.tierstimmenarchiv.de/recordings/Ailuroedus_buccoides_V2010_04_short.mp3",
-      medium.get(DcTerm.identifier));
-    assertEquals("http://www.tierstimmenarchiv.de/webinterface/contents/showdetails.php?edit=-1&unique_id=TSA:Ailuroedus_buccoides_V_2010_4_1&autologin=true",
-      medium.get(DcTerm.references));
+    Map<Term, String> medium = mediaObjects.get(0);
+    assertEquals("http://www.tierstimmenarchiv.de/recordings/Ailuroedus_buccoides_V2010_04_short.mp3", medium.get(DcTerm.identifier));
+    assertEquals(
+        "http://www.tierstimmenarchiv.de/webinterface/contents/showdetails.php?edit=-1&unique_id=TSA:Ailuroedus_buccoides_V_2010_4_1&autologin=true",
+        medium.get(DcTerm.references));
     assertEquals("audio/mp3", medium.get(DcTerm.format));
-    assertEquals("CC BY-NC-ND (Attribution for non commercial use only and without derivative)",
-      medium.get(DcTerm.license));
+    assertEquals("CC BY-NC-ND (Attribution for non commercial use only and without derivative)", medium.get(DcTerm.license));
 
   }
 
@@ -88,8 +87,7 @@ public class FragmentParserTest {
   public void testDwc14() {
     OccurrenceSchemaType schema = OccurrenceSchemaType.DWC_1_4;
     UUID datasetKey = UUID.randomUUID();
-    Fragment frag =
-      new Fragment(datasetKey, dwc14.getBytes(), DigestUtils.md5(dwc14.getBytes()), Fragment.FragmentType.XML,
+    Fragment frag = new Fragment(datasetKey, dwc14.getBytes(), DigestUtils.md5(dwc14.getBytes()), Fragment.FragmentType.XML,
         EndpointType.DIGIR, new Date(), 1, schema, null, null);
     frag.setKey(123);
 

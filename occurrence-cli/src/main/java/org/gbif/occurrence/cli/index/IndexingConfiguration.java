@@ -1,11 +1,11 @@
 package org.gbif.occurrence.cli.index;
 
-import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.occurrence.cli.common.GangliaConfiguration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.occurrence.cli.common.GangliaConfiguration;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -62,9 +62,8 @@ class IndexingConfiguration {
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("messaging", messaging).add("ganglia", ganglia).add("poolSize", poolSize)
-      .add("commitWithinMs", commitWithinMs).add("queueName", queueName).add("solrServer", solrServer)
-      .add("solrServerType", solrServerType).add("solrCollection", solrCollection)
-      .add("solrUpdateBatchSize", solrUpdateBatchSize).add("solrUpdateWithinMs", solrUpdateWithinMs)
-      .toString();
+        .add("commitWithinMs", commitWithinMs).add("queueName", queueName).add("solrServer", solrServer)
+        .add("solrServerType", solrServerType).add("solrCollection", solrCollection).add("solrUpdateBatchSize", solrUpdateBatchSize)
+        .add("solrUpdateWithinMs", solrUpdateWithinMs).toString();
   }
 }

@@ -1,10 +1,5 @@
 package org.gbif.occurrence.search.writer;
 
-import org.gbif.api.model.occurrence.Occurrence;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -13,35 +8,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
- * Utility class that encapsulates how the occurrence fields are concatenated to compose a single text field.
+ * Utility class that encapsulates how the occurrence fields are concatenated to compose a single
+ * text field.
  */
 public class FullTextFieldBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullTextFieldBuilder.class);
 
-  public static final Set<Term> NON_FULL_TEXT_TERMS = new ImmutableSet.Builder<Term>().add(DwcTerm.verbatimEventDate,
-                                                                                           DwcTerm.verbatimCoordinates,
-                                                                                           DwcTerm.verbatimCoordinateSystem,
-                                                                                           DwcTerm.verbatimDepth,
-                                                                                           DwcTerm.verbatimElevation,
-                                                                                           DwcTerm.verbatimLatitude,
-                                                                                           DwcTerm.verbatimLongitude,
-                                                                                           DwcTerm.eventTime,
-                                                                                           DwcTerm.taxonID,
-                                                                                           GbifTerm.gbifID,
-                                                                                           GbifTerm.datasetKey).build();
+  public static final Set<Term> NON_FULL_TEXT_TERMS =
+      new ImmutableSet.Builder<Term>().add(DwcTerm.verbatimEventDate, DwcTerm.verbatimCoordinates, DwcTerm.verbatimCoordinateSystem,
+          DwcTerm.verbatimDepth, DwcTerm.verbatimElevation, DwcTerm.verbatimLatitude, DwcTerm.verbatimLongitude, DwcTerm.eventTime,
+          DwcTerm.taxonID, GbifTerm.gbifID, GbifTerm.datasetKey).build();
 
   /**
    * Private hidden constructor.
    */
   private FullTextFieldBuilder() {
-    //Utility classes hide constructors
+    // Utility classes hide constructors
   }
 
   /**
@@ -57,7 +51,7 @@ public class FullTextFieldBuilder {
         }
       }
 
-      for (Map.Entry<Term,String> verbatimField : occurrence.getVerbatimFields().entrySet()) {
+      for (Map.Entry<Term, String> verbatimField : occurrence.getVerbatimFields().entrySet()) {
         if (verbatimField.getValue() != null && !NON_FULL_TEXT_TERMS.contains(verbatimField.getKey())) {
           fullTextField.add(verbatimField.getValue());
         }
@@ -78,17 +72,12 @@ public class FullTextFieldBuilder {
   }
 
   /**
-   *  Utility function to filter out unsupported types in full text searches.
+   * Utility function to filter out unsupported types in full text searches.
    */
   private static boolean nonFullTextTypes(Object value) {
     Class<?> type = value.getClass();
-    return type.isAssignableFrom(Boolean.class)
-           || type.isAssignableFrom(Integer.class)
-           || type.isAssignableFrom(Date.class)
-           || type.isAssignableFrom(UUID.class)
-           || type.isArray()
-           || value instanceof Map
-           || value instanceof Collection
-           || value instanceof EnumSet;
+    return type.isAssignableFrom(Boolean.class) || type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Date.class)
+        || type.isAssignableFrom(UUID.class) || type.isArray() || value instanceof Map || value instanceof Collection
+        || value instanceof EnumSet;
   }
 }

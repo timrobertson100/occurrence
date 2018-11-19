@@ -1,8 +1,14 @@
 package org.gbif.occurrence.persistence.hbase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
+
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.api.vocabulary.OccurrenceIssue;
-import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
@@ -10,18 +16,11 @@ import org.gbif.dwc.terms.TermFactory;
 import org.gbif.dwc.terms.UnknownTerm;
 import org.gbif.occurrence.common.TermUtils;
 
-import java.util.regex.Pattern;
-import javax.annotation.Nullable;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 
 /**
- * Utility class to deal with occurrence hbase columns.
- * Primarily translate from Terms to their corresponding HBase column name (in the occurrence table), but
- * also deals with any other names used, e.g. identifiers, issue columns, etc.
+ * Utility class to deal with occurrence hbase columns. Primarily translate from Terms to their
+ * corresponding HBase column name (in the occurrence table), but also deals with any other names
+ * used, e.g. identifiers, issue columns, etc.
  */
 public class Columns {
 
@@ -35,11 +34,13 @@ public class Columns {
   // a prefix required for all non term based columns
   private static final String INTERNAL_PREFIX = "_";
 
-  // the counter table is a single cell that is the "autoincrement" number for new keys, with column family, column,
+  // the counter table is a single cell that is the "autoincrement" number for new keys, with column
+  // family, column,
   // and key ("row" in hbase speak)
   public static final String COUNTER_COLUMN = "id";
 
-  // the lookup table is a secondary index of unique ids (holy triplet or publisher-provided) to GBIF integer keys
+  // the lookup table is a secondary index of unique ids (holy triplet or publisher-provided) to GBIF
+  // integer keys
   public static final String LOOKUP_KEY_COLUMN = "i";
   public static final String LOOKUP_LOCK_COLUMN = "l";
   public static final String LOOKUP_STATUS_COLUMN = "s";
@@ -47,10 +48,12 @@ public class Columns {
   // each UnknownTerm is prefixed differently
   private static final String VERBATIM_TERM_PREFIX = "v_";
 
-  // a single occurrence will have 0 or more OccurrenceIssues. Once column per issue, each one prefixed
+  // a single occurrence will have 0 or more OccurrenceIssues. Once column per issue, each one
+  // prefixed
   private static final String ISSUE_PREFIX = INTERNAL_PREFIX + "iss_";
 
-  // An occurrence can have 0-n identifiers, each of a certain type. Their column names look like _t1, _i1, _t2, _i2,
+  // An occurrence can have 0-n identifiers, each of a certain type. Their column names look like _t1,
+  // _i1, _t2, _i2,
   // etc.
   private static final String IDENTIFIER_TYPE_COLUMN = INTERNAL_PREFIX + "t";
   private static final String IDENTIFIER_COLUMN = INTERNAL_PREFIX + "i";
@@ -59,18 +62,15 @@ public class Columns {
   /**
    * Should never be instantiated.
    */
-  private Columns() {
-  }
+  private Columns() {}
 
   /**
-   * Returns the column for the given term.
-   * If an interpreted column exists for the given term it will be returned, otherwise the verbatim column will be
-   * used.
-   * Not that GbifInternalTerm are always interpreted and do not exist as verbatim columns.
-   * Asking for a "secondary" interpreted term like country which is used during interpretation but not stored
-   * will result in an IllegalArgumentException. dwc:countryCode is the right term in this case.
-   * Key terms like taxonID or occurrenceID are considered verbatim terms and do not map to the respective GBIF
-   * columns.
+   * Returns the column for the given term. If an interpreted column exists for the given term it will
+   * be returned, otherwise the verbatim column will be used. Not that GbifInternalTerm are always
+   * interpreted and do not exist as verbatim columns. Asking for a "secondary" interpreted term like
+   * country which is used during interpretation but not stored will result in an
+   * IllegalArgumentException. dwc:countryCode is the right term in this case. Key terms like taxonID
+   * or occurrenceID are considered verbatim terms and do not map to the respective GBIF columns.
    * Please use the GbifTerm enum for those!
    */
   public static String column(Term term) {
@@ -78,7 +78,8 @@ public class Columns {
       return column(term, "");
 
     } else if (TermUtils.isInterpretedSourceTerm(term)) {
-      // "secondary" terms used in interpretation but not used to store the interpreted values should never be asked for
+      // "secondary" terms used in interpretation but not used to store the interpreted values should
+      // never be asked for
       throw new IllegalArgumentException("The term " + term + " is interpreted and only relevant for verbatim values");
 
     } else {
@@ -87,8 +88,8 @@ public class Columns {
   }
 
   /**
-   * Return the column for the given extension. There will always be both verbatim and interpreted versions of each
-   * extension. This is the interpreted extension's column.
+   * Return the column for the given extension. There will always be both verbatim and interpreted
+   * versions of each extension. This is the interpreted extension's column.
    *
    * @param extension the column to build
    *
@@ -100,20 +101,19 @@ public class Columns {
   }
 
   /**
-   * Returns the verbatim column for a term.
-   * GbifInternalTerm is not permitted and will result in an IllegalArgumentException!
+   * Returns the verbatim column for a term. GbifInternalTerm is not permitted and will result in an
+   * IllegalArgumentException!
    */
   public static String verbatimColumn(Term term) {
     if (term instanceof GbifInternalTerm) {
-      throw new IllegalArgumentException(
-        "Internal terms (like the tried [" + term.simpleName() + "]) do not exist as verbatim columns");
+      throw new IllegalArgumentException("Internal terms (like the tried [" + term.simpleName() + "]) do not exist as verbatim columns");
     }
     return column(term, VERBATIM_TERM_PREFIX);
   }
 
   /**
-   * Return the verbatim column for the given extension. There will always be both verbatim and interpreted versions of
-   * each extension. This is the verbatim extension's column.
+   * Return the verbatim column for the given extension. There will always be both verbatim and
+   * interpreted versions of each extension. This is the verbatim extension's column.
    *
    * @param extension the column to build
    *
@@ -131,7 +131,8 @@ public class Columns {
   private static String column(Term term, String colPrefix) {
     checkNotNull(term, "term can't be null");
 
-    // unknown terms will never be mapped in Hive, and we can't replace : with anything and guarantee that it will
+    // unknown terms will never be mapped in Hive, and we can't replace : with anything and guarantee
+    // that it will
     // be reversible
     if (term instanceof UnknownTerm) {
       return colPrefix + term.qualifiedName();
@@ -150,8 +151,8 @@ public class Columns {
   }
 
   /**
-   * Returns the term for a strictly verbatim column.
-   * If the column given is not a verbatim column, null will be returned.
+   * Returns the term for a strictly verbatim column. If the column given is not a verbatim column,
+   * null will be returned.
    */
   @Nullable
   public static Term termFromVerbatimColumn(byte[] qualifier) {

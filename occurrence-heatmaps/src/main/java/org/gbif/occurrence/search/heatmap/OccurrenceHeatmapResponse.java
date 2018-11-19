@@ -25,22 +25,14 @@ public class OccurrenceHeatmapResponse {
    * Default constructor, required for JSON serialization.
    */
   public OccurrenceHeatmapResponse() {
-    //empty
+    // empty
   }
 
   /**
    * Full constructor.
    */
-  public OccurrenceHeatmapResponse(
-    Integer columns,
-    Integer rows,
-    Long count,
-    Double minX,
-    Double maxX,
-    Double minY,
-    Double maxY,
-    List<List<Integer>> countsInts2D
-  ) {
+  public OccurrenceHeatmapResponse(Integer columns, Integer rows, Long count, Double minX, Double maxX, Double minY, Double maxY,
+      List<List<Integer>> countsInts2D) {
     this.columns = columns;
     this.count = count;
     this.rows = rows;
@@ -143,7 +135,7 @@ public class OccurrenceHeatmapResponse {
    * @return length of X: maxX - minX
    */
   public Double getLengthX() {
-    if(lengthX == null){
+    if (lengthX == null) {
       lengthX = (maxX - minX) / columns;
     }
     return lengthX;
@@ -154,7 +146,7 @@ public class OccurrenceHeatmapResponse {
    * @return length of Y: maxY - minY
    */
   public Double getLengthY() {
-    if(lengthY == null){
+    if (lengthY == null) {
       lengthY = (maxY - minY) / columns;
     }
     return lengthY;
@@ -212,8 +204,8 @@ public class OccurrenceHeatmapResponse {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("columns", columns).add("rows", rows).add("count", count).add("minX", minX)
-      .add("maxX",maxX).add("minY",minY).add("maxY",maxY).add("lengthX",lengthX).add("lenghtY",lengthY)
-      .add("countsInts2D",countsInts2D).toString();
+        .add("maxX", maxX).add("minY", minY).add("maxY", maxY).add("lengthX", lengthX).add("lenghtY", lengthY)
+        .add("countsInts2D", countsInts2D).toString();
   }
 
   @Override
@@ -226,21 +218,15 @@ public class OccurrenceHeatmapResponse {
     }
 
     OccurrenceHeatmapResponse that = (OccurrenceHeatmapResponse) obj;
-    return Objects.equal(columns, that.columns)
-           && Objects.equal(rows, that.rows)
-           && Objects.equal(count, that.count)
-           && Objects.equal(minX, that.minX)
-           && Objects.equal(maxX, that.maxX)
-           && Objects.equal(minY, that.minY)
-           && Objects.equal(maxY, that.maxY)
-           && Objects.equal(lengthX, that.lengthX)
-           && Objects.equal(lengthY, that.lengthY)
-           && Objects.equal(countsInts2D, that.countsInts2D);
+    return Objects.equal(columns, that.columns) && Objects.equal(rows, that.rows) && Objects.equal(count, that.count)
+        && Objects.equal(minX, that.minX) && Objects.equal(maxX, that.maxX) && Objects.equal(minY, that.minY)
+        && Objects.equal(maxY, that.maxY) && Objects.equal(lengthX, that.lengthX) && Objects.equal(lengthY, that.lengthY)
+        && Objects.equal(countsInts2D, that.countsInts2D);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(columns,rows,count,minX,maxX,minY,maxY,lengthX,lengthY,countsInts2D);
+    return Objects.hashCode(columns, rows, count, minX, maxX, minY, maxY, lengthX, lengthY, countsInts2D);
   }
 
 }

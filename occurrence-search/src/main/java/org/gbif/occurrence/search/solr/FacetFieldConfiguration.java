@@ -4,10 +4,11 @@ import org.gbif.api.model.common.search.SearchParameter;
 
 
 /**
- * Facets configuration class.
- * This class encapsulates the information to build faceted queries of SearchParameter.
+ * Facets configuration class. This class encapsulates the information to build faceted queries of
+ * SearchParameter.
  *
- * moved from common-search, see: https://github.com/gbif/common-search/commit/c9529087d5b34228b045f30323901074218c5d90
+ * moved from common-search, see:
+ * https://github.com/gbif/common-search/commit/c9529087d5b34228b045f30323901074218c5d90
  */
 public class FacetFieldConfiguration {
 
@@ -23,11 +24,12 @@ public class FacetFieldConfiguration {
   public FacetFieldConfiguration() {
 
   }
+
   /**
    * Full constructor.
    */
-  public FacetFieldConfiguration(String field, SearchParameter searchParameter, FacetField.Method method,
-                                 FacetField.SortOrder sortOrder, boolean missing) {
+  public FacetFieldConfiguration(String field, SearchParameter searchParameter, FacetField.Method method, FacetField.SortOrder sortOrder,
+      boolean missing) {
     this.field = field;
     this.searchParameter = searchParameter;
     this.method = method;

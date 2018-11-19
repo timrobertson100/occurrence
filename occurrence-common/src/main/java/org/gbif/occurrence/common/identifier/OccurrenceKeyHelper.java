@@ -3,15 +3,14 @@ package org.gbif.occurrence.common.identifier;
 import javax.annotation.Nullable;
 
 /**
- * A helper class for building the row keys used in the occurrence lookup table/process.
- * TODO: this is too similar to OccurrenceKeyBuilder - they should be merged
+ * A helper class for building the row keys used in the occurrence lookup table/process. TODO: this
+ * is too similar to OccurrenceKeyBuilder - they should be merged
  */
 public class OccurrenceKeyHelper {
 
   private static final char DELIM = '|';
 
-  private OccurrenceKeyHelper() {
-  }
+  private OccurrenceKeyHelper() {}
 
   public static String buildKeyPrefix(String datasetKey) {
     return datasetKey + DELIM;
@@ -19,8 +18,8 @@ public class OccurrenceKeyHelper {
 
   @Nullable
   public static String buildKey(@Nullable HolyTriplet triplet) {
-    if (triplet == null || triplet.getDatasetKey() == null || triplet.getInstitutionCode() == null
-        || triplet.getCollectionCode() == null || triplet.getCatalogNumber() == null) {
+    if (triplet == null || triplet.getDatasetKey() == null || triplet.getInstitutionCode() == null || triplet.getCollectionCode() == null
+        || triplet.getCatalogNumber() == null) {
       return null;
     }
 
@@ -39,8 +38,7 @@ public class OccurrenceKeyHelper {
 
   @Nullable
   public static String buildKey(@Nullable PublisherProvidedUniqueIdentifier pubProvided) {
-    if (pubProvided == null || pubProvided.getDatasetKey() == null
-        || pubProvided.getPublisherProvidedIdentifier() == null) {
+    if (pubProvided == null || pubProvided.getDatasetKey() == null || pubProvided.getPublisherProvidedIdentifier() == null) {
       return null;
     }
 
@@ -62,8 +60,8 @@ public class OccurrenceKeyHelper {
 
   @Nullable
   public static String buildUnscopedKey(@Nullable HolyTriplet triplet) {
-    if (triplet == null || triplet.getDatasetKey() == null || triplet.getInstitutionCode() == null
-        || triplet.getCollectionCode() == null || triplet.getCatalogNumber() == null) {
+    if (triplet == null || triplet.getDatasetKey() == null || triplet.getInstitutionCode() == null || triplet.getCollectionCode() == null
+        || triplet.getCatalogNumber() == null) {
       return null;
     }
 

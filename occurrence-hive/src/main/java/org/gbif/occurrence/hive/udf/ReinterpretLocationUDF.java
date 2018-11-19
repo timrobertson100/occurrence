@@ -1,17 +1,9 @@
 package org.gbif.occurrence.hive.udf;
 
-import org.gbif.api.model.occurrence.Occurrence;
-import org.gbif.api.model.occurrence.VerbatimOccurrence;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
-import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
-import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
-
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-import com.beust.jcommander.internal.Lists;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -20,17 +12,26 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.gbif.api.model.occurrence.Occurrence;
+import org.gbif.api.model.occurrence.VerbatimOccurrence;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
+import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
+import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.internal.Lists;
+
 /**
  *
- * Reinterpret location (latitude, longitude, country) based on verbatim fields.
- * This is used to test addition or changes to location interpretation algorithm.
+ * Reinterpret location (latitude, longitude, country) based on verbatim fields. This is used to
+ * test addition or changes to location interpretation algorithm.
  *
  *
  */
-@Description(name = "reinterpretLocation", value = "_FUNC_(apiUrl, decimalLatitude, decimalLongitude, verbatimLatitude, verbatimLongitude, verbatimCoordinates, geodeticDatum, country, countrycode)")
+@Description(name = "reinterpretLocation",
+    value = "_FUNC_(apiUrl, decimalLatitude, decimalLongitude, verbatimLatitude, verbatimLongitude, verbatimCoordinates, geodeticDatum, country, countrycode)")
 public class ReinterpretLocationUDF extends GenericUDF {
   private static final int argLength = 9;
 
@@ -48,7 +49,7 @@ public class ReinterpretLocationUDF extends GenericUDF {
 
   private void init(URI apiWs) {
     if (locInterpreter == null) {
-      synchronized (lock) {    // while we were waiting for the lock, another thread may have instantiated the object
+      synchronized (lock) { // while we were waiting for the lock, another thread may have instantiated the object
         if (locInterpreter == null) {
           LOG.info("Create new coordinate & location interpreter using API at {}", apiWs);
           ApiClientConfiguration cfg = new ApiClientConfiguration();
@@ -94,18 +95,17 @@ public class ReinterpretLocationUDF extends GenericUDF {
 
     try {
       getLocInterpreter(api).interpretLocation(verbatim, occ);
-    }
-    catch (Exception e){
-      //From VerbatimOccurrenceInterpreter: these interpreters throw a variety of runtime exceptions but should throw checked exceptions
+    } catch (Exception e) {
+      // From VerbatimOccurrenceInterpreter: these interpreters throw a variety of runtime exceptions but
+      // should throw checked exceptions
     }
 
     result.add(occ.getDecimalLatitude());
     result.add(occ.getDecimalLongitude());
 
-    if(occ.getCountry() != null){
+    if (occ.getCountry() != null) {
       result.add(occ.getCountry().getIso2LetterCode());
-    }
-    else{
+    } else {
       result.add(null);
     }
     return result;
@@ -114,8 +114,8 @@ public class ReinterpretLocationUDF extends GenericUDF {
   @Override
   public String getDisplayString(String[] strings) {
     assert strings.length == argLength;
-    return "reinterpretLocation(" + strings[0] + ", " + strings[1] + ", " + strings[2] + ", " + strings[3] +
-            ", " + strings[4] + ", " + strings[5] + ", " + strings[6] + ", " + strings[7] + ", " + strings[8] + ')';
+    return "reinterpretLocation(" + strings[0] + ", " + strings[1] + ", " + strings[2] + ", " + strings[3] + ", " + strings[4] + ", "
+        + strings[5] + ", " + strings[6] + ", " + strings[7] + ", " + strings[8] + ')';
   }
 
   @Override
@@ -126,13 +126,11 @@ public class ReinterpretLocationUDF extends GenericUDF {
 
     converters = new ObjectInspectorConverters.Converter[arguments.length];
     for (int i = 0; i < arguments.length; i++) {
-      converters[i] = ObjectInspectorConverters
-        .getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+      converters[i] = ObjectInspectorConverters.getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
     }
 
-    return ObjectInspectorFactory
-      .getStandardStructObjectInspector(Arrays.asList("decimallatitude", "decimallongitude", "countrycode"), Arrays
-        .<ObjectInspector>asList(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector, PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
-                PrimitiveObjectInspectorFactory.javaStringObjectInspector));
+    return ObjectInspectorFactory.getStandardStructObjectInspector(Arrays.asList("decimallatitude", "decimallongitude", "countrycode"),
+        Arrays.<ObjectInspector>asList(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
+            PrimitiveObjectInspectorFactory.javaDoubleObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector));
   }
 }

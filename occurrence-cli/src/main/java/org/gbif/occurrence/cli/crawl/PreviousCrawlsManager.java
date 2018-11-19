@@ -1,11 +1,5 @@
 package org.gbif.occurrence.cli.crawl;
 
-import org.gbif.api.model.crawler.DatasetProcessStatus;
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.crawler.ProcessState;
-import org.gbif.api.service.occurrence.OccurrenceSearchService;
-import org.gbif.api.service.registry.DatasetProcessStatusService;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,51 +13,48 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
 import javax.annotation.Nullable;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
+import org.gbif.api.model.crawler.DatasetProcessStatus;
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.api.service.occurrence.OccurrenceSearchService;
+import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+
 /**
- * Manager that checks for previous crawls and sends delete messages if predefined conditions are met.
+ * Manager that checks for previous crawls and sends delete messages if predefined conditions are
+ * met.
  */
 public class PreviousCrawlsManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviousCrawlsManager.class);
 
-  private static final String SQL_WITH_CLAUSE =
-          "WITH t1 AS (" +
-                  " SELECT datasetKey, count(DISTINCT crawlID) crawlCount" +
-                  " FROM %s" +
-                  " WHERE protocol = 'DWC_ARCHIVE'" +
-                  " GROUP BY datasetKey" +
-                  " HAVING crawlCount > 1 )";
+  private static final String SQL_WITH_CLAUSE = "WITH t1 AS (" + " SELECT datasetKey, count(DISTINCT crawlID) crawlCount" + " FROM %s"
+      + " WHERE protocol = 'DWC_ARCHIVE'" + " GROUP BY datasetKey" + " HAVING crawlCount > 1 )";
 
   private static final String SQL_QUERY =
-          " SELECT " +
-                  " o.datasetKey, o.crawlId, count(*) AS crawlCount" +
-                  " FROM " +
-                  " %s o JOIN t1 ON o.datasetKey = t1.datasetKey" +
-                  " GROUP BY " +
-                  "  o.datasetKey, o.crawlId" +
-                  " ORDER BY " +
-                  "  o.datasetKey, o.crawlId";
+      " SELECT " + " o.datasetKey, o.crawlId, count(*) AS crawlCount" + " FROM " + " %s o JOIN t1 ON o.datasetKey = t1.datasetKey"
+          + " GROUP BY " + "  o.datasetKey, o.crawlId" + " ORDER BY " + "  o.datasetKey, o.crawlId";
 
-  private static final String SQL_QUERY_SINGLE_DATASET = "SELECT datasetKey, crawlId, count(*) AS crawlCount FROM " +
-          " %s WHERE datasetkey = ? GROUP BY datasetkey, crawlid";
+  private static final String SQL_QUERY_SINGLE_DATASET =
+      "SELECT datasetKey, crawlId, count(*) AS crawlCount FROM " + " %s WHERE datasetkey = ? GROUP BY datasetkey, crawlid";
 
   private static final String DATASET_KEY_LBL = "datasetKey";
   private static final String CRAWL_ID_LBL = "crawlId";
   private static final String CRAWL_COUNT_LBL = "crawlCount";
 
-  private static final Function<String, String> getSqlCommand = (tableName) ->
-          String.format(SQL_WITH_CLAUSE, tableName) + String.format(SQL_QUERY, tableName);
+  private static final Function<String, String> getSqlCommand =
+      (tableName) -> String.format(SQL_WITH_CLAUSE, tableName) + String.format(SQL_QUERY, tableName);
 
-  private static final Function<String, String> getSqlCommandSingleDataset = (tableName) ->
-          String.format(SQL_QUERY_SINGLE_DATASET, tableName);
+  private static final Function<String, String> getSqlCommandSingleDataset =
+      (tableName) -> String.format(SQL_QUERY_SINGLE_DATASET, tableName);
 
   private final PreviousCrawlsManagerConfiguration config;
   private final DatasetProcessStatusService datasetProcessStatusService;
@@ -72,8 +63,7 @@ public class PreviousCrawlsManager {
 
   @Inject
   public PreviousCrawlsManager(PreviousCrawlsManagerConfiguration config, DatasetProcessStatusService datasetProcessStatusService,
-                               OccurrenceSearchService occurrenceSearchService,
-                               @Nullable PreviousCrawlsOccurrenceDeleter deletePreviousCrawlsService) {
+      OccurrenceSearchService occurrenceSearchService, @Nullable PreviousCrawlsOccurrenceDeleter deletePreviousCrawlsService) {
     this.config = config;
     this.datasetProcessStatusService = datasetProcessStatusService;
     this.occurrenceSearchService = occurrenceSearchService;
@@ -96,8 +86,8 @@ public class PreviousCrawlsManager {
   }
 
   /**
-   * Manage deletion of previous crawls for the provided dataset.
-   * Decision to issue delete messages or not is taken by {@link #shouldRunAutomaticDeletion(DatasetRecordCountInfo)}
+   * Manage deletion of previous crawls for the provided dataset. Decision to issue delete messages or
+   * not is taken by {@link #shouldRunAutomaticDeletion(DatasetRecordCountInfo)}
    *
    * @param datasetKey
    *
@@ -107,8 +97,8 @@ public class PreviousCrawlsManager {
     MDC.put(DATASET_KEY_LBL, datasetKey.toString());
     DatasetRecordCountInfo datasetRecordCountInfo = getDatasetCrawlInfo(datasetKey);
     if (shouldRunAutomaticDeletion(datasetRecordCountInfo)) {
-      int numberOfMessageEmitted = deletePreviousCrawlsService.deleteOccurrenceInPreviousCrawls(datasetKey,
-              datasetRecordCountInfo.getLastCrawlId());
+      int numberOfMessageEmitted =
+          deletePreviousCrawlsService.deleteOccurrenceInPreviousCrawls(datasetKey, datasetRecordCountInfo.getLastCrawlId());
       LOG.info("Number of delete message emitted: {}", numberOfMessageEmitted);
       LOG.info("Deletion report: {}", datasetRecordCountInfo);
     }
@@ -117,43 +107,38 @@ public class PreviousCrawlsManager {
   }
 
   /**
-   * Manage deletion of previous crawls for all datasets with more than one crawl.
-   * Decision to issue delete messages or not is taken by {@link #shouldRunAutomaticDeletion(DatasetRecordCountInfo)}
+   * Manage deletion of previous crawls for all datasets with more than one crawl. Decision to issue
+   * delete messages or not is taken by {@link #shouldRunAutomaticDeletion(DatasetRecordCountInfo)}
    *
    * @return
    */
   private Map<UUID, DatasetRecordCountInfo> manageDatasetWithMoreThanOneCrawl() {
 
-    //we do not support forceDelete on all datasets
+    // we do not support forceDelete on all datasets
     if (config.forceDelete) {
       LOG.error("forceDelete is only support for a single dataset");
       return Collections.EMPTY_MAP;
     }
 
-    Map<UUID, DatasetRecordCountInfo> allDatasetWithMoreThanOneCrawl =
-            getAllDatasetWithMoreThanOneCrawl();
+    Map<UUID, DatasetRecordCountInfo> allDatasetWithMoreThanOneCrawl = getAllDatasetWithMoreThanOneCrawl();
 
     if (config.delete) {
-      allDatasetWithMoreThanOneCrawl.entrySet()
-              .stream()
-              .map(Map.Entry::getValue)
-              .peek(drci -> MDC.put(DATASET_KEY_LBL, drci.getDatasetKey().toString()))
-              .filter(this::shouldRunAutomaticDeletion)
-              .limit(config.datasetAutodeletionLimit)
-              .forEach(drci -> {
-                int numberOfMessageEmitted = deletePreviousCrawlsService.deleteOccurrenceInPreviousCrawls(
-                        drci.getDatasetKey(), drci.getLastCrawlId());
-                LOG.info("Number of delete message emitted for dataset {}: {}", drci.getDatasetKey(), numberOfMessageEmitted);
-                LOG.info("Deletion report: {}", drci);
-              });
+      allDatasetWithMoreThanOneCrawl.entrySet().stream().map(Map.Entry::getValue)
+          .peek(drci -> MDC.put(DATASET_KEY_LBL, drci.getDatasetKey().toString())).filter(this::shouldRunAutomaticDeletion)
+          .limit(config.datasetAutodeletionLimit).forEach(drci -> {
+            int numberOfMessageEmitted =
+                deletePreviousCrawlsService.deleteOccurrenceInPreviousCrawls(drci.getDatasetKey(), drci.getLastCrawlId());
+            LOG.info("Number of delete message emitted for dataset {}: {}", drci.getDatasetKey(), numberOfMessageEmitted);
+            LOG.info("Deletion report: {}", drci);
+          });
     }
     MDC.remove(DATASET_KEY_LBL);
     return allDatasetWithMoreThanOneCrawl;
   }
 
   /**
-   * Based on {@link PreviousCrawlsManagerConfiguration} and {@link DatasetRecordCountInfo}, decides if we should
-   * trigger deletion of occurrence records that belong to previous crawl(s).
+   * Based on {@link PreviousCrawlsManagerConfiguration} and {@link DatasetRecordCountInfo}, decides
+   * if we should trigger deletion of occurrence records that belong to previous crawl(s).
    *
    * @param datasetRecordCountInfo
    *
@@ -173,52 +158,44 @@ public class PreviousCrawlsManager {
     }
 
     // If it concluded anything other than success we skip auto deletion (e.g. could be running now)
-    if (!(datasetRecordCountInfo.getFinishReason() == FinishReason.NORMAL ||
-        datasetRecordCountInfo.getFinishReason() == FinishReason.NOT_MODIFIED) ||
-        datasetRecordCountInfo.getProcessStateOccurrence() == ProcessState.RUNNING) {
-      LOG.info("Dataset {} → No deletion, most recent crawl is {} and processing is {}.",
-          datasetRecordCountInfo.getDatasetKey(),
-          datasetRecordCountInfo.getFinishReason(),
-          datasetRecordCountInfo.getProcessStateOccurrence());
+    if (!(datasetRecordCountInfo.getFinishReason() == FinishReason.NORMAL
+        || datasetRecordCountInfo.getFinishReason() == FinishReason.NOT_MODIFIED)
+        || datasetRecordCountInfo.getProcessStateOccurrence() == ProcessState.RUNNING) {
+      LOG.info("Dataset {} → No deletion, most recent crawl is {} and processing is {}.", datasetRecordCountInfo.getDatasetKey(),
+          datasetRecordCountInfo.getFinishReason(), datasetRecordCountInfo.getProcessStateOccurrence());
       return false;
     }
 
-    // Tolerate a difference in fragment count and record count since some datasets hold small numbers of duplicates
-    // which are seen as an insert followed by updates.  This occurs when paging crawling hits the same records
+    // Tolerate a difference in fragment count and record count since some datasets hold small numbers
+    // of duplicates
+    // which are seen as an insert followed by updates. This occurs when paging crawling hits the same
+    // records
     // and when record IDs are reused within a dataset.
-    long recordCountDiff = Math.abs(datasetRecordCountInfo.getLastCrawlCount()
-                                    - datasetRecordCountInfo.getLastCrawlFragmentEmittedCount());
-    if (recordCountDiff > 0 && datasetRecordCountInfo.getLastCrawlFragmentEmittedCount() > 0 &&
-        (recordCountDiff / datasetRecordCountInfo.getLastCrawlFragmentEmittedCount()) * 100 >
-        config.automaticRecordDeletionThreshold) {
-      LOG.info("Dataset {} → No automatic deletion. "
-               + "Crawl lastCrawlCount differs from lastCrawlFragmentEmittedCount by too much, which may indicate an " +
-              "incomplete or bad crawl. lastCrawlCount: {}, lastCrawlFragmentEmittedCount: {}",
-               datasetRecordCountInfo.getDatasetKey(),
-               datasetRecordCountInfo.getLastCrawlCount(),
-               datasetRecordCountInfo.getLastCrawlFragmentEmittedCount());
+    long recordCountDiff = Math.abs(datasetRecordCountInfo.getLastCrawlCount() - datasetRecordCountInfo.getLastCrawlFragmentEmittedCount());
+    if (recordCountDiff > 0 && datasetRecordCountInfo.getLastCrawlFragmentEmittedCount() > 0
+        && (recordCountDiff / datasetRecordCountInfo.getLastCrawlFragmentEmittedCount()) * 100 > config.automaticRecordDeletionThreshold) {
+      LOG.info(
+          "Dataset {} → No automatic deletion. "
+              + "Crawl lastCrawlCount differs from lastCrawlFragmentEmittedCount by too much, which may indicate an "
+              + "incomplete or bad crawl. lastCrawlCount: {}, lastCrawlFragmentEmittedCount: {}",
+          datasetRecordCountInfo.getDatasetKey(), datasetRecordCountInfo.getLastCrawlCount(),
+          datasetRecordCountInfo.getLastCrawlFragmentEmittedCount());
       return false;
     }
 
     if (datasetRecordCountInfo.getPercentagePreviousCrawls() > config.automaticRecordDeletionThreshold) {
-      LOG.info("Dataset {} → No automatic deletion. "
-               + "Percentage of records to remove ({}%) higher than the configured threshold ({}%).",
-               datasetRecordCountInfo.getDatasetKey(),
-               datasetRecordCountInfo.getPercentagePreviousCrawls(),
-               config.automaticRecordDeletionThreshold);
+      LOG.info("Dataset {} → No automatic deletion. " + "Percentage of records to remove ({}%) higher than the configured threshold ({}%).",
+          datasetRecordCountInfo.getDatasetKey(), datasetRecordCountInfo.getPercentagePreviousCrawls(),
+          config.automaticRecordDeletionThreshold);
       return false;
     }
 
-    LOG.info("Dataset {} → Automatic deletion. "
-            + "Crawl difference (|{}–{}| = {}) is within threshold ({}). "
+    LOG.info(
+        "Dataset {} → Automatic deletion. " + "Crawl difference (|{}–{}| = {}) is within threshold ({}). "
             + "Percentage of records to remove ({}%) lower threshold ({}%).",
-            datasetRecordCountInfo.getDatasetKey(),
-            datasetRecordCountInfo.getLastCrawlCount(),
-            datasetRecordCountInfo.getLastCrawlFragmentEmittedCount(),
-            recordCountDiff,
-            config.automaticRecordDeletionThreshold,
-            datasetRecordCountInfo.getPercentagePreviousCrawls(),
-            config.automaticRecordDeletionThreshold);
+        datasetRecordCountInfo.getDatasetKey(), datasetRecordCountInfo.getLastCrawlCount(),
+        datasetRecordCountInfo.getLastCrawlFragmentEmittedCount(), recordCountDiff, config.automaticRecordDeletionThreshold,
+        datasetRecordCountInfo.getPercentagePreviousCrawls(), config.automaticRecordDeletionThreshold);
 
     return true;
   }
@@ -236,7 +213,7 @@ public class PreviousCrawlsManager {
     List<DatasetCrawlInfo> datasetCrawlInfoList = new ArrayList<>();
 
     try (Connection conn = config.hive.buildHiveConnection();
-         PreparedStatement stmt = conn.prepareStatement(getSqlCommandSingleDataset.apply(config.hiveOccurrenceTable))) {
+        PreparedStatement stmt = conn.prepareStatement(getSqlCommandSingleDataset.apply(config.hiveOccurrenceTable))) {
       stmt.setString(1, datasetKey.toString());
       try (ResultSet rs = stmt.executeQuery()) {
         while (rs.next()) {
@@ -252,7 +229,8 @@ public class PreviousCrawlsManager {
   }
 
   /**
-   * Get {@link DatasetRecordCountInfo} for each dataset that has records coming from more than one crawl.
+   * Get {@link DatasetRecordCountInfo} for each dataset that has records coming from more than one
+   * crawl.
    *
    * @return
    */
@@ -261,8 +239,8 @@ public class PreviousCrawlsManager {
 
     Map<UUID, DatasetRecordCountInfo> crawlInfo = new HashMap<>();
     try (Connection conn = config.hive.buildHiveConnection();
-         Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery(sql)) {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(sql)) {
 
       UUID currentDatasetKey = null;
       DatasetRecordCountInfo currentDatasetRecordCountInfo;
@@ -271,7 +249,7 @@ public class PreviousCrawlsManager {
       while (rs.next()) {
 
         if (!UUID.fromString(rs.getString(DATASET_KEY_LBL)).equals(currentDatasetKey)) {
-          //manage previous list
+          // manage previous list
           if (currentDatasetKey != null) {
             currentDatasetRecordCountInfo = new DatasetRecordCountInfo();
             currentDatasetRecordCountInfo.setDatasetKey(currentDatasetKey);
@@ -291,15 +269,16 @@ public class PreviousCrawlsManager {
   }
 
   /**
-   * Populate the given {@link DatasetRecordCountInfo} with Solr count and last crawls information from the registry.
+   * Populate the given {@link DatasetRecordCountInfo} with Solr count and last crawls information
+   * from the registry.
    *
    * @return the provided {@link DatasetRecordCountInfo} populated
    */
   private DatasetRecordCountInfo populateRegistryData(DatasetRecordCountInfo datasetRecordCountInfo) {
 
-    //Get crawl status of the last crawl
+    // Get crawl status of the last crawl
     DatasetProcessStatus lastCompletedCrawl = datasetProcessStatusService.getDatasetProcessStatus(datasetRecordCountInfo.getDatasetKey(),
-            datasetRecordCountInfo.getLastCrawlId());
+        datasetRecordCountInfo.getLastCrawlId());
     if (lastCompletedCrawl != null) {
       datasetRecordCountInfo.setFinishReason(lastCompletedCrawl.getFinishReason());
       datasetRecordCountInfo.setProcessStateOccurrence(lastCompletedCrawl.getProcessStateOccurrence());

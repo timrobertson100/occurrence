@@ -3,6 +3,7 @@ package org.gbif.occurrence.download.conf;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Properties;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -19,7 +20,7 @@ import org.w3c.dom.Node;
 public class DownloadConfBuilder {
 
   private static final String XPATH_ENV_EXPR =
-    "/*[name()=\"settings\"]/*[name()=\"profiles\"]/*[name()=\"profile\"][*[name()=\"id\" and text()=\"%s\"]]/*[name()=\"properties\"]";
+      "/*[name()=\"settings\"]/*[name()=\"profiles\"]/*[name()=\"profile\"][*[name()=\"id\" and text()=\"%s\"]]/*[name()=\"properties\"]";
 
   public static void main(String[] args) throws Exception {
     try (FileOutputStream fileOutputStream = new FileOutputStream(args[1])) {
@@ -48,7 +49,7 @@ public class DownloadConfBuilder {
    * Hidden constructor.
    */
   private DownloadConfBuilder() {
-    //empty constructor
+    // empty constructor
   }
 
 }

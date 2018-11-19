@@ -1,20 +1,17 @@
 package org.gbif.occurrence.ws.resources.provider;
 
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.TermFactory;
-import org.gbif.occurrence.ws.provider.DwcXMLDocument;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.TermFactory;
+import org.gbif.occurrence.ws.provider.DwcXMLDocument;
+import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 /**
  *

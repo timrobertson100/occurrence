@@ -1,5 +1,18 @@
 package org.gbif.occurrence.processor.parsing;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import org.codehaus.jackson.map.ObjectMapper;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.api.vocabulary.OccurrenceSchemaType;
@@ -11,24 +24,12 @@ import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
 import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 import org.gbif.occurrence.parsing.xml.IdentifierExtractionResult;
 import org.gbif.occurrence.persistence.api.Fragment;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Parses JSON-encoded fragments.
@@ -40,8 +41,7 @@ public class JsonFragmentParser {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   // should not be instantiated
-  private JsonFragmentParser() {
-  }
+  private JsonFragmentParser() {}
 
   /**
    * Expects a fragment encoded in JSON (so, DwCA) and parses it into a VerbatimOccurrence.
@@ -101,8 +101,8 @@ public class JsonFragmentParser {
   }
 
   /**
-   * Parses a simple string based map into a Term based map, ignoring any non term entries and not parsing nested
-   * e.g. extensions data.
+   * Parses a simple string based map into a Term based map, ignoring any non term entries and not
+   * parsing nested e.g. extensions data.
    */
   private static Map<Term, String> parseTermMap(Map<String, Object> data) {
     Map<Term, String> terms = Maps.newHashMap();
@@ -126,13 +126,13 @@ public class JsonFragmentParser {
   /**
    * Extracts the unique identifiers from this json snippet.
    *
-   * @param datasetKey      the UUID of the dataset
-   * @param jsonData        the raw byte array of the snippet's json
+   * @param datasetKey the UUID of the dataset
+   * @param jsonData the raw byte array of the snippet's json
    * @param useOccurrenceId @return a set of
    */
   @Nullable
   public static IdentifierExtractionResult extractIdentifiers(UUID datasetKey, byte[] jsonData, boolean useTriplet,
-    boolean useOccurrenceId) {
+      boolean useOccurrenceId) {
     checkNotNull(datasetKey, "datasetKey can't be null");
     checkNotNull(jsonData, "jsonData can't be null");
 
@@ -154,9 +154,10 @@ public class JsonFragmentParser {
         try {
           holyTriplet = new HolyTriplet(datasetKey, ic, cc, cn, null);
         } catch (IllegalArgumentException e) {
-          // some of the triplet was null or empty, so it's not valid - that's highly suspicious, but could be ok...
+          // some of the triplet was null or empty, so it's not valid - that's highly suspicious, but could be
+          // ok...
           LOG.info("No holy triplet for json snippet in dataset [{}] and schema [{}], got error [{}]",
-            new String[] {datasetKey.toString(), OccurrenceSchemaType.DWCA.toString(), e.getMessage()});
+              new String[] {datasetKey.toString(), OccurrenceSchemaType.DWCA.toString(), e.getMessage()});
         }
         if (holyTriplet != null) {
           uniqueIds.add(holyTriplet);

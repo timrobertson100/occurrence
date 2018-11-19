@@ -1,5 +1,41 @@
 package org.gbif.occurrence.download.file.dwca;
 
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.CITATIONS_FILENAME;
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.INTERPRETED_FILENAME;
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.METADATA_FILENAME;
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.MULTIMEDIA_FILENAME;
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.RIGHTS_FILENAME;
+import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.VERBATIM_FILENAME;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.gbif.api.model.occurrence.Download;
 import org.gbif.api.model.occurrence.predicate.Predicate;
 import org.gbif.api.model.registry.Citation;
@@ -29,29 +65,8 @@ import org.gbif.occurrence.query.TitleLookupModule;
 import org.gbif.registry.metadata.EMLWriter;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
-
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -65,26 +80,11 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.sun.jersey.api.client.UniformInterfaceException;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.CITATIONS_FILENAME;
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.INTERPRETED_FILENAME;
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.METADATA_FILENAME;
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.MULTIMEDIA_FILENAME;
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.RIGHTS_FILENAME;
-import static org.gbif.occurrence.download.file.dwca.DwcDownloadsConstants.VERBATIM_FILENAME;
 
 /**
  * Creates a dwc archive for occurrence downloads based on the hive query result files generated
- * during the Oozie workflow. It create a local archive folder with an occurrence data file and a dataset subfolder
- * that contains an EML metadata file per dataset involved.
+ * during the Oozie workflow. It create a local archive folder with an occurrence data file and a
+ * dataset subfolder that contains an EML metadata file per dataset involved.
  */
 public class DwcaArchiveBuilder {
 
@@ -92,16 +92,14 @@ public class DwcaArchiveBuilder {
   // The CRC is created by the function FileSystem.copyMerge function
   private static final String DOWNLOAD_CONTACT_SERVICE = "GBIF Download Service";
   private static final String DOWNLOAD_CONTACT_EMAIL = "support@gbif.org";
-  private static final String METADATA_DESC_HEADER_FMT =
-    "A dataset containing all occurrences available in GBIF matching the query:\n%s"
-    +
-    "\nThe dataset includes records from the following constituent datasets. "
-    + "The full metadata for each constituent is also included in this archive:\n";
+  private static final String METADATA_DESC_HEADER_FMT = "A dataset containing all occurrences available in GBIF matching the query:\n%s"
+      + "\nThe dataset includes records from the following constituent datasets. "
+      + "The full metadata for each constituent is also included in this archive:\n";
   private static final String CITATION_HEADER =
-    "When using this dataset please use the following citation and pay attention to the rights documented in rights.txt:\n";
+      "When using this dataset please use the following citation and pay attention to the rights documented in rights.txt:\n";
   private static final String DATASET_TITLE_FMT = "GBIF Occurrence Download %s";
   private static final String RIGHTS =
-    "The data included in this download are provided to the user under a %s license (%s), please read the license terms and conditions to understand the implications of its usage and sharing.\nData from some individual datasets included in this download may be licensed under less restrictive terms; review the details below.";
+      "The data included in this download are provided to the user under a %s license (%s), please read the license terms and conditions to understand the implications of its usage and sharing.\nData from some individual datasets included in this download may be licensed under less restrictive terms; review the details below.";
   private static final String DATA_DESC_FORMAT = "Darwin Core Archive";
   private static final Splitter TAB_SPLITTER = Splitter.on('\t').trimResults();
   private static final EMLWriter EML_WRITER = EMLWriter.newInstance(true);
@@ -117,16 +115,16 @@ public class DwcaArchiveBuilder {
   private final DownloadJobConfiguration configuration;
   private final LicenseSelector licenseSelector = LicenseSelectors.getMostRestrictiveLicenseSelector(License.CC_BY_4_0);
 
-  //constituents and citation are basically the same info, are keep in 2 separate collections to avoid rebuilding them
+  // constituents and citation are basically the same info, are keep in 2 separate collections to
+  // avoid rebuilding them
   private Set<Constituent> constituents = Sets.newTreeSet();
-  private Map<UUID,Long> citations = Maps.newHashMap();
+  private Map<UUID, Long> citations = Maps.newHashMap();
 
   public static void buildArchive(DownloadJobConfiguration configuration) throws IOException {
     buildArchive(configuration, new WorkflowConfiguration());
   }
 
-  public static void buildArchive(DownloadJobConfiguration configuration, WorkflowConfiguration workflowConfiguration)
-    throws IOException {
+  public static void buildArchive(DownloadJobConfiguration configuration, WorkflowConfiguration workflowConfiguration) throws IOException {
     RegistryClientUtil registryClientUtil = new RegistryClientUtil();
     String tmpDir = workflowConfiguration.getTempDir();
 
@@ -141,25 +139,17 @@ public class DwcaArchiveBuilder {
     Injector inj = Guice.createInjector(new TitleLookupModule(true, workflowConfiguration.getApiUrl()));
     TitleLookup titleLookup = inj.getInstance(TitleLookup.class);
 
-    FileSystem sourceFs = configuration.isSmallDownload()
-      ? FileSystem.getLocal(workflowConfiguration.getHadoopConf())
-      : FileSystem.get(workflowConfiguration.getHadoopConf());
+    FileSystem sourceFs = configuration.isSmallDownload() ? FileSystem.getLocal(workflowConfiguration.getHadoopConf())
+        : FileSystem.get(workflowConfiguration.getHadoopConf());
     FileSystem targetFs = FileSystem.get(workflowConfiguration.getHadoopConf());
 
     // build archive
-    DwcaArchiveBuilder generator = new DwcaArchiveBuilder(datasetService,
-                                                          occurrenceDownloadService,
-                                                          sourceFs,
-                                                          targetFs,
-                                                          archiveDir,
-                                                          titleLookup,
-                                                          configuration,
-                                                          workflowConfiguration);
+    DwcaArchiveBuilder generator = new DwcaArchiveBuilder(datasetService, occurrenceDownloadService, sourceFs, targetFs, archiveDir,
+        titleLookup, configuration, workflowConfiguration);
     generator.buildArchive(new File(tmpDir, configuration.getDownloadKey() + ".zip"));
   }
 
-  private static String writeCitation(Writer citationWriter, Dataset dataset)
-    throws IOException {
+  private static String writeCitation(Writer citationWriter, Dataset dataset) throws IOException {
     // citation
     String citationLink = null;
     if (dataset.getCitation() != null && !Strings.isNullOrEmpty(dataset.getCitation().getText())) {
@@ -174,8 +164,7 @@ public class DwcaArchiveBuilder {
   /**
    * Write rights text.
    */
-  private static void writeRights(Writer rightsWriter, Dataset dataset, String citationLink)
-    throws IOException {
+  private static void writeRights(Writer rightsWriter, Dataset dataset, String citationLink) throws IOException {
     // write rights
     rightsWriter.write("\nDataset: " + dataset.getTitle());
     if (!Strings.isNullOrEmpty(citationLink)) {
@@ -190,9 +179,9 @@ public class DwcaArchiveBuilder {
   }
 
   @VisibleForTesting
-  protected DwcaArchiveBuilder(DatasetService datasetService, OccurrenceDownloadService occurrenceDownloadService,
-                               FileSystem sourceFs, FileSystem targetFs, File archiveDir, TitleLookup titleLookup,
-                               DownloadJobConfiguration configuration, WorkflowConfiguration workflowConfiguration) {
+  protected DwcaArchiveBuilder(DatasetService datasetService, OccurrenceDownloadService occurrenceDownloadService, FileSystem sourceFs,
+      FileSystem targetFs, File archiveDir, TitleLookup titleLookup, DownloadJobConfiguration configuration,
+      WorkflowConfiguration workflowConfiguration) {
     this.datasetService = datasetService;
     this.occurrenceDownloadService = occurrenceDownloadService;
     this.sourceFs = sourceFs;
@@ -243,8 +232,7 @@ public class DwcaArchiveBuilder {
       if (!configuration.isSmallDownload()) {
         appendPreCompressedFiles(zipFile);
       }
-      targetFs.moveFromLocalFile(new Path(zipFile.getPath()),
-                                 new Path(workflowConfiguration.getHdfsOutputPath(), zipFile.getName()));
+      targetFs.moveFromLocalFile(new Path(zipFile.getPath()), new Path(workflowConfiguration.getHdfsOutputPath(), zipFile.getName()));
 
     } catch (IOException e) {
       throw new DownloadException(e);
@@ -261,7 +249,7 @@ public class DwcaArchiveBuilder {
       // store dataset EML as constituent metadata
       if (in != null) {
         // copy into archive, reading stream from registry services
-        try(OutputStream out = new FileOutputStream(new File(emlDir, constituentId + ".xml"))) {
+        try (OutputStream out = new FileOutputStream(new File(emlDir, constituentId + ".xml"))) {
           ByteStreams.copy(in, out);
         }
       } else {
@@ -289,9 +277,7 @@ public class DwcaArchiveBuilder {
     }
 
     description.append(String.format(METADATA_DESC_HEADER_FMT, humanQuery));
-    constituents.stream()
-      .map(c -> c.getRecords() + " records from " + c.getDataset().getTitle() + '\n')
-      .forEach(description::append);
+    constituents.stream().map(c -> c.getRecords() + " records from " + c.getDataset().getTitle() + '\n').forEach(description::append);
     return description.toString();
   }
 
@@ -310,7 +296,8 @@ public class DwcaArchiveBuilder {
   }
 
   /**
-   * Rewrites the zip file by opening the original and appending the pre-compressed content on the fly.
+   * Rewrites the zip file by opening the original and appending the pre-compressed content on the
+   * fly.
    */
   private void appendPreCompressedFiles(File zipFile) throws IOException {
 
@@ -320,31 +307,23 @@ public class DwcaArchiveBuilder {
     boolean renameOk = zipFile.renameTo(tempZip);
     if (renameOk) {
       try (ZipInputStream zin = new ZipInputStream(new FileInputStream(tempZip));
-           ModalZipOutputStream out = new ModalZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))
-      ) {
+          ModalZipOutputStream out = new ModalZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))) {
 
         // copy existing entries
         ZipEntry entry = zin.getNextEntry();
         while (entry != null) {
-          out.putNextEntry(new org.gbif.hadoop.compress.d2.zip.ZipEntry(entry.getName()),
-                           ModalZipOutputStream.MODE.DEFAULT);
+          out.putNextEntry(new org.gbif.hadoop.compress.d2.zip.ZipEntry(entry.getName()), ModalZipOutputStream.MODE.DEFAULT);
           ByteStreams.copy(zin, out);
           entry = zin.getNextEntry();
         }
 
         // NOTE: hive lowercases all the paths
-        appendPreCompressedFile(out,
-                                new Path(configuration.getInterpretedDataFileName()),
-                                INTERPRETED_FILENAME,
-                                HeadersFileUtil.getInterpretedTableHeader());
-        appendPreCompressedFile(out,
-                                new Path(configuration.getVerbatimDataFileName()),
-                                VERBATIM_FILENAME,
-                                HeadersFileUtil.getVerbatimTableHeader());
-        appendPreCompressedFile(out,
-                                new Path(configuration.getMultimediaDataFileName()),
-                                MULTIMEDIA_FILENAME,
-                                HeadersFileUtil.getMultimediaTableHeader());
+        appendPreCompressedFile(out, new Path(configuration.getInterpretedDataFileName()), INTERPRETED_FILENAME,
+            HeadersFileUtil.getInterpretedTableHeader());
+        appendPreCompressedFile(out, new Path(configuration.getVerbatimDataFileName()), VERBATIM_FILENAME,
+            HeadersFileUtil.getVerbatimTableHeader());
+        appendPreCompressedFile(out, new Path(configuration.getMultimediaDataFileName()), MULTIMEDIA_FILENAME,
+            HeadersFileUtil.getMultimediaTableHeader());
 
       } finally {
         // we've rewritten so remove the original
@@ -361,8 +340,7 @@ public class DwcaArchiveBuilder {
   /**
    * Appends the compressed files found within the directory to the zip stream as the named file
    */
-  private void appendPreCompressedFile(ModalZipOutputStream out, Path dir, String filename, String headerRow)
-    throws IOException {
+  private void appendPreCompressedFile(ModalZipOutputStream out, Path dir, String filename, String headerRow) throws IOException {
     RemoteIterator<LocatedFileStatus> files = sourceFs.listFiles(dir, false);
     List<InputStream> parts = Lists.newArrayList();
 
@@ -396,10 +374,10 @@ public class DwcaArchiveBuilder {
   }
 
   /**
-   * Adds an eml file per dataset involved into a subfolder "dataset" which is supported by our dwc archive reader.
-   * Create a rights.txt and citation.txt file targeted at humans to quickly yield an overview about rights and
-   * datasets involved.
-   * This method returns the License that must be assigned to the occurrence download file.
+   * Adds an eml file per dataset involved into a subfolder "dataset" which is supported by our dwc
+   * archive reader. Create a rights.txt and citation.txt file targeted at humans to quickly yield an
+   * overview about rights and datasets involved. This method returns the License that must be
+   * assigned to the occurrence download file.
    */
   private License addConstituentMetadata() throws IOException {
 
@@ -421,44 +399,42 @@ public class DwcaArchiveBuilder {
       emlDir.mkdir();
     }
 
-    try(Writer rightsWriter = FileUtils.startNewUtf8File(new File(archiveDir, RIGHTS_FILENAME));
+    try (Writer rightsWriter = FileUtils.startNewUtf8File(new File(archiveDir, RIGHTS_FILENAME));
         Writer citationWriter = FileUtils.startNewUtf8File(new File(archiveDir, CITATIONS_FILENAME))) {
-        // write fixed citations header
-        citationWriter.write(CITATION_HEADER);
-        // now iterate over constituent UUIDs
+      // write fixed citations header
+      citationWriter.write(CITATION_HEADER);
+      // now iterate over constituent UUIDs
 
-        for (Constituent constituent : constituents) {
-          LOG.info("Processing constituent dataset: {}", constituent.getKey());
-          // catch errors for each uuid to make sure one broken dataset does not bring down the entire process
-          try {
-            Dataset dataset = constituent.getDataset();
+      for (Constituent constituent : constituents) {
+        LOG.info("Processing constituent dataset: {}", constituent.getKey());
+        // catch errors for each uuid to make sure one broken dataset does not bring down the entire process
+        try {
+          Dataset dataset = constituent.getDataset();
 
-            licenseSelector.collectLicense(constituent.getDataset().getLicense());
-            // citation
-            String citationLink = writeCitation(citationWriter, constituent.getDataset());
-            // rights
-            writeRights(rightsWriter, constituent.getDataset(), citationLink);
-            // eml file
-            createEmlFile(dataset.getKey(), emlDir);
+          licenseSelector.collectLicense(constituent.getDataset().getLicense());
+          // citation
+          String citationLink = writeCitation(citationWriter, constituent.getDataset());
+          // rights
+          writeRights(rightsWriter, constituent.getDataset(), citationLink);
+          // eml file
+          createEmlFile(dataset.getKey(), emlDir);
 
-            // add original author as content provider to main dataset description
-            DwcaContactsUtil.getContentProviderContact(constituent.getDataset())
-              .ifPresent(provider -> dataset.getContacts().add(provider));
-          } catch (UniformInterfaceException e) {
-            LOG.error("Registry client http exception: {} \n {}", e.getResponse().getStatus(),
-                       e.getResponse().getEntity(String.class), e);
-          } catch (Exception e) {
-            LOG.error("Error creating download file", e);
-            return licenseSelector.getSelectedLicense();
-          }
+          // add original author as content provider to main dataset description
+          DwcaContactsUtil.getContentProviderContact(constituent.getDataset()).ifPresent(provider -> dataset.getContacts().add(provider));
+        } catch (UniformInterfaceException e) {
+          LOG.error("Registry client http exception: {} \n {}", e.getResponse().getStatus(), e.getResponse().getEntity(String.class), e);
+        } catch (Exception e) {
+          LOG.error("Error creating download file", e);
+          return licenseSelector.getSelectedLicense();
         }
+      }
     }
     return licenseSelector.getSelectedLicense();
   }
 
   /**
-   * Creates a single EML metadata file for the entire archive.
-   * Make sure we execute this method AFTER building the constituents metadata which adds to our dataset instance.
+   * Creates a single EML metadata file for the entire archive. Make sure we execute this method AFTER
+   * building the constituents metadata which adds to our dataset instance.
    */
   private void generateMetadata() {
     LOG.info("Add query dataset metadata to archive");
@@ -487,25 +463,16 @@ public class DwcaArchiveBuilder {
       dataset.setDataLanguage(Language.ENGLISH);
       dataset.setType(DatasetType.OCCURRENCE);
       dataset.getDataDescriptions().add(createDataDescription());
-      //TODO: use new license field once available
+      // TODO: use new license field once available
       if (download.getLicense().isConcrete()) {
         dataset.setRights(String.format(RIGHTS, download.getLicense().getLicenseTitle(), download.getLicense().getLicenseUrl()));
       }
       dataset.getContacts()
-        .add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE,
-                                            DOWNLOAD_CONTACT_EMAIL,
-                                            ContactType.ORIGINATOR,
-                                            true));
+          .add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE, DOWNLOAD_CONTACT_EMAIL, ContactType.ORIGINATOR, true));
+      dataset.getContacts().add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE, DOWNLOAD_CONTACT_EMAIL,
+          ContactType.ADMINISTRATIVE_POINT_OF_CONTACT, true));
       dataset.getContacts()
-        .add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE,
-                                            DOWNLOAD_CONTACT_EMAIL,
-                                            ContactType.ADMINISTRATIVE_POINT_OF_CONTACT,
-                                            true));
-      dataset.getContacts()
-        .add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE,
-                                            DOWNLOAD_CONTACT_EMAIL,
-                                            ContactType.METADATA_AUTHOR,
-                                            true));
+          .add(DwcaContactsUtil.createContact(DOWNLOAD_CONTACT_SERVICE, DOWNLOAD_CONTACT_EMAIL, ContactType.METADATA_AUTHOR, true));
 
       File eml = new File(archiveDir, METADATA_FILENAME);
       Writer writer = FileUtils.startNewUtf8File(eml);
@@ -552,8 +519,7 @@ public class DwcaArchiveBuilder {
     int invalidUuids = 0;
     for (FileStatus fs : citFiles) {
       if (!fs.isDirectory()) {
-        try (BufferedReader citationReader =
-               new BufferedReader(new InputStreamReader(sourceFs.open(fs.getPath()), Charsets.UTF_8))) {
+        try (BufferedReader citationReader = new BufferedReader(new InputStreamReader(sourceFs.open(fs.getPath()), Charsets.UTF_8))) {
 
           String line = citationReader.readLine();
           while (line != null) {
@@ -582,12 +548,11 @@ public class DwcaArchiveBuilder {
     } else {
       LOG.info("All {} dataset UUIDs are valid", datasets.size());
     }
-      // small downloads persist dataset usages while builds the citations file
+    // small downloads persist dataset usages while builds the citations file
     if (!configuration.isSmallDownload()) {
       try {
         occurrenceDownloadService.createUsages(configuration.getDownloadKey(), citations);
-      }
-      catch(Exception e) {
+      } catch (Exception e) {
         LOG.error("Error persisting dataset usage information, downloadKey: {} for large download", configuration.getDownloadKey(), e);
       }
     }
@@ -597,10 +562,11 @@ public class DwcaArchiveBuilder {
   /**
    * Simple, local representation for a constituent dataset.
    */
-  static class Constituent implements  Comparable<Constituent> {
+  static class Constituent implements Comparable<Constituent> {
 
-    //Comparator based on number of records and then key
-    private static final Comparator<Constituent> CONSTITUENT_COMPARATOR = Comparator.comparingLong(Constituent::getRecords).thenComparing(Constituent::getKey);
+    // Comparator based on number of records and then key
+    private static final Comparator<Constituent> CONSTITUENT_COMPARATOR =
+        Comparator.comparingLong(Constituent::getRecords).thenComparing(Constituent::getKey);
 
     private final UUID key;
     private final long records;
@@ -631,10 +597,7 @@ public class DwcaArchiveBuilder {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
-              .add("key", key)
-              .add("records", records)
-              .add("dataset", dataset).toString();
+      return Objects.toStringHelper(this).add("key", key).add("records", records).add("dataset", dataset).toString();
     }
   }
 

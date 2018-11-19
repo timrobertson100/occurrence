@@ -1,21 +1,21 @@
 package org.gbif.occurrence.ws.provider;
 
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import com.google.common.base.Optional;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.google.common.base.Optional;
+
 /**
- * Simple wrapper around {@link Document} to generate DarwinCore XML file.
- * This class is a candidate to be moved to the dwca-io project.
+ * Simple wrapper around {@link Document} to generate DarwinCore XML file. This class is a candidate
+ * to be moved to the dwca-io project.
  *
  */
 public class DwcXMLDocument {
@@ -24,14 +24,13 @@ public class DwcXMLDocument {
   private static final String NS_PREFIX = "xmlns:";
 
   /**
-   * Currently private but could be exposed if needed elsewhere.
-   * Could also be refactor if the Term interface expose a getPrefix and getNamespace methods.
+   * Currently private but could be exposed if needed elsewhere. Could also be refactor if the Term
+   * interface expose a getPrefix and getNamespace methods.
    */
   private enum DwcXmlNamespace {
 
-    DWC(DwcTerm.class, "dwc", "http://rs.tdwg.org/dwc/terms/"),
-    DC(DcTerm.class, "dcterms", "http://purl.org/dc/terms/"),
-    GBIF(GbifTerm.class, "gbif", "http://rs.gbif.org/terms/1.0/");
+    DWC(DwcTerm.class, "dwc", "http://rs.tdwg.org/dwc/terms/"), DC(DcTerm.class, "dcterms",
+        "http://purl.org/dc/terms/"), GBIF(GbifTerm.class, "gbif", "http://rs.gbif.org/terms/1.0/");
 
     private final Class<? extends Term> termClass;
     private final String prefix;
@@ -74,7 +73,7 @@ public class DwcXMLDocument {
   }
 
   /**
-   *  Creates a new DwcXMLDocument using the specified Term as root element.
+   * Creates a new DwcXMLDocument using the specified Term as root element.
    *
    * @param rootElementTerm
    * @return
@@ -102,9 +101,11 @@ public class DwcXMLDocument {
   public void append(DcTerm term, String value) {
     append(currentElement, DwcXmlNamespace.DC, term, value);
   }
+
   public void append(DwcTerm term, String value) {
     append(currentElement, DwcXmlNamespace.DWC, term, value);
   }
+
   public void append(GbifTerm term, String value) {
     append(currentElement, DwcXmlNamespace.GBIF, term, value);
   }
@@ -136,7 +137,8 @@ public class DwcXMLDocument {
   }
 
   /**
-   * Appends the term,value to the document under the parentElement with dwcXmlNamespace. null values are simply ignored.
+   * Appends the term,value to the document under the parentElement with dwcXmlNamespace. null values
+   * are simply ignored.
    *
    * @param parentElement
    * @param dwcXmlNamespace

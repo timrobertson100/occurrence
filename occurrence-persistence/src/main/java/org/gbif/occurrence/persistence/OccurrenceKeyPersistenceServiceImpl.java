@@ -1,12 +1,15 @@
 package org.gbif.occurrence.persistence;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 import org.gbif.occurrence.persistence.api.KeyLookupResult;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -16,18 +19,14 @@ import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 @Singleton
 public class OccurrenceKeyPersistenceServiceImpl implements OccurrenceKeyPersistenceService {
 
   private final KeyPersistenceService<Integer> keyPersistenceService;
 
-  private final Timer lockWaitTimer = Metrics.newTimer(OccurrenceKeyPersistenceServiceImpl.class, "lock wait",
-                                                       TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-  private final Meter lockRequests = Metrics.newMeter(OccurrenceKeyPersistenceServiceImpl.class, "lock req", "lock req",
-                                                      TimeUnit.SECONDS);
+  private final Timer lockWaitTimer =
+      Metrics.newTimer(OccurrenceKeyPersistenceServiceImpl.class, "lock wait", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+  private final Meter lockRequests = Metrics.newMeter(OccurrenceKeyPersistenceServiceImpl.class, "lock req", "lock req", TimeUnit.SECONDS);
 
   @Inject
   public OccurrenceKeyPersistenceServiceImpl(KeyPersistenceService<Integer> keyPersistenceService) {

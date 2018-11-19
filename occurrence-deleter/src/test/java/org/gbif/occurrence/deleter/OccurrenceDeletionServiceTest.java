@@ -1,5 +1,16 @@
 package org.gbif.occurrence.deleter;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.EndpointType;
@@ -18,23 +29,12 @@ import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
 import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
 import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-
-import java.util.Date;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.collect.Sets;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import com.google.common.collect.Sets;
 
 public class OccurrenceDeletionServiceTest {
 
@@ -78,8 +78,7 @@ public class OccurrenceDeletionServiceTest {
 
   @Before
   public void setUp() {
-    KeyPersistenceService keyPersistenceService =
-      new HBaseLockingKeyService(CFG, CONNECTION);
+    KeyPersistenceService keyPersistenceService = new HBaseLockingKeyService(CFG, CONNECTION);
     occurrenceKeyService = new OccurrenceKeyPersistenceServiceImpl(keyPersistenceService);
     fragmentService = new FragmentPersistenceServiceImpl(CFG, CONNECTION, occurrenceKeyService);
     occurrenceService = new OccurrencePersistenceServiceImpl(CFG, CONNECTION);
@@ -100,30 +99,27 @@ public class OccurrenceDeletionServiceTest {
     String cn = "cn1";
     uniqueIds.add(new HolyTriplet(GOOD_DATASET_KEY, ic, cc, cn, null));
     uniqueIds.add(new PublisherProvidedUniqueIdentifier(GOOD_DATASET_KEY, "abc1"));
-    Fragment fragment =
-      new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    Fragment fragment = new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
-    VerbatimOccurrence verbatim = build(1, GOOD_DATASET_KEY, cn,cc,ic);
+    VerbatimOccurrence verbatim = build(1, GOOD_DATASET_KEY, cn, cc, ic);
     occurrenceService.update(verbatim);
 
     uniqueIds = Sets.newHashSet();
     cn = "cn2";
     uniqueIds.add(new HolyTriplet(GOOD_DATASET_KEY, ic, cc, cn, null));
     uniqueIds.add(new PublisherProvidedUniqueIdentifier(GOOD_DATASET_KEY, "abc2"));
-    fragment =
-      new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    fragment = new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
-    verbatim = build(2, GOOD_DATASET_KEY, cn,cc,ic);
+    verbatim = build(2, GOOD_DATASET_KEY, cn, cc, ic);
     occurrenceService.update(verbatim);
 
     uniqueIds = Sets.newHashSet();
     cn = "cn3";
     uniqueIds.add(new HolyTriplet(GOOD_DATASET_KEY, ic, cc, cn, null));
     uniqueIds.add(new PublisherProvidedUniqueIdentifier(GOOD_DATASET_KEY, "abc3"));
-    fragment =
-      new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    fragment = new Fragment(GOOD_DATASET_KEY, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
-    verbatim = build(3, GOOD_DATASET_KEY, cn,cc,ic);
+    verbatim = build(3, GOOD_DATASET_KEY, cn, cc, ic);
     occurrenceService.update(verbatim);
 
     // singles (will be keys 4-6)
@@ -133,10 +129,9 @@ public class OccurrenceDeletionServiceTest {
     cn = "cn1";
     uniqueIds = Sets.newHashSet();
     uniqueIds.add(new HolyTriplet(datasetKey, ic, cc, cn, null));
-    fragment =
-      new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    fragment = new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
-    verbatim = build(4, GOOD_DATASET_KEY, cn,cc,ic);
+    verbatim = build(4, GOOD_DATASET_KEY, cn, cc, ic);
     occurrenceService.update(verbatim);
 
     ic = "ic4";
@@ -144,8 +139,7 @@ public class OccurrenceDeletionServiceTest {
     crawlId = 2;
     uniqueIds = Sets.newHashSet();
     uniqueIds.add(new HolyTriplet(datasetKey, ic, cc, cn, null));
-    fragment =
-      new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    fragment = new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
     verbatim = build(5, GOOD_DATASET_KEY, cn, cc, ic, crawlId);
     occurrenceService.update(verbatim);
@@ -154,10 +148,9 @@ public class OccurrenceDeletionServiceTest {
     datasetKey = UUID.randomUUID();
     uniqueIds = Sets.newHashSet();
     uniqueIds.add(new HolyTriplet(datasetKey, ic, cc, cn, null));
-    fragment =
-      new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
+    fragment = new Fragment(datasetKey, null, null, fragmentType, protocol, harvestedDate, crawlId, schema, null, created);
     fragmentService.insert(fragment, uniqueIds);
-    verbatim = build(6, GOOD_DATASET_KEY, cn,cc,ic);
+    verbatim = build(6, GOOD_DATASET_KEY, cn, cc, ic);
     occurrenceService.update(verbatim);
   }
 
@@ -194,7 +187,7 @@ public class OccurrenceDeletionServiceTest {
 
     occ = occurrenceService.get(5);
     assertNotNull(occ);
-    //test deletion of a record with a target crawl of 1
+    // test deletion of a record with a target crawl of 1
     occurrenceDeletionService.deleteOccurrence(5, 1);
     occ = occurrenceService.get(5);
     assertNotNull(occ);

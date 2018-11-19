@@ -1,5 +1,8 @@
 package org.gbif.occurrence.processor.zookeeper;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -7,8 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -18,8 +19,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 
 public class ZookeeperConnectorTest {
 
@@ -31,7 +32,7 @@ public class ZookeeperConnectorTest {
   public void setUp() throws Exception {
     server = new TestingServer();
     curator = CuratorFrameworkFactory.builder().namespace("crawlertest").connectString(server.getConnectString())
-      .retryPolicy(new RetryNTimes(1, 1000)).build();
+        .retryPolicy(new RetryNTimes(1, 1000)).build();
     curator.start();
     connector = new ZookeeperConnector(curator);
   }
@@ -148,15 +149,13 @@ public class ZookeeperConnectorTest {
     int threadCount = 100;
     ExecutorService tp = Executors.newFixedThreadPool(threadCount);
     for (int i = 0; i < threadCount; i++) {
-      tp.execute(new CountAddingThread(connector, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED, datasetKey,
-        totalCounts / threadCount));
+      tp.execute(new CountAddingThread(connector, ZookeeperConnector.CounterName.FRAGMENT_RECEIVED, datasetKey, totalCounts / threadCount));
     }
     tp.shutdown();
     tp.awaitTermination(10, TimeUnit.MINUTES);
     stopwatch.stop();
-    System.out.println(
-      "zk counter adds took [" + stopwatch + "] for an average of [" + stopwatch.elapsed(TimeUnit.MILLISECONDS) / totalCounts
-      + " ms/write]");
+    System.out.println("zk counter adds took [" + stopwatch + "] for an average of ["
+        + stopwatch.elapsed(TimeUnit.MILLISECONDS) / totalCounts + " ms/write]");
     fail();
   }
 
@@ -167,8 +166,7 @@ public class ZookeeperConnectorTest {
     private final UUID uuid;
     private final int count;
 
-    private CountAddingThread(ZookeeperConnector zkConnector, ZookeeperConnector.CounterName counterName, UUID uuid,
-      int count) {
+    private CountAddingThread(ZookeeperConnector zkConnector, ZookeeperConnector.CounterName counterName, UUID uuid, int count) {
       this.zkConnector = zkConnector;
       this.counterName = counterName;
       this.uuid = uuid;

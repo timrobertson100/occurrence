@@ -1,25 +1,24 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.Arrays;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.common.parsers.core.OccurrenceParseResult;
 import org.gbif.common.parsers.core.ParseResult;
 import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
 import org.gbif.occurrence.processor.interpreting.result.CoordinateResult;
-
-import java.net.URI;
-import java.util.Arrays;
-
-import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 @Ignore("Shouldn't be run by Jenkins, it uses an external service")
 public class CoordinateInterpreterTest {
@@ -40,8 +39,7 @@ public class CoordinateInterpreterTest {
   public void testCoordinate() {
     Double lat = 43.0;
     Double lng = 79.0;
-    OccurrenceParseResult<CoordinateResult> result =
-      interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, null);
+    OccurrenceParseResult<CoordinateResult> result = interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, null);
 
     assertCoordinate(result, lat, lng);
     assertTrue(result.getIssues().contains(OccurrenceIssue.COUNTRY_DERIVED_FROM_COORDINATES));
@@ -86,8 +84,7 @@ public class CoordinateInterpreterTest {
     Double lat = 200d;
     Double lng = 200d;
     Country country = null; // "asdf"
-    OccurrenceParseResult<CoordinateResult> result =
-      interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, country);
+    OccurrenceParseResult<CoordinateResult> result = interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, country);
     assertNull(result.getPayload());
     assertFalse(result.isSuccessful());
     assertTrue(result.getIssues().contains(OccurrenceIssue.COORDINATE_OUT_OF_RANGE));
@@ -106,7 +103,8 @@ public class CoordinateInterpreterTest {
 
   @Test
   public void testLookupLatLngReversed() {
-    assertCountry(-43.65, 79.40, Country.CANADA, 43.65, -79.40, Country.CANADA, OccurrenceIssue.PRESUMED_NEGATED_LATITUDE, OccurrenceIssue.PRESUMED_NEGATED_LONGITUDE);
+    assertCountry(-43.65, 79.40, Country.CANADA, 43.65, -79.40, Country.CANADA, OccurrenceIssue.PRESUMED_NEGATED_LATITUDE,
+        OccurrenceIssue.PRESUMED_NEGATED_LONGITUDE);
   }
 
   @Test
@@ -121,7 +119,8 @@ public class CoordinateInterpreterTest {
     // -0.97 is still in France, and -0.50 is still in DR Congo, but we want the correct order.
     assertCountry(49.43, 0.97, Country.FRANCE, Country.FRANCE);
     assertCountry(0.50, 24.1, Country.CONGO_DEMOCRATIC_REPUBLIC, Country.CONGO_DEMOCRATIC_REPUBLIC);
-    // (Unfortunately, this test can still pass by accident if the ordering of the transformers is correct by chance.)
+    // (Unfortunately, this test can still pass by accident if the ordering of the transformers is
+    // correct by chance.)
   }
 
   @Test
@@ -156,8 +155,7 @@ public class CoordinateInterpreterTest {
     double roundedLat = Math.round(lat * Math.pow(10, 6)) / Math.pow(10, 6);
     double roundedLng = Math.round(lng * Math.pow(10, 6)) / Math.pow(10, 6);
     Country country = Country.CANADA;
-    OccurrenceParseResult<CoordinateResult> result =
-      interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, country);
+    OccurrenceParseResult<CoordinateResult> result = interpreter.interpretCoordinate(lat.toString(), lng.toString(), null, country);
 
     assertCoordinate(result, roundedLat, roundedLng);
     assertEquals(country, result.getPayload().getCountry());
@@ -187,10 +185,13 @@ public class CoordinateInterpreterTest {
 
   @Test
   public void testConfusedCountryWithBadCoordinates() {
-    // https://www.gbif.org/occurrence/656979971 — says United States, but coordinates are Northern Mariana Islands
-    assertCountry(15.1030, 145.7410, Country.UNITED_STATES, Country.NORTHERN_MARIANA_ISLANDS, OccurrenceIssue.COUNTRY_DERIVED_FROM_COORDINATES);
+    // https://www.gbif.org/occurrence/656979971 — says United States, but coordinates are Northern
+    // Mariana Islands
+    assertCountry(15.1030, 145.7410, Country.UNITED_STATES, Country.NORTHERN_MARIANA_ISLANDS,
+        OccurrenceIssue.COUNTRY_DERIVED_FROM_COORDINATES);
 
-    // https://www.gbif.org/occurrence/1316597083 — says United States, coordinates are simply wrong, and shouldn't be negated to land on the Northern Mariana Islands.
+    // https://www.gbif.org/occurrence/1316597083 — says United States, coordinates are simply wrong,
+    // and shouldn't be negated to land on the Northern Mariana Islands.
     assertCountry(-17.35, -149.25, Country.UNITED_STATES, Country.UNITED_STATES, OccurrenceIssue.COUNTRY_COORDINATE_MISMATCH);
   }
 
@@ -239,11 +240,14 @@ public class CoordinateInterpreterTest {
     assertCountry(lat, lng, providedCountry, lat, lng, expectedCountry, expectedIssues);
   }
 
-  private void assertCountry(Double lat, Double lng, Country providedCountry, Double expectedLat, Double expectedLng, Country expectedCountry, OccurrenceIssue... expectedIssues) {
-    OccurrenceParseResult<CoordinateResult> result = interpreter.interpretCoordinate(lat.toString(), lng.toString(), "EPSG:4326", providedCountry);
+  private void assertCountry(Double lat, Double lng, Country providedCountry, Double expectedLat, Double expectedLng,
+      Country expectedCountry, OccurrenceIssue... expectedIssues) {
+    OccurrenceParseResult<CoordinateResult> result =
+        interpreter.interpretCoordinate(lat.toString(), lng.toString(), "EPSG:4326", providedCountry);
     assertCoordinate(result, expectedLat, expectedLng);
     assertEquals(expectedCountry, result.getPayload().getCountry());
-    assertTrue("Expecting "+expectedIssues+" for "+result.getIssues(), CollectionUtils.isEqualCollection(Arrays.asList(expectedIssues), result.getIssues()));
+    assertTrue("Expecting " + expectedIssues + " for " + result.getIssues(),
+        CollectionUtils.isEqualCollection(Arrays.asList(expectedIssues), result.getIssues()));
     assertEquals(expectedIssues.length, result.getIssues().size());
   }
 }

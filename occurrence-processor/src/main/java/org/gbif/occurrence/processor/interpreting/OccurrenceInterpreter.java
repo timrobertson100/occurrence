@@ -1,5 +1,11 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.BasisOfRecord;
@@ -22,29 +28,23 @@ import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
-
-import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Interprets/Validates verbatim occurrence records.
- * This class doesn't persist any information, it only collects possible issues and generates a interpreted version
- * of the verbatim record.
+ * Interprets/Validates verbatim occurrence records. This class doesn't persist any information, it
+ * only collects possible issues and generates a interpreted version of the verbatim record.
  */
 @Singleton
 public class OccurrenceInterpreter implements Serializable {
 
   @FunctionalInterface
-  private interface Interpreter{
+  private interface Interpreter {
     void interpret(VerbatimOccurrence verbatim, Occurrence occurrence);
   }
 
@@ -59,28 +59,21 @@ public class OccurrenceInterpreter implements Serializable {
 
   private final DatasetInfoInterpreter datasetInfoInterpreter;
 
-  //Holds the list of Interpreters that will be applied
+  // Holds the list of Interpreters that will be applied
   private final List<Interpreter> interpreters;
 
   @Inject
-  public OccurrenceInterpreter(@Nullable DatasetInfoInterpreter datasetInfoInterpreter,
-                               TaxonomyInterpreter taxonomyInterpreter, LocationInterpreter locationInterpreter) {
+  public OccurrenceInterpreter(@Nullable DatasetInfoInterpreter datasetInfoInterpreter, TaxonomyInterpreter taxonomyInterpreter,
+      LocationInterpreter locationInterpreter) {
     this.datasetInfoInterpreter = datasetInfoInterpreter;
-    //the list of interpreters is initialized with all the interpretations methods used
-    ImmutableList.Builder<Interpreter> bldr = new ImmutableList.Builder<Interpreter>().add(
-            locationInterpreter::interpretLocation,
-            taxonomyInterpreter::interpretTaxonomy,
-            MultiMediaInterpreter::interpretMedia,
-            OccurrenceInterpreter::interpretBor,
-            OccurrenceInterpreter::interpretSex,
-            OccurrenceInterpreter::interpretEstablishmentMeans,
-            OccurrenceInterpreter::interpretLifeStage,
-            OccurrenceInterpreter::interpretTypification,
-            TemporalInterpreter::interpretTemporal,
-            OccurrenceInterpreter::interpretReferences,
-            OccurrenceInterpreter::interpretIndividualCount);
+    // the list of interpreters is initialized with all the interpretations methods used
+    ImmutableList.Builder<Interpreter> bldr = new ImmutableList.Builder<Interpreter>().add(locationInterpreter::interpretLocation,
+        taxonomyInterpreter::interpretTaxonomy, MultiMediaInterpreter::interpretMedia, OccurrenceInterpreter::interpretBor,
+        OccurrenceInterpreter::interpretSex, OccurrenceInterpreter::interpretEstablishmentMeans, OccurrenceInterpreter::interpretLifeStage,
+        OccurrenceInterpreter::interpretTypification, TemporalInterpreter::interpretTemporal, OccurrenceInterpreter::interpretReferences,
+        OccurrenceInterpreter::interpretIndividualCount);
 
-    if(datasetInfoInterpreter != null) {
+    if (datasetInfoInterpreter != null) {
       bldr.add(this::interpretDatasetInfo);
     }
 
@@ -98,18 +91,18 @@ public class OccurrenceInterpreter implements Serializable {
   }
 
   /**
-   * Interpret all the verbatim fields into our standard Occurrence fields.
-   * TODO: send messages/write logs for interpretation errors
+   * Interpret all the verbatim fields into our standard Occurrence fields. TODO: send messages/write
+   * logs for interpretation errors
    *
    * @param verbatim the verbatim occurrence to interpret
    *
-   * @return an OccurrenceInterpretationResult that contains an "updated" Occurrence with interpreted fields and an
-   * "original"
-   * occurrence iff this was an update to an existing record (will be null otherwise)
+   * @return an OccurrenceInterpretationResult that contains an "updated" Occurrence with interpreted
+   *         fields and an "original" occurrence iff this was an update to an existing record (will be
+   *         null otherwise)
    */
   public OccurrenceInterpretationResult interpret(VerbatimOccurrence verbatim, Occurrence original) {
     Occurrence occ = new Occurrence(verbatim);
-    interpreters.forEach(interpreter ->  {
+    interpreters.forEach(interpreter -> {
       try {
         interpreter.interpret(verbatim, occ);
       } catch (Exception e) {
@@ -123,8 +116,8 @@ public class OccurrenceInterpreter implements Serializable {
   }
 
   /**
-   *  This method was created to be follow the Interpreter functional interface contract.
-   *  Note that datasetInfoInterpreter is nullable but will not be added to the list if null
+   * This method was created to be follow the Interpreter functional interface contract. Note that
+   * datasetInfoInterpreter is nullable but will not be added to the list if null
    */
   private void interpretDatasetInfo(VerbatimOccurrence verbatim, Occurrence occ) {
     datasetInfoInterpreter.interpretDatasetInfo(occ);
@@ -149,7 +142,7 @@ public class OccurrenceInterpreter implements Serializable {
 
       ParseResult<String> parsedName = TYPE_NAME_PARSER.parse(verbatim.getVerbatimField(DwcTerm.typeStatus));
       occ.setTypifiedName(parsedName.getPayload());
-      //TODO: flag value invalid issue (new API enum value to be created)
+      // TODO: flag value invalid issue (new API enum value to be created)
     }
     if (verbatim.hasVerbatimField(GbifTerm.typifiedName)) {
       occ.setTypifiedName(verbatim.getVerbatimField(GbifTerm.typifiedName));
@@ -172,7 +165,7 @@ public class OccurrenceInterpreter implements Serializable {
     if (parsed.isSuccessful()) {
       occ.setSex(parsed.getPayload());
     } else {
-      //TODO: flag value invalid issue (new API enum value to be created)
+      // TODO: flag value invalid issue (new API enum value to be created)
       LOG.debug("Unknown sex [{}]", verbatim.getVerbatimField(DwcTerm.sex));
     }
   }
@@ -182,7 +175,7 @@ public class OccurrenceInterpreter implements Serializable {
     if (parsed.isSuccessful()) {
       occ.setEstablishmentMeans(parsed.getPayload());
     } else {
-      //TODO: flag value invalid issue (new API enum value to be created)
+      // TODO: flag value invalid issue (new API enum value to be created)
       LOG.debug("Unknown establishmentMeans [{}]", verbatim.getVerbatimField(DwcTerm.establishmentMeans));
     }
   }
@@ -192,7 +185,7 @@ public class OccurrenceInterpreter implements Serializable {
     if (parsed.isSuccessful()) {
       occ.setLifeStage(parsed.getPayload());
     } else {
-      //TODO: flag value invalid issue (new API enum value to be created)
+      // TODO: flag value invalid issue (new API enum value to be created)
       LOG.debug("Unknown lifeStage [{}]", verbatim.getVerbatimField(DwcTerm.lifeStage));
     }
   }

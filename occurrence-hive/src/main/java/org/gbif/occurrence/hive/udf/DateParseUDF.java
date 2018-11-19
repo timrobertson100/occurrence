@@ -1,10 +1,5 @@
 package org.gbif.occurrence.hive.udf;
 
-import org.gbif.common.parsers.core.OccurrenceParseResult;
-import org.gbif.common.parsers.date.AtomizedLocalDate;
-import org.gbif.common.parsers.date.TemporalAccessorUtils;
-import org.gbif.occurrence.processor.interpreting.TemporalInterpreter;
-
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,12 +13,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.gbif.common.parsers.core.OccurrenceParseResult;
+import org.gbif.common.parsers.date.AtomizedLocalDate;
+import org.gbif.common.parsers.date.TemporalAccessorUtils;
+import org.gbif.occurrence.processor.interpreting.TemporalInterpreter;
+
 /**
  * Parses year month and day only.
  */
-@Description(
-  name = "parseDate",
-  value = "_FUNC_(year, month, day, event_date)")
+@Description(name = "parseDate", value = "_FUNC_(year, month, day, event_date)")
 public class DateParseUDF extends GenericUDF {
 
   private ObjectInspectorConverters.Converter[] converters;
@@ -38,17 +36,14 @@ public class DateParseUDF extends GenericUDF {
     String event_date = getArgument(3, arguments);
     List<Object> result = new ArrayList<Object>(4);
     try {
-      OccurrenceParseResult<AtomizedLocalDate> parsed =
-        TemporalInterpreter.interpretEventDate(year, month, day, event_date);
-      OccurrenceParseResult<TemporalAccessor> parsed2 =
-              TemporalInterpreter.interpretRecordedDate(year, month, day, event_date);
+      OccurrenceParseResult<AtomizedLocalDate> parsed = TemporalInterpreter.interpretEventDate(year, month, day, event_date);
+      OccurrenceParseResult<TemporalAccessor> parsed2 = TemporalInterpreter.interpretRecordedDate(year, month, day, event_date);
       if (parsed.isSuccessful() && parsed.getIssues().isEmpty()) {
         result.add(parsed.getPayload().getYear());
         result.add(parsed.getPayload().getMonth());
         result.add(parsed.getPayload().getDay());
         result.add(TemporalAccessorUtils.toDate(parsed2.getPayload(), true).getTime());
-      }
-      else{
+      } else {
         result.add(null);
         result.add(null);
         result.add(null);
@@ -85,16 +80,13 @@ public class DateParseUDF extends GenericUDF {
 
     converters = new ObjectInspectorConverters.Converter[arguments.length];
     for (int i = 0; i < arguments.length; i++) {
-      converters[i] = ObjectInspectorConverters
-        .getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+      converters[i] = ObjectInspectorConverters.getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableStringObjectInspector);
     }
 
-    return ObjectInspectorFactory.getStandardStructObjectInspector(Arrays.asList("year", "month", "day", "epoch"), Arrays
-        .<ObjectInspector>asList(
-                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-                PrimitiveObjectInspectorFactory.javaLongObjectInspector));
+    return ObjectInspectorFactory.getStandardStructObjectInspector(Arrays.asList("year", "month", "day", "epoch"),
+        Arrays.<ObjectInspector>asList(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+            PrimitiveObjectInspectorFactory.javaIntObjectInspector, PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+            PrimitiveObjectInspectorFactory.javaLongObjectInspector));
   }
 
 }

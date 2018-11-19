@@ -3,15 +3,16 @@
  */
 package org.gbif.metrics.ws.client;
 
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.UUID;
+
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.gbif.api.service.occurrence.OccurrenceDatasetIndexService;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.ws.client.BaseWsClient;
 import org.gbif.ws.client.QueryParamBuilder;
-
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.UUID;
-import javax.ws.rs.core.MultivaluedMap;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedMap;
@@ -31,8 +32,7 @@ public class OccurrenceDatasetIndexWsClient extends BaseWsClient implements Occu
   private static final String NUBKEY_PARAM = "nubKey";
   private static final String COUNTRY_PARAM = "country";
 
-  private static final GenericType<Map<UUID, Long>> GENERIC_TYPE = new GenericType<Map<UUID, Long>>() {
-  };
+  private static final GenericType<Map<UUID, Long>> GENERIC_TYPE = new GenericType<Map<UUID, Long>>() {};
 
   @Inject
   public OccurrenceDatasetIndexWsClient(WebResource resource) {
@@ -41,8 +41,7 @@ public class OccurrenceDatasetIndexWsClient extends BaseWsClient implements Occu
 
   @Override
   public SortedMap<UUID, Long> occurrenceDatasetsForCountry(Country country) {
-    return getRequest(QueryParamBuilder.create(COUNTRY_PARAM, country.getIso2LetterCode()).build(),
-      DATASETS_PATH);
+    return getRequest(QueryParamBuilder.create(COUNTRY_PARAM, country.getIso2LetterCode()).build(), DATASETS_PATH);
   }
 
   @Override
@@ -55,7 +54,6 @@ public class OccurrenceDatasetIndexWsClient extends BaseWsClient implements Occu
    */
   private SortedMap<UUID, Long> getRequest(MultivaluedMap<String, String> params, String path) {
     final Map<UUID, Long> res = get(GENERIC_TYPE, params, path);
-    return ImmutableSortedMap.copyOf(res,
-      Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
+    return ImmutableSortedMap.copyOf(res, Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
   }
 }

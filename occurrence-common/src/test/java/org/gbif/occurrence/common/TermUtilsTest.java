@@ -1,5 +1,11 @@
 package org.gbif.occurrence.common;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Set;
+
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.DcTerm;
@@ -7,15 +13,9 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
-
-import java.util.Set;
-
-import com.google.common.collect.Sets;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Sets;
 
 /**
  *
@@ -79,11 +79,10 @@ public class TermUtilsTest {
   @Test
   public void testHiveColumns() {
     assertEquals(GbifTerm.gbifID.simpleName().toLowerCase(), HiveColumnsUtils.getHiveColumn(GbifTerm.gbifID));
-    assertEquals(DwcTerm.catalogNumber.simpleName().toLowerCase(),
-      HiveColumnsUtils.getHiveColumn(DwcTerm.catalogNumber));
+    assertEquals(DwcTerm.catalogNumber.simpleName().toLowerCase(), HiveColumnsUtils.getHiveColumn(DwcTerm.catalogNumber));
     assertEquals(DcTerm.date.simpleName().toLowerCase() + '_', HiveColumnsUtils.getHiveColumn(DcTerm.date));
 
     assertEquals(OccurrenceIssue.BASIS_OF_RECORD_INVALID.name().toLowerCase(),
-      HiveColumnsUtils.getHiveColumn(OccurrenceIssue.BASIS_OF_RECORD_INVALID));
+        HiveColumnsUtils.getHiveColumn(OccurrenceIssue.BASIS_OF_RECORD_INVALID));
   }
 }

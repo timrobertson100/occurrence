@@ -1,15 +1,14 @@
 package org.gbif.occurrence.cli.process;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.gbif.cli.BaseCommand;
 import org.gbif.cli.Command;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.InterpretVerbatimMessage;
 import org.gbif.occurrence.cli.common.HueCsvReader;
-
-import java.io.IOException;
-import java.util.List;
-
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +62,8 @@ public class InterpretOccurrenceCommand extends BaseCommand {
     } catch (IOException e) {
       LOG.error("Caught exception while sending delete occurrence message", e);
     } finally {
-      if (publisher != null) publisher.close();
+      if (publisher != null)
+        publisher.close();
     }
   }
 

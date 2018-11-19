@@ -1,30 +1,30 @@
 package org.gbif.occurrence.persistence.keygen;
 
-import org.gbif.hbase.util.ResultReader;
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-import org.gbif.occurrence.persistence.api.KeyLookupResult;
-import org.gbif.occurrence.persistence.hbase.Columns;
-
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.hbase.util.ResultReader;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
+import org.gbif.occurrence.persistence.api.KeyLookupResult;
+import org.gbif.occurrence.persistence.hbase.Columns;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Meter;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * An extension of AbstractHBaseKeyPersistenceService with a generateKey implementation that uses an HBase
- * implementation of the algorithm described at
- * <a href="http://dev.gbif.org/code/snippet/CR-OCC-5">http://dev.gbif.org/code/snippet/CR-OCC-5</a>.
+ * An extension of AbstractHBaseKeyPersistenceService with a generateKey implementation that uses an
+ * HBase implementation of the algorithm described at <a href=
+ * "http://dev.gbif.org/code/snippet/CR-OCC-5">http://dev.gbif.org/code/snippet/CR-OCC-5</a>.
  */
 public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
 
@@ -42,8 +42,7 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
   // our reserved upper key limit for the current batch
   private int maxReservedKeyInclusive;
 
-  private final Meter reattempts = Metrics.newMeter(HBaseLockingKeyService.class, "reattempts", "reattempts",
-                                                    TimeUnit.SECONDS);
+  private final Meter reattempts = Metrics.newMeter(HBaseLockingKeyService.class, "reattempts", "reattempts", TimeUnit.SECONDS);
 
   @Inject
   public HBaseLockingKeyService(OccHBaseConfiguration cfg, Connection connection) {
@@ -71,15 +70,12 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
       KeyStatus status = null;
       byte[] existingLock = null;
       if (row != null) {
-        String rawStatus = ResultReader.getString(row, Columns.OCCURRENCE_COLUMN_FAMILY,
-                                                  Columns.LOOKUP_STATUS_COLUMN, null);
+        String rawStatus = ResultReader.getString(row, Columns.OCCURRENCE_COLUMN_FAMILY, Columns.LOOKUP_STATUS_COLUMN, null);
         if (rawStatus != null) {
           status = KeyStatus.valueOf(rawStatus);
         }
-        existingLock = ResultReader.getBytes(row, Columns.OCCURRENCE_COLUMN_FAMILY,
-                                             Columns.LOOKUP_LOCK_COLUMN, null);
-        key = ResultReader.getInteger(row, Columns.OCCURRENCE_COLUMN_FAMILY,
-                                      Columns.LOOKUP_KEY_COLUMN, null);
+        existingLock = ResultReader.getBytes(row, Columns.OCCURRENCE_COLUMN_FAMILY, Columns.LOOKUP_LOCK_COLUMN, null);
+        key = ResultReader.getInteger(row, Columns.OCCURRENCE_COLUMN_FAMILY, Columns.LOOKUP_KEY_COLUMN, null);
         LOG.debug("Got existing status [{}] existingLock [{}] key [{}]", status, existingLock, key);
       }
 
@@ -99,8 +95,8 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
         LOG.debug("Status ALLOCATED, using found key [{}]", foundKey);
       } else if (existingLock == null) {
         // lock is ours for the taking - checkAndPut lockId, expecting null for lockId
-        boolean gotLock = lookupTableStore.checkAndPut(lookupKey, Columns.LOOKUP_LOCK_COLUMN, lockId,
-                                                       Columns.LOOKUP_LOCK_COLUMN, null, now);
+        boolean gotLock =
+            lookupTableStore.checkAndPut(lookupKey, Columns.LOOKUP_LOCK_COLUMN, lockId, Columns.LOOKUP_LOCK_COLUMN, null, now);
         if (gotLock) {
           statusMap.put(lookupKey, KeyStatus.ALLOCATING);
           LOG.debug("Grabbed free lock, now ALLOCATING [{}]", lookupKey);
@@ -110,17 +106,18 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
           break;
         }
       } else {
-        // somebody has written their lockId and so has the lock, but they haven't finished yet (status != ALLOCATED)
-        Long existingLockTs = ResultReader.getTimestamp(row, Columns.OCCURRENCE_COLUMN_FAMILY,
-                                                        Columns.LOOKUP_LOCK_COLUMN);
+        // somebody has written their lockId and so has the lock, but they haven't finished yet (status !=
+        // ALLOCATED)
+        Long existingLockTs = ResultReader.getTimestamp(row, Columns.OCCURRENCE_COLUMN_FAMILY, Columns.LOOKUP_LOCK_COLUMN);
         if (now - existingLockTs > STALE_LOCK_TIME) {
           LOG.debug("Found stale lock for [{}]", lookupKey);
           // Someone died before releasing lock.
-          // Note that key could be not null here - this means that thread had the lock, wrote the key, but then
+          // Note that key could be not null here - this means that thread had the lock, wrote the key, but
+          // then
           // died before releasing lock.
           // checkandPut our lockId, expecting lock to match the existing lock
-          boolean gotLock = lookupTableStore.checkAndPut(lookupKey, Columns.LOOKUP_LOCK_COLUMN,
-                                                         lockId, Columns.LOOKUP_LOCK_COLUMN, existingLock, now);
+          boolean gotLock =
+              lookupTableStore.checkAndPut(lookupKey, Columns.LOOKUP_LOCK_COLUMN, lockId, Columns.LOOKUP_LOCK_COLUMN, existingLock, now);
           if (gotLock) {
             statusMap.put(lookupKey, KeyStatus.ALLOCATING);
             LOG.debug("Reset stale lock, now ALLOCATING [{}]", lookupKey);
@@ -186,10 +183,11 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
   }
 
   /**
-   * Provides the next available key. Because throughput of an incrementColumnValue is limited by HBase to a few
-   * thousand calls per second, this implementation reserves a batch of IDs at a time, and then allocates them to
-   * the calling threads, until they are exhausted, when it will go and reserve another batch. Failure scenarios
-   * will therefore mean IDs go unused. This is expected to be a rare scenario and therefore acceptable.
+   * Provides the next available key. Because throughput of an incrementColumnValue is limited by
+   * HBase to a few thousand calls per second, this implementation reserves a batch of IDs at a time,
+   * and then allocates them to the calling threads, until they are exhausted, when it will go and
+   * reserve another batch. Failure scenarios will therefore mean IDs go unused. This is expected to
+   * be a rare scenario and therefore acceptable.
    *
    * @return the next key
    */
@@ -221,5 +219,3 @@ public class HBaseLockingKeyService extends AbstractHBaseKeyPersistenceService {
     ALLOCATING, ALLOCATED
   }
 }
-
-

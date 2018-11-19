@@ -1,12 +1,8 @@
 package org.gbif.occurrence.parsing.xml;
 
-import org.gbif.api.vocabulary.OccurrenceSchemaType;
-import org.gbif.occurrence.common.identifier.HolyTriplet;
-import org.gbif.occurrence.common.identifier.OccurrenceKeyHelper;
-import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-import org.gbif.occurrence.model.RawOccurrenceRecord;
-import org.gbif.occurrence.parsing.RawXmlOccurrence;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -19,14 +15,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.google.common.io.Resources;
 import org.apache.commons.io.Charsets;
+import org.gbif.api.vocabulary.OccurrenceSchemaType;
+import org.gbif.occurrence.common.identifier.HolyTriplet;
+import org.gbif.occurrence.common.identifier.OccurrenceKeyHelper;
+import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
+import org.gbif.occurrence.model.RawOccurrenceRecord;
+import org.gbif.occurrence.parsing.RawXmlOccurrence;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.google.common.io.Resources;
 
 public class XmlFragmentParserTest {
 
@@ -38,7 +38,8 @@ public class XmlFragmentParserTest {
     RawXmlOccurrence rawRecord = createFakeOcc(xml);
     List<RawOccurrenceRecord> results = XmlFragmentParser.parseRecord(rawRecord);
     assertEquals(1, results.size());
-    // System.out.println("Looking for [Oschütz], got collector name [" + results.get(0).getCollectorName() + "]");
+    // System.out.println("Looking for [Oschütz], got collector name [" +
+    // results.get(0).getCollectorName() + "]");
     assertTrue(results.get(0).getCollectorName().equals("Oschütz"));
   }
 
@@ -91,12 +92,10 @@ public class XmlFragmentParserTest {
     String xml = Resources.toString(Resources.getResource("id_extraction/abcd1_simple.xml"), Charsets.UTF_8);
     UUID datasetKey = UUID.randomUUID();
     HolyTriplet target =
-      new HolyTriplet(datasetKey, "TLMF", "Tiroler Landesmuseum Ferdinandeum", "82D45C93-B297-490E-B7B0-E0A9BEED1326",
-        null);
+        new HolyTriplet(datasetKey, "TLMF", "Tiroler Landesmuseum Ferdinandeum", "82D45C93-B297-490E-B7B0-E0A9BEED1326", null);
     byte[] xmlBytes = xml.getBytes(Charset.forName("UTF8"));
     Set<IdentifierExtractionResult> extractionResults =
-      XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.ABCD_1_2, true,
-        true);
+        XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.ABCD_1_2, true, true);
     Set<UniqueIdentifier> ids = extractionResults.iterator().next().getUniqueIdentifiers();
     assertEquals(1, ids.size());
     UniqueIdentifier id = ids.iterator().next();
@@ -111,17 +110,15 @@ public class XmlFragmentParserTest {
     UUID datasetKey = UUID.randomUUID();
     byte[] xmlBytes = xml.getBytes(Charset.forName("UTF8"));
     Set<IdentifierExtractionResult> extractionResults =
-      XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.ABCD_2_0_6, true,
-        true);
-    HolyTriplet holyTriplet1 =
-      new HolyTriplet(datasetKey, "BGBM", "Bridel Herbar", "Bridel-1-428", "Grimmia alpicola Sw. ex Hedw.");
-    HolyTriplet holyTriplet2 = new HolyTriplet(datasetKey, "BGBM", "Bridel Herbar", "Bridel-1-428",
-      "Schistidium agassizii Sull. & Lesq. in Sull.");
+        XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.ABCD_2_0_6, true, true);
+    HolyTriplet holyTriplet1 = new HolyTriplet(datasetKey, "BGBM", "Bridel Herbar", "Bridel-1-428", "Grimmia alpicola Sw. ex Hedw.");
+    HolyTriplet holyTriplet2 =
+        new HolyTriplet(datasetKey, "BGBM", "Bridel Herbar", "Bridel-1-428", "Schistidium agassizii Sull. & Lesq. in Sull.");
     assertEquals(2, extractionResults.size());
     for (IdentifierExtractionResult result : extractionResults) {
       String uniqueId = result.getUniqueIdentifiers().iterator().next().getUniqueString();
-      assertTrue(uniqueId.equals(OccurrenceKeyHelper.buildKey(holyTriplet1)) || uniqueId
-        .equals(OccurrenceKeyHelper.buildKey(holyTriplet2)));
+      assertTrue(
+          uniqueId.equals(OccurrenceKeyHelper.buildKey(holyTriplet1)) || uniqueId.equals(OccurrenceKeyHelper.buildKey(holyTriplet2)));
     }
   }
 
@@ -131,27 +128,23 @@ public class XmlFragmentParserTest {
     UUID datasetKey = UUID.randomUUID();
     byte[] xmlBytes = xml.getBytes(Charset.forName("UTF8"));
     Set<IdentifierExtractionResult> extractionResults =
-      XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.DWC_1_4, true,
-        true);
+        XmlFragmentParser.extractIdentifiers(datasetKey, xmlBytes, OccurrenceSchemaType.DWC_1_4, true, true);
     Set<UniqueIdentifier> ids = extractionResults.iterator().next().getUniqueIdentifiers();
-    PublisherProvidedUniqueIdentifier pubProvided =
-      new PublisherProvidedUniqueIdentifier(datasetKey, "UGENT:vertebrata:50058");
+    PublisherProvidedUniqueIdentifier pubProvided = new PublisherProvidedUniqueIdentifier(datasetKey, "UGENT:vertebrata:50058");
     HolyTriplet holyTriplet = new HolyTriplet(datasetKey, "UGENT", "vertebrata", "50058", null);
     assertEquals(2, ids.size());
     for (UniqueIdentifier id : ids) {
-      assertTrue(id.getUniqueString().equals(OccurrenceKeyHelper.buildKey(holyTriplet)) || id.getUniqueString()
-        .equals(OccurrenceKeyHelper.buildKey(pubProvided)));
+      assertTrue(id.getUniqueString().equals(OccurrenceKeyHelper.buildKey(holyTriplet))
+          || id.getUniqueString().equals(OccurrenceKeyHelper.buildKey(pubProvided)));
     }
   }
 
   @Test
   public void testIdExtractTapir() throws IOException {
-    String xml =
-      Resources.toString(Resources.getResource("id_extraction/tapir_triplet_contains_unrecorded.xml"), Charsets.UTF_8);
+    String xml = Resources.toString(Resources.getResource("id_extraction/tapir_triplet_contains_unrecorded.xml"), Charsets.UTF_8);
     byte[] xmlBytes = xml.getBytes(Charset.forName("UTF8"));
     Set<IdentifierExtractionResult> extractionResults =
-      XmlFragmentParser.extractIdentifiers(UUID.randomUUID(), xmlBytes, OccurrenceSchemaType.DWC_1_4, true,
-        true);
+        XmlFragmentParser.extractIdentifiers(UUID.randomUUID(), xmlBytes, OccurrenceSchemaType.DWC_1_4, true, true);
     assertFalse(extractionResults.isEmpty());
   }
 
@@ -160,8 +153,7 @@ public class XmlFragmentParserTest {
     String xml = Resources.toString(Resources.getResource("id_extraction/manis_no_cc.xml"), Charsets.UTF_8);
     byte[] xmlBytes = xml.getBytes(Charset.forName("UTF8"));
     Set<IdentifierExtractionResult> extractionResults =
-      XmlFragmentParser.extractIdentifiers(UUID.randomUUID(), xmlBytes, OccurrenceSchemaType.DWC_MANIS, true,
-        true);
+        XmlFragmentParser.extractIdentifiers(UUID.randomUUID(), xmlBytes, OccurrenceSchemaType.DWC_MANIS, true, true);
     assertTrue(extractionResults.isEmpty());
   }
 

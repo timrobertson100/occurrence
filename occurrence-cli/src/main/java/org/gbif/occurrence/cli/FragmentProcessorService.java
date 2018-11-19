@@ -25,8 +25,7 @@ public class FragmentProcessorService extends AbstractIdleService {
     cfg.ganglia.start();
 
     listener = new MessageListener(cfg.messaging.getConnectionParameters());
-    listener.listen(cfg.primaryQueueName, cfg.msgPoolSize,
-                    new OccurrenceFragmentedListener(inj.getInstance(FragmentProcessor.class)));
+    listener.listen(cfg.primaryQueueName, cfg.msgPoolSize, new OccurrenceFragmentedListener(inj.getInstance(FragmentProcessor.class)));
   }
 
   @Override

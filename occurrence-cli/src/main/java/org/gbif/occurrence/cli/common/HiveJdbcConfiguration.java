@@ -3,11 +3,13 @@ package org.gbif.occurrence.cli.common;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 import javax.validation.constraints.NotNull;
 
-import com.beust.jcommander.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.beust.jcommander.Parameter;
 
 /**
  * Configuration used to connect to Hive using JDBC.
@@ -31,7 +33,8 @@ public class HiveJdbcConfiguration {
   public String hiveJdbcUrl;
 
   /**
-   * Get a new Hive {@link Connection}. Call with a try-with-resource to ensure the connection is closed properly.
+   * Get a new Hive {@link Connection}. Call with a try-with-resource to ensure the connection is
+   * closed properly.
    *
    * @return new {@link Connection} or null if a connection can not be created.
    *

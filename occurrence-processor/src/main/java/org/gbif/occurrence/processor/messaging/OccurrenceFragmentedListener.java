@@ -1,10 +1,12 @@
 package org.gbif.occurrence.processor.messaging;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
 import org.gbif.occurrence.processor.FragmentProcessor;
-
-import java.util.concurrent.TimeUnit;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -12,11 +14,9 @@ import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * A MessageCallback implementation for OccurrenceFragmentedMessage. Hands off to the FragmentProcessor passed in
- * during construction. This is the start of the processing chain.
+ * A MessageCallback implementation for OccurrenceFragmentedMessage. Hands off to the
+ * FragmentProcessor passed in during construction. This is the start of the processing chain.
  */
 @Singleton
 public class OccurrenceFragmentedListener extends AbstractMessageCallback<OccurrenceFragmentedMessage> {
@@ -24,7 +24,7 @@ public class OccurrenceFragmentedListener extends AbstractMessageCallback<Occurr
   private final FragmentProcessor processor;
 
   private final Timer processTimer =
-    Metrics.newTimer(FragmentProcessor.class, "frag process time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+      Metrics.newTimer(FragmentProcessor.class, "frag process time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
   @Inject
   public OccurrenceFragmentedListener(FragmentProcessor processor) {
@@ -36,8 +36,8 @@ public class OccurrenceFragmentedListener extends AbstractMessageCallback<Occurr
   public void handleMessage(OccurrenceFragmentedMessage message) {
     final TimerContext context = processTimer.time();
     try {
-      processor.buildFragments(message.getDatasetUuid(), message.getFragment(), message.getSchemaType(),
-        message.getEndpointType(), message.getAttempt(), message.getValidationReport());
+      processor.buildFragments(message.getDatasetUuid(), message.getFragment(), message.getSchemaType(), message.getEndpointType(),
+          message.getAttempt(), message.getValidationReport());
     } finally {
       context.stop();
     }

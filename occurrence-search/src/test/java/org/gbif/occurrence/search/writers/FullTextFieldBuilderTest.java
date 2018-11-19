@@ -1,5 +1,11 @@
 package org.gbif.occurrence.search.writers;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.vocabulary.BasisOfRecord;
 import org.gbif.api.vocabulary.Country;
@@ -10,19 +16,12 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.search.writer.FullTextFieldBuilder;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 public class FullTextFieldBuilderTest {
 
-  private Occurrence buildTestOccurrence(){
+  private Occurrence buildTestOccurrence() {
     Date now = new Date();
     Occurrence occurrence = new Occurrence();
     occurrence.setKey(1227769253);
@@ -58,10 +57,10 @@ public class FullTextFieldBuilderTest {
     occurrence.setYear(2016);
     occurrence.setMonth(1);
     occurrence.setDay(2);
-    Map<Term,String> verbatimFields = new HashMap<>();
-    verbatimFields.put(DwcTerm.geodeticDatum,"WGS84");
-    verbatimFields.put(DwcTerm.class_,"Gastropoda");
-    verbatimFields.put(DwcTerm.countryCode,"MX");
+    Map<Term, String> verbatimFields = new HashMap<>();
+    verbatimFields.put(DwcTerm.geodeticDatum, "WGS84");
+    verbatimFields.put(DwcTerm.class_, "Gastropoda");
+    verbatimFields.put(DwcTerm.countryCode, "MX");
     verbatimFields.put(DwcTerm.country, "Mexico");
     verbatimFields.put(DcTerm.rightsHolder, "Alison Young");
     verbatimFields.put(DcTerm.identifier, "2544088");
@@ -75,7 +74,8 @@ public class FullTextFieldBuilderTest {
     verbatimFields.put(DwcTerm.recordedBy, "Alison Young");
     verbatimFields.put(DwcTerm.catalogNumber, "2544088");
     verbatimFields.put(DwcTerm.institutionCode, "iNaturalist");
-    verbatimFields.put(DcTerm.rights, "Copyright Alison Young, licensed under a Creative Commons cc_by_nc_sa_name license: http://creativecommons.org/licenses/by-nc-sa/3.0/");
+    verbatimFields.put(DcTerm.rights,
+        "Copyright Alison Young, licensed under a Creative Commons cc_by_nc_sa_name license: http://creativecommons.org/licenses/by-nc-sa/3.0/");
     verbatimFields.put(DwcTerm.eventTime, "23:28:43Z");
     verbatimFields.put(DwcTerm.identificationID, "4737209");
     occurrence.setVerbatimFields(verbatimFields);
@@ -83,7 +83,7 @@ public class FullTextFieldBuilderTest {
   }
 
   @Test
-  public void fullTextFieldBuidlTest(){
+  public void fullTextFieldBuidlTest() {
     Occurrence occurrence = buildTestOccurrence();
     Set<String> fullTextValues = FullTextFieldBuilder.buildFullTextField(occurrence);
     Assert.assertNotNull(fullTextValues);

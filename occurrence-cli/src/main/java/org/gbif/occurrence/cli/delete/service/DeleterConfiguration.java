@@ -1,12 +1,12 @@
 package org.gbif.occurrence.cli.delete.service;
 
-import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.occurrence.cli.common.GangliaConfiguration;
-import org.gbif.occurrence.common.config.OccHBaseConfiguration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.occurrence.cli.common.GangliaConfiguration;
+import org.gbif.occurrence.common.config.OccHBaseConfiguration;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -40,6 +40,6 @@ public class DeleterConfiguration {
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("messaging", messaging).add("ganglia", ganglia).add("hbase", hbase)
-      .add("msgPoolSize", msgPoolSize).add("queueName", queueName).toString();
+        .add("msgPoolSize", msgPoolSize).add("queueName", queueName).toString();
   }
 }

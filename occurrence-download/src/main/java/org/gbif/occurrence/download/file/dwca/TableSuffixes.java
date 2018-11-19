@@ -5,7 +5,7 @@ package org.gbif.occurrence.download.file.dwca;
  */
 public final class TableSuffixes {
 
-  //Suffixes for table names
+  // Suffixes for table names
   public static final String INTERPRETED_SUFFIX = "_interpreted";
   public static final String VERBATIM_SUFFIX = "_verbatim";
   public static final String MULTIMEDIA_SUFFIX = "_multimedia";
@@ -15,7 +15,7 @@ public final class TableSuffixes {
    * Hidden/private constructor.
    */
   private TableSuffixes() {
-    //empty constructor
+    // empty constructor
   }
 
 }

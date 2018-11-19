@@ -1,12 +1,11 @@
 package org.gbif.occurrence.ws.client.mock;
 
+import static org.junit.Assert.assertEquals;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.vocabulary.BasisOfRecord;
 import org.gbif.dwc.terms.DwcTerm;
-
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class OccurrencePersistenceMockServiceTest {
 
@@ -22,6 +21,6 @@ public class OccurrencePersistenceMockServiceTest {
     assertEquals(BasisOfRecord.HUMAN_OBSERVATION, occ.getBasisOfRecord());
     assertEquals((Integer) 1912, occ.getYear());
     assertEquals((Integer) 5, occ.getMonth());
-    assertEquals( (Double) 112d, occ.getElevation());
+    assertEquals((Double) 112d, occ.getElevation());
   }
 }

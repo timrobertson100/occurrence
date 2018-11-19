@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import com.beust.jcommander.internal.Lists;
-import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A simple file reader for CSV files that are the result of Hue queries.
@@ -22,8 +23,8 @@ public class HueCsvReader {
 
   /**
    * Read the CSV file export from a Hue query for keys (e.g. select key from occurrence where xxx or
-   * select dataset_key from occurrence where xxx). Properly handles the header row "id" and double quotes that Hue
-   * adds.
+   * select dataset_key from occurrence where xxx). Properly handles the header row "id" and double
+   * quotes that Hue adds.
    *
    * @param keyFileName the file to read
    *
@@ -32,13 +33,13 @@ public class HueCsvReader {
   public static List<String> readKeys(String keyFileName) {
     List<String> keys = Lists.newArrayList();
     try (BufferedReader br = new BufferedReader(new FileReader(keyFileName))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          String key = line.replaceAll("\"", "");
-          if (!HEADER_FIELDS.contains(key)) {
-            keys.add(key);
-          }
+      String line;
+      while ((line = br.readLine()) != null) {
+        String key = line.replaceAll("\"", "");
+        if (!HEADER_FIELDS.contains(key)) {
+          keys.add(key);
         }
+      }
     } catch (FileNotFoundException e) {
       LOG.error("Could not find csv key file [{}]. Exiting", keyFileName, e);
     } catch (IOException e) {

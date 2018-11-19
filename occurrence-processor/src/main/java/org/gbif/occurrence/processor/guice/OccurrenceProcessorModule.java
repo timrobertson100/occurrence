@@ -1,5 +1,8 @@
 package org.gbif.occurrence.processor.guice;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryNTimes;
 import org.gbif.api.service.occurrence.OccurrenceService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -16,13 +19,11 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.client.WebResource;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
 
 /**
- * The Guice module that configures everything needed for the processing to start up. See the README for needed
- * properties. Only needed when using the Startup class - see also the occurrence-cli project.
+ * The Guice module that configures everything needed for the processing to start up. See the README
+ * for needed properties. Only needed when using the Startup class - see also the occurrence-cli
+ * project.
  */
 public class OccurrenceProcessorModule extends PrivateModule {
 
@@ -34,11 +35,8 @@ public class OccurrenceProcessorModule extends PrivateModule {
 
   @Provides
   public ZookeeperConnector provideZookeeperConnector() throws Exception {
-    CuratorFramework curator = CuratorFrameworkFactory.builder()
-      .namespace(cfg.zooKeeper.namespace)
-      .connectString(cfg.zooKeeper.connectionString)
-      .retryPolicy(new RetryNTimes(1, 1000))
-      .build();
+    CuratorFramework curator = CuratorFrameworkFactory.builder().namespace(cfg.zooKeeper.namespace)
+        .connectString(cfg.zooKeeper.connectionString).retryPolicy(new RetryNTimes(1, 1000)).build();
     curator.start();
     return new ZookeeperConnector(curator);
   }

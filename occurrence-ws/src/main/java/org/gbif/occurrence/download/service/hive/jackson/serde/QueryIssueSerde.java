@@ -1,6 +1,7 @@
 package org.gbif.occurrence.download.service.hive.jackson.serde;
 
 import java.io.IOException;
+
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonSerializer;

@@ -30,8 +30,8 @@ public class BulkLoadSolr {
     options.setRunner(SparkRunner.class);
     Pipeline p = Pipeline.create(options);
 
-    Counter docsIndexed =  Metrics.counter(BulkLoadSolr.class,"docsIndexed");
-    Counter docsFailed =  Metrics.counter(BulkLoadSolr.class,"docsFailed");
+    Counter docsIndexed = Metrics.counter(BulkLoadSolr.class, "docsIndexed");
+    Counter docsFailed = Metrics.counter(BulkLoadSolr.class, "docsFailed");
 
     String solrCollection = options.getSolrCollection();
 
@@ -44,44 +44,33 @@ public class BulkLoadSolr {
 
     int keyDivisor = options.getKeyDivisor();
     int keyReminder = options.getKeyRemainder();
-    String table =  options.getTable();
+    String table = options.getTable();
 
-    PCollection<Result> rows =
-        p.apply(
-            "read",
-            HBaseIO.read().withConfiguration(hbaseConfig).withScan(scan).withTableId(table));
+    PCollection<Result> rows = p.apply("read", HBaseIO.read().withConfiguration(hbaseConfig).withScan(scan).withTableId(table));
 
-    PCollection<SolrInputDocument> docs =
-        rows.apply(
-            "convert",
-            ParDo.of(
-                new DoFn<Result, SolrInputDocument>() {
+    PCollection<SolrInputDocument> docs = rows.apply("convert", ParDo.of(new DoFn<Result, SolrInputDocument>() {
 
-                  @ProcessElement
-                  public void processElement(ProcessContext c) {
-                    Result row = c.element();
-                    try {
-                      Occurrence occurrence = OccurrenceBuilder.buildOccurrence(row);
-                      if (occurrence.getKey() % keyDivisor == keyReminder) {
-                        SolrInputDocument document = SolrOccurrenceWriter.buildOccSolrDocument(occurrence);
-                        c.output(document);
-                        docsIndexed.inc();
-                      }
-                    } catch (NullPointerException e) {
-                      // Expected for bad data
-                      docsFailed.inc();
-                    }
-                  }
-                }));
+      @ProcessElement
+      public void processElement(ProcessContext c) {
+        Result row = c.element();
+        try {
+          Occurrence occurrence = OccurrenceBuilder.buildOccurrence(row);
+          if (occurrence.getKey() % keyDivisor == keyReminder) {
+            SolrInputDocument document = SolrOccurrenceWriter.buildOccSolrDocument(occurrence);
+            c.output(document);
+            docsIndexed.inc();
+          }
+        } catch (NullPointerException e) {
+          // Expected for bad data
+          docsFailed.inc();
+        }
+      }
+    }));
 
     final SolrIO.ConnectionConfiguration conn = SolrIO.ConnectionConfiguration.create(options.getSolrZk());
 
-    docs.apply("write",
-        SolrIO.write()
-            .to(solrCollection)
-            .withConnectionConfiguration(conn)
-            .withRetryConfiguration(
-                SolrIO.RetryConfiguration.create(options.getMaxAttempts(), Duration.standardMinutes(1))));
+    docs.apply("write", SolrIO.write().to(solrCollection).withConnectionConfiguration(conn)
+        .withRetryConfiguration(SolrIO.RetryConfiguration.create(options.getMaxAttempts(), Duration.standardMinutes(1))));
 
     PipelineResult result = p.run();
     result.waitUntilFinish();

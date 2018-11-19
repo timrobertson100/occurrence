@@ -1,14 +1,14 @@
 package org.gbif.metrics.ws.client;
 
-import org.gbif.api.service.occurrence.OccurrenceDistributionIndexService;
-import org.gbif.api.vocabulary.BasisOfRecord;
-import org.gbif.api.vocabulary.Kingdom;
-import org.gbif.ws.client.BaseWsClient;
-
 import java.util.Map;
 
 import javax.validation.constraints.Min;
 import javax.ws.rs.core.MultivaluedMap;
+
+import org.gbif.api.service.occurrence.OccurrenceDistributionIndexService;
+import org.gbif.api.vocabulary.BasisOfRecord;
+import org.gbif.api.vocabulary.Kingdom;
+import org.gbif.ws.client.BaseWsClient;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedMap;
@@ -24,17 +24,11 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 public class OccurrenceDistributionIndexWsClient extends BaseWsClient implements OccurrenceDistributionIndexService {
 
 
-  private static final GenericType<Map<BasisOfRecord, Long>> BOF_MAP_GENERIC_TYPE =
-    new GenericType<Map<BasisOfRecord, Long>>() {
-    };
+  private static final GenericType<Map<BasisOfRecord, Long>> BOF_MAP_GENERIC_TYPE = new GenericType<Map<BasisOfRecord, Long>>() {};
 
-  private static final GenericType<Map<Kingdom, Long>> KINGDOM_MAP_GENERIC_TYPE =
-    new GenericType<Map<Kingdom, Long>>() {
-    };
+  private static final GenericType<Map<Kingdom, Long>> KINGDOM_MAP_GENERIC_TYPE = new GenericType<Map<Kingdom, Long>>() {};
 
-  private static final GenericType<Map<Integer, Long>> INT_MAP_GENERIC_TYPE =
-    new GenericType<Map<Integer, Long>>() {
-    };
+  private static final GenericType<Map<Integer, Long>> INT_MAP_GENERIC_TYPE = new GenericType<Map<Integer, Long>>() {};
 
 
   @Inject
@@ -64,8 +58,7 @@ public class OccurrenceDistributionIndexWsClient extends BaseWsClient implements
    */
   private <T extends Comparable<T>> Map<T, Long> getRequest(String path, GenericType<Map<T, Long>> genericType) {
     final Map<T, Long> res = get(genericType, path);
-    return ImmutableSortedMap.copyOf(res,
-      Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
+    return ImmutableSortedMap.copyOf(res, Ordering.natural().onResultOf(Functions.forMap(res)).compound(Ordering.natural()).reverse());
   }
 
 }

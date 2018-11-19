@@ -3,7 +3,6 @@ package org.gbif.occurrence.hive.udf;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
@@ -12,6 +11,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
+
+import com.google.common.collect.Lists;
 
 /**
  * A simple UDF that remove nulls from a list.
@@ -44,7 +45,7 @@ public class ArrayNullsRemoverGenericUDF extends GenericUDF {
     List result = Lists.newArrayList();
     for (Object oElement : list) {
       Object stdObject = ObjectInspectorUtils.copyToStandardJavaObject(oElement, primitiveObjectInspector);
-      if (stdObject != null && !((String)stdObject).trim().isEmpty()) {
+      if (stdObject != null && !((String) stdObject).trim().isEmpty()) {
         result.add(stdObject);
       }
     }

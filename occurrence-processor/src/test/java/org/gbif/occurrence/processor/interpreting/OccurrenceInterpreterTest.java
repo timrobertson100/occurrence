@@ -1,6 +1,11 @@
 package org.gbif.occurrence.processor.interpreting;
 
-import com.google.common.collect.Lists;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.UUID;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.model.registry.Dataset;
@@ -13,20 +18,15 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.occurrence.processor.guice.OccurrenceProcessorModule;
 import org.gbif.occurrence.processor.guice.ProcessorConfiguration;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
-
-import java.net.URI;
-import java.util.UUID;
-
-import com.google.common.collect.Sets;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class OccurrenceInterpreterTest {
 
@@ -34,9 +34,10 @@ public class OccurrenceInterpreterTest {
 
     private ProcessorConfiguration cfg;
 
-    public OccurrenceProcessorMockModule(ProcessorConfiguration cfg){
+    public OccurrenceProcessorMockModule(ProcessorConfiguration cfg) {
       this.cfg = cfg;
     }
+
     @Override
     protected void configure() {
       Organization organizationMock = new Organization();
@@ -48,8 +49,8 @@ public class OccurrenceInterpreterTest {
       mockDataset.setInstallationKey(UUID.randomUUID());
       mockDataset.setLicense(License.CC_BY_4_0);
       DatasetInfoInterpreter datasetInfoInterpreterMock = Mockito.mock(DatasetInfoInterpreter.class);
-      Mockito.when(datasetInfoInterpreterMock.getDatasetData(Mockito.anyObject())).thenReturn(
-              new DatasetInfoInterpreter.DatasetCacheData(mockDataset, Lists.newArrayList(), organizationMock));
+      Mockito.when(datasetInfoInterpreterMock.getDatasetData(Mockito.anyObject()))
+          .thenReturn(new DatasetInfoInterpreter.DatasetCacheData(mockDataset, Lists.newArrayList(), organizationMock));
       bind(DatasetInfoInterpreter.class).toInstance(datasetInfoInterpreterMock);
       install(new OccurrenceProcessorModule(cfg));
     }
@@ -74,9 +75,7 @@ public class OccurrenceInterpreterTest {
     verbatimOccurrence.setCrawlId(8);
     OccurrenceInterpretationResult result = occurrenceInterpreter.interpret(verbatimOccurrence, null);
     assertTrue(result.getUpdated().getIssues().containsAll(Sets.newHashSet(OccurrenceIssue.GEODETIC_DATUM_ASSUMED_WGS84,
-                                                                  OccurrenceIssue.COUNTRY_DERIVED_FROM_COORDINATES,
-                                                                  OccurrenceIssue.TAXON_MATCH_NONE,
-                                                                  OccurrenceIssue.BASIS_OF_RECORD_INVALID)));
+        OccurrenceIssue.COUNTRY_DERIVED_FROM_COORDINATES, OccurrenceIssue.TAXON_MATCH_NONE, OccurrenceIssue.BASIS_OF_RECORD_INVALID)));
     assertEquals(8, result.getUpdated().getCrawlId().intValue());
   }
 
@@ -126,8 +125,8 @@ public class OccurrenceInterpreterTest {
     OccurrenceInterpretationResult result = occurrenceInterpreter.interpret(v, null);
 
     Occurrence o = result.getUpdated();
-    assertEquals(7598904, (int)o.getTaxonKey());
-    assertEquals(7479242, (int)o.getFamilyKey());
+    assertEquals(7598904, (int) o.getTaxonKey());
+    assertEquals(7479242, (int) o.getFamilyKey());
   }
 
 }

@@ -1,10 +1,10 @@
 package org.gbif.occurrence.ws.client.mock;
 
 
-import org.gbif.ws.server.guice.GbifServletListener;
-
 import java.util.List;
 import java.util.Properties;
+
+import org.gbif.ws.server.guice.GbifServletListener;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Module;

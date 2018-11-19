@@ -1,24 +1,26 @@
 package org.gbif.occurrence.processor.zookeeper;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
 
-import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.RetryNTimes;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.inject.Singleton;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
 
 /**
  * A connector to Zookeeper that provides convenience methods for incrementing and reading counts.
@@ -33,18 +35,16 @@ public class ZookeeperConnector {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZookeeperConnector.class);
 
-  private final Timer addTimer =
-    Metrics.newTimer(ZookeeperConnector.class, "counter add time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-  private final Timer incrementTimer =
-    Metrics.newTimer(ZookeeperConnector.class, "dal inc time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+  private final Timer addTimer = Metrics.newTimer(ZookeeperConnector.class, "counter add time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+  private final Timer incrementTimer = Metrics.newTimer(ZookeeperConnector.class, "dal inc time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
   private final BatchingDalWrapper dalWrapper;
   private static final Set<String> ENSURED_PATHS = Collections.synchronizedSet(new HashSet<String>());
 
 
   /**
-   * Builds the connector with the given curator. Note that if the curator is not started before being passed in it
-   * will be started here.
+   * Builds the connector with the given curator. Note that if the curator is not started before being
+   * passed in it will be started here.
    *
    * @param curator the CuratorFramework providing underlying connections to zookeeper
    */
@@ -115,16 +115,14 @@ public class ZookeeperConnector {
   }
 
   public enum CounterName {
-    FRAGMENT_RECEIVED("/fragmentsReceived"),
-    RAW_OCCURRENCE_PERSISTED_NEW("/rawOccurrencesPersisted/new"),
-    RAW_OCCURRENCE_PERSISTED_UPDATED("/rawOccurrencesPersisted/updated"),
-    RAW_OCCURRENCE_PERSISTED_UNCHANGED("/rawOccurrencesPersisted/unchanged"),
-    RAW_OCCURRENCE_PERSISTED_ERROR("/rawOccurrencesPersisted/error"),
-    FRAGMENT_PROCESSED("/fragmentsProcessed"),
-    VERBATIM_OCCURRENCE_PERSISTED_SUCCESS("/verbatimOccurrencesPersisted/successful"),
-    VERBATIM_OCCURRENCE_PERSISTED_ERROR("/verbatimOccurrencesPersisted/error"),
-    INTERPRETED_OCCURRENCE_PERSISTED_SUCCESS("/interpretedOccurrencesPersisted/successful"),
-    INTERPRETED_OCCURRENCE_PERSISTED_ERROR("/interpretedOccurrencesPersisted/error");
+    FRAGMENT_RECEIVED("/fragmentsReceived"), RAW_OCCURRENCE_PERSISTED_NEW("/rawOccurrencesPersisted/new"), RAW_OCCURRENCE_PERSISTED_UPDATED(
+        "/rawOccurrencesPersisted/updated"), RAW_OCCURRENCE_PERSISTED_UNCHANGED(
+            "/rawOccurrencesPersisted/unchanged"), RAW_OCCURRENCE_PERSISTED_ERROR("/rawOccurrencesPersisted/error"), FRAGMENT_PROCESSED(
+                "/fragmentsProcessed"), VERBATIM_OCCURRENCE_PERSISTED_SUCCESS(
+                    "/verbatimOccurrencesPersisted/successful"), VERBATIM_OCCURRENCE_PERSISTED_ERROR(
+                        "/verbatimOccurrencesPersisted/error"), INTERPRETED_OCCURRENCE_PERSISTED_SUCCESS(
+                            "/interpretedOccurrencesPersisted/successful"), INTERPRETED_OCCURRENCE_PERSISTED_ERROR(
+                                "/interpretedOccurrencesPersisted/error");
 
     private final String path;
 

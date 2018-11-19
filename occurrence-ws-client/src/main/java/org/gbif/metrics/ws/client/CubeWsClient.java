@@ -1,15 +1,15 @@
 package org.gbif.metrics.ws.client;
 
+import java.util.List;
+import java.util.Map.Entry;
+
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.gbif.api.model.metrics.cube.Dimension;
 import org.gbif.api.model.metrics.cube.ReadBuilder;
 import org.gbif.api.model.metrics.cube.Rollup;
 import org.gbif.api.service.metrics.CubeService;
 import org.gbif.ws.client.BaseWsClient;
-
-import java.util.List;
-import java.util.Map.Entry;
-
-import javax.ws.rs.core.MultivaluedMap;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -22,8 +22,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  */
 public class CubeWsClient extends BaseWsClient implements CubeService {
 
-  private static final GenericType<List<Rollup>> GENERIC_TYPE = new GenericType<List<Rollup>>() {
-  };
+  private static final GenericType<List<Rollup>> GENERIC_TYPE = new GenericType<List<Rollup>>() {};
   private static final String OCCURRENCE_COUNT_PATH = "occurrence/count";
   private static final String OCCURRENCE_SCHEMA_PATH = "occurrence/count/schema";
 

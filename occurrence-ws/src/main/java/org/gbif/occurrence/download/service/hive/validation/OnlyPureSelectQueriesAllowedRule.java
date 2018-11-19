@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.calcite.sql.SqlKind;
 import org.gbif.occurrence.download.service.hive.validation.Query.Issue;
 
@@ -14,12 +15,10 @@ import org.gbif.occurrence.download.service.hive.validation.Query.Issue;
  *
  */
 public class OnlyPureSelectQueriesAllowedRule implements Rule {
-  
-  private static final Set<SqlKind> NOT_ALLOWED_KINDS = Stream.of(SqlKind.DML.stream(),
-                                                                  SqlKind.SET_QUERY.stream(),
-                                                                  Stream.of(SqlKind.JOIN, SqlKind.AS))
-                                                        .flatMap(Function.identity())
-                                                        .collect(Collectors.toSet());
+
+  private static final Set<SqlKind> NOT_ALLOWED_KINDS =
+      Stream.of(SqlKind.DML.stream(), SqlKind.SET_QUERY.stream(), Stream.of(SqlKind.JOIN, SqlKind.AS)).flatMap(Function.identity())
+          .collect(Collectors.toSet());
 
   @Override
   public RuleContext apply(QueryContext context) {

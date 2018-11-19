@@ -1,5 +1,17 @@
 package org.gbif.occurrence.persistence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.occurrence.common.config.OccHBaseConfiguration;
 import org.gbif.occurrence.common.identifier.HolyTriplet;
@@ -14,24 +26,12 @@ import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
 import org.gbif.occurrence.persistence.hbase.Columns;
 import org.gbif.occurrence.persistence.keygen.HBaseLockingKeyService;
 import org.gbif.occurrence.persistence.keygen.KeyPersistenceService;
-
-import java.util.Iterator;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.collect.Sets;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import com.google.common.collect.Sets;
 
 public class DatasetDeletionServiceImplTest {
 
@@ -79,10 +79,9 @@ public class DatasetDeletionServiceImplTest {
     TEST_UTIL.truncateTable(LOOKUP_TABLE);
     TEST_UTIL.truncateTable(COUNTER_TABLE);
 
-    KeyPersistenceService<Integer> keyService =  new HBaseLockingKeyService(CFG, connection);
+    KeyPersistenceService<Integer> keyService = new HBaseLockingKeyService(CFG, connection);
     occurrenceKeyService = new OccurrenceKeyPersistenceServiceImpl(keyService);
-    FragmentPersistenceService fragmentService =
-      new FragmentPersistenceServiceImpl(CFG, connection, occurrenceKeyService);
+    FragmentPersistenceService fragmentService = new FragmentPersistenceServiceImpl(CFG, connection, occurrenceKeyService);
     occurrenceService = new OccurrencePersistenceServiceImpl(CFG, connection);
     deletionService = new DatasetDeletionServiceImpl(occurrenceService, occurrenceKeyService);
 
@@ -111,7 +110,7 @@ public class DatasetDeletionServiceImplTest {
   @Test
   public void testDatasetKeyExists() {
     Iterator<Integer> iterator =
-      occurrenceService.getKeysByColumn(Bytes.toBytes(GOOD_DATASET_KEY.toString()), Columns.column(GbifTerm.datasetKey));
+        occurrenceService.getKeysByColumn(Bytes.toBytes(GOOD_DATASET_KEY.toString()), Columns.column(GbifTerm.datasetKey));
     int count = 0;
     while (iterator.hasNext()) {
       iterator.next();
@@ -136,7 +135,7 @@ public class DatasetDeletionServiceImplTest {
   public void testDatasetKeyDoesntExist() {
     UUID datasetKey = UUID.randomUUID();
     Iterator<Integer> iterator =
-      occurrenceService.getKeysByColumn(Bytes.toBytes(datasetKey.toString()), Columns.column(GbifTerm.datasetKey));
+        occurrenceService.getKeysByColumn(Bytes.toBytes(datasetKey.toString()), Columns.column(GbifTerm.datasetKey));
     assertFalse(iterator.hasNext());
     deletionService.deleteDataset(datasetKey);
 

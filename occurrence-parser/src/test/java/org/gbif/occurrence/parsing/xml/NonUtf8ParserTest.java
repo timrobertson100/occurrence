@@ -1,13 +1,12 @@
 package org.gbif.occurrence.parsing.xml;
 
-import org.gbif.occurrence.parsing.RawXmlOccurrence;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.List;
 
+import org.gbif.occurrence.parsing.RawXmlOccurrence;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class NonUtf8ParserTest extends ParserTestCase {
 

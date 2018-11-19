@@ -15,22 +15,20 @@ import com.sun.jersey.api.client.WebResource;
 
 
 /**
- * A cache loader that will call a webservice, falling back into a retry mechanism should any
- * errors occur in the web service call.  Developers are urged to consider carefully their use
- * before adopting this approach.  This is particularly suitable for operations such as batch
- * processing, where one knows the client will be making a large number of identical web service
- * calls in a short space of time, and changes during that time are not of high importance.
- * Note that {@link WebResource} is suitable as the key
- * since it uses {@link URI} and not {@link URL} which the JVM does not try to resolve at runtime.
- * Construction is forced through static factories to ensure that generics are handled correctly,
- * removing the need for casting at use.
- * The following illustrates the intended use of this class:
+ * A cache loader that will call a webservice, falling back into a retry mechanism should any errors
+ * occur in the web service call. Developers are urged to consider carefully their use before
+ * adopting this approach. This is particularly suitable for operations such as batch processing,
+ * where one knows the client will be making a large number of identical web service calls in a
+ * short space of time, and changes during that time are not of high importance. Note that
+ * {@link WebResource} is suitable as the key since it uses {@link URI} and not {@link URL} which
+ * the JVM does not try to resolve at runtime. Construction is forced through static factories to
+ * ensure that generics are handled correctly, removing the need for casting at use. The following
+ * illustrates the intended use of this class:
+ * 
  * <pre>
- *   LoadingCache<WebResource, NameUsageMatch> cache = CacheBuilder.newBuilder()
- *     .maximumSize(1000)
- *     .expireAfterAccess(1, TimeUnit.MINUTES)
+ * LoadingCache<WebResource, NameUsageMatch> cache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterAccess(1, TimeUnit.MINUTES)
  *     .build(RetryingWebserviceClient.newInstance(NameUsageMatch.class, NUM_RETRIES, RETRY_PERIOD_MSEC));
- *   NameUsageMatch lookup = cache.get(RESOURCE.queryParams(queryParams));
+ * NameUsageMatch lookup = cache.get(RESOURCE.queryParams(queryParams));
  * </pre>
  *
  * TODO: this is a copy from occurrence-store - move to somewhere common
@@ -46,8 +44,8 @@ public class RetryingWebserviceClient<T> extends CacheLoader<WebResource, T> {
   public static final int DEFAULT_DELAY_MSECS = 0;
 
   /**
-   * Creates a new instance using the default configuration {@link #DEFAULT_NUMBER_OF_ATTEMPTS}
-   * and {@link #DEFAULT_DELAY_MSECS}.
+   * Creates a new instance using the default configuration {@link #DEFAULT_NUMBER_OF_ATTEMPTS} and
+   * {@link #DEFAULT_DELAY_MSECS}.
    *
    * @param type Of resource to be returned by the web service
    *
@@ -60,9 +58,9 @@ public class RetryingWebserviceClient<T> extends CacheLoader<WebResource, T> {
   /**
    * Creates a new instance using the provided configuration.
    *
-   * @param type             Of resource to be returned by the web service
+   * @param type Of resource to be returned by the web service
    * @param numberOfAttempts Which must be 1 or more
-   * @param retryDelayMsec   Which must be 0 or more
+   * @param retryDelayMsec Which must be 0 or more
    *
    * @return A cacheloader suitable for using in a Google {@link CacheBuilder}
    */
@@ -71,11 +69,11 @@ public class RetryingWebserviceClient<T> extends CacheLoader<WebResource, T> {
   }
 
   /**
-   * Creates a new instance using the default configuration {@link #DEFAULT_NUMBER_OF_ATTEMPTS}
-   * and {@link #DEFAULT_DELAY_MSECS}.
-   * This allows implementation to use the likes of:
+   * Creates a new instance using the default configuration {@link #DEFAULT_NUMBER_OF_ATTEMPTS} and
+   * {@link #DEFAULT_DELAY_MSECS}. This allows implementation to use the likes of:
+   * 
    * <pre>
-   *   new GenericType<PagingResponse<Dataset>>() {};
+   * new GenericType<PagingResponse<Dataset>>() {};
    * </pre>
    *
    * @param genericType Of the response object
@@ -87,15 +85,16 @@ public class RetryingWebserviceClient<T> extends CacheLoader<WebResource, T> {
   }
 
   /**
-   * Creates a new instance using the provided configuratio, which supports the generic typing of the response object.
-   * This allows implementation to use the likes of:
+   * Creates a new instance using the provided configuratio, which supports the generic typing of the
+   * response object. This allows implementation to use the likes of:
+   * 
    * <pre>
-   *   new GenericType<PagingResponse<Dataset>>() {};
+   * new GenericType<PagingResponse<Dataset>>() {};
    * </pre>
    *
-   * @param genericType      Of the response object
+   * @param genericType Of the response object
    * @param numberOfAttempts Which must be 1 or more
-   * @param retryDelayMsec   Which must be 0 or more
+   * @param retryDelayMsec Which must be 0 or more
    *
    * @return A cacheloader suitable for using in a Google {@link CacheBuilder}
    */

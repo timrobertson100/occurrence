@@ -7,7 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.inject.Inject;
+
 import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
+
 import com.google.common.base.Throwables;
 
 /**
@@ -120,7 +123,7 @@ public class SpeciesListDownloadAggregator implements DownloadAggregator {
       throw Throwables.propagate(e);
     }
   }
-  
+
   /**
    * Persist download license that was assigned to the occurrence download.
    */

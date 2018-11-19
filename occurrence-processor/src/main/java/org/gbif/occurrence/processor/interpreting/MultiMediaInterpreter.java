@@ -1,5 +1,14 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import static org.gbif.common.parsers.date.TemporalAccessorUtils.toDate;
+
+import java.net.URI;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAccessor;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.gbif.api.model.common.MediaObject;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
@@ -16,19 +25,10 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.Terms;
 
-import java.net.URI;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAccessor;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Range;
-
-import static org.gbif.common.parsers.date.TemporalAccessorUtils.toDate;
 
 /**
  * Interprets multi media extension records.
@@ -38,20 +38,21 @@ public class MultiMediaInterpreter {
   private static final MediaParser MEDIA_PARSER = MediaParser.getInstance();
   private static final LicenseUriParser LICENSE_URI_PARSER = LicenseUriParser.getInstance();
 
-  // Order is important in case more than one extension is provided. The order will define the precedence.
-  private static final Set<Extension> SUPPORTED_MEDIA_EXTENSIONS = ImmutableSet.of(
-          Extension.MULTIMEDIA, Extension.AUDUBON, Extension.IMAGE);
+  // Order is important in case more than one extension is provided. The order will define the
+  // precedence.
+  private static final Set<Extension> SUPPORTED_MEDIA_EXTENSIONS =
+      ImmutableSet.of(Extension.MULTIMEDIA, Extension.AUDUBON, Extension.IMAGE);
 
   /**
    * Private constructor.
    */
   private MultiMediaInterpreter() {
-    //hidden constructor
+    // hidden constructor
   }
 
   public static void interpretMedia(VerbatimOccurrence verbatim, Occurrence occ) {
 
-    //the order is important since we will keep the first object that appears for each URI
+    // the order is important since we will keep the first object that appears for each URI
     List<MediaObject> mediaList = Lists.newLinkedList();
     List<URI> mediaUri = Lists.newLinkedList();
 
@@ -59,11 +60,10 @@ public class MultiMediaInterpreter {
     final Extension mediaExt = getMultimediaExtension(verbatim.getExtensions().keySet());
     if (mediaExt != null) {
       for (Map<Term, String> rec : verbatim.getExtensions().get(mediaExt)) {
-        //For AUDUBON, we use accessURI over identifier
-        //TODO handle AUDUBON in its own method
+        // For AUDUBON, we use accessURI over identifier
+        // TODO handle AUDUBON in its own method
         URI uri = UrlParser.parse(Terms.getValueOfFirst(rec, AcTerm.accessURI, DcTerm.identifier));
-        URI link = UrlParser.parse(Terms.getValueOfFirst(rec, DcTerm.references, AcTerm.furtherInformationURL,
-                AcTerm.attributionLinkURL));
+        URI link = UrlParser.parse(Terms.getValueOfFirst(rec, DcTerm.references, AcTerm.furtherInformationURL, AcTerm.attributionLinkURL));
         // link or media uri must exist
         if (uri != null || link != null) {
           MediaObject m = new MediaObject();
@@ -82,7 +82,7 @@ public class MultiMediaInterpreter {
           if (rec.containsKey(DcTerm.created)) {
             Range<LocalDate> validRecordedDateRange = Range.closed(TemporalInterpreter.MIN_LOCAL_DATE, LocalDate.now());
             OccurrenceParseResult<TemporalAccessor> parsed = TemporalInterpreter.interpretLocalDate(rec.get(DcTerm.created),
-                    validRecordedDateRange, OccurrenceIssue.MULTIMEDIA_DATE_INVALID);
+                validRecordedDateRange, OccurrenceIssue.MULTIMEDIA_DATE_INVALID);
             m.setCreated(toDate(parsed.getPayload()));
             occ.getIssues().addAll(parsed.getIssues());
           }
@@ -103,7 +103,7 @@ public class MultiMediaInterpreter {
           occ.getIssues().add(OccurrenceIssue.MULTIMEDIA_URI_INVALID);
         } else {
           // only try to build the object if we don't already have it from the extension
-          if(!mediaUri.contains(uri)) {
+          if (!mediaUri.contains(uri)) {
             MediaObject m = new MediaObject();
             m.setIdentifier(uri);
             MEDIA_PARSER.detectType(m);
@@ -123,9 +123,9 @@ public class MultiMediaInterpreter {
    * @param recordExtension
    * @return First media Extension found or null if not found
    */
-  private static Extension getMultimediaExtension(Set<Extension> recordExtension){
-    for(Extension ext: SUPPORTED_MEDIA_EXTENSIONS){
-      if(recordExtension.contains(ext)){
+  private static Extension getMultimediaExtension(Set<Extension> recordExtension) {
+    for (Extension ext : SUPPORTED_MEDIA_EXTENSIONS) {
+      if (recordExtension.contains(ext)) {
         return ext;
       }
     }
@@ -134,16 +134,18 @@ public class MultiMediaInterpreter {
 
   /**
    * We can get file uris or weblinks. Prefer file URIs as they clearly identify a single image
+   * 
    * @param mediaObject
    * @return
    */
-  private static URI getPreferredURI(MediaObject mediaObject){
+  private static URI getPreferredURI(MediaObject mediaObject) {
     return mediaObject.getIdentifier() != null ? mediaObject.getIdentifier() : mediaObject.getReferences();
   }
 
   /**
-   * Merges media records if the same image URL or link is given several times.
-   * Remove any media that has not either a file or webpage uri.
+   * Merges media records if the same image URL or link is given several times. Remove any media that
+   * has not either a file or webpage uri.
+   * 
    * @return a new list
    */
   private static List<MediaObject> deduplicateMedia(List<MediaObject> mediaList) {
@@ -162,7 +164,9 @@ public class MultiMediaInterpreter {
   }
 
   /**
-   * Parse a license into a machine-readable URI if possible, but otherwise retain the verbatim license value.
+   * Parse a license into a machine-readable URI if possible, but otherwise retain the verbatim
+   * license value.
+   * 
    * @param value The verbatim license
    * @return A parsed URI (as a String) or else the verbatim value
    */

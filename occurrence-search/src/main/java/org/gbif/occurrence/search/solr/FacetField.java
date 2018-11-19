@@ -1,17 +1,19 @@
 package org.gbif.occurrence.search.solr;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation that defines a faceted field.
- * The field corresponds to the name of it in the index data store or in the model object.
- * The name is the actual name of the facet, this field is used to naming the facet in consistent way without
- * dependencies of the field name. The intended use of name is that it should contain values coming from literal names
- * of a enumerated type (e.g: Enum.name()).
+ * Annotation that defines a faceted field. The field corresponds to the name of it in the index
+ * data store or in the model object. The name is the actual name of the facet, this field is used
+ * to naming the facet in consistent way without dependencies of the field name. The intended use of
+ * name is that it should contain values coming from literal names of a enumerated type (e.g:
+ * Enum.name()).
  *
- * moved from common-search, see: https://github.com/gbif/common-search/commit/c9529087d5b34228b045f30323901074218c5d90
+ * moved from common-search, see:
+ * https://github.com/gbif/common-search/commit/c9529087d5b34228b045f30323901074218c5d90
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -21,15 +23,15 @@ public @interface FacetField {
    * Valid sort orders.
    */
   public enum SortOrder {
-    /**
-     * Sort the constraints by count (highest count first).
-     */
-    COUNT,
-    /**
-     * Sorted in index order (lexicographic by indexed term).
-     * For terms in the ascii range, this will be alphabetically sorted.
-     */
-    INDEX
+  /**
+   * Sort the constraints by count (highest count first).
+   */
+  COUNT,
+  /**
+   * Sorted in index order (lexicographic by indexed term). For terms in the ascii range, this will be
+   * alphabetically sorted.
+   */
+  INDEX
   }
 
   /**
@@ -38,20 +40,20 @@ public @interface FacetField {
   public enum Method {
 
     /**
-     * Enumerates all terms in a field, calculating the set intersection of documents that match the term with documents
-     * that match the query.
+     * Enumerates all terms in a field, calculating the set intersection of documents that match the
+     * term with documents that match the query.
      */
     ENUM,
 
     /**
-     * The facet counts are calculated by iterating over documents that match the query and summing the terms that
-     * appear in each document.
+     * The facet counts are calculated by iterating over documents that match the query and summing the
+     * terms that appear in each document.
      */
     FIELD_CACHE,
 
     /**
-     * Works the same as FIELD_CACHE except the underlying cache data structure is built for each segment of the index
-     * individually.
+     * Works the same as FIELD_CACHE except the underlying cache data structure is built for each
+     * segment of the index individually.
      */
     FIELD_CACHE_SEGMENT
   }

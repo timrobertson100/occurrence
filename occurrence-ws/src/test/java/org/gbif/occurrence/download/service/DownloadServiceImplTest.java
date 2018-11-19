@@ -9,10 +9,12 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
 import org.gbif.api.model.common.paging.Pageable;
@@ -36,6 +38,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -67,7 +70,7 @@ public class DownloadServiceImplTest {
     downloadLimitsService = mock(DownloadLimitsService.class);
     when(downloadLimitsService.isInDownloadLimits(any(String.class))).thenReturn(true);
     requestService =
-      new DownloadRequestServiceImpl(oozieClient, props, "", "", downloadService, mock(DownloadEmailUtils.class), downloadLimitsService);
+        new DownloadRequestServiceImpl(oozieClient, props, "", "", downloadService, mock(DownloadEmailUtils.class), downloadLimitsService);
   }
 
 
@@ -105,21 +108,21 @@ public class DownloadServiceImplTest {
     allDownloads.add(job1);
     allDownloads.add(job2);
     // always get 3 job infos until we hit an offset of 100
-    when(downloadService.listByUser(any(String.class), any(Pageable.class), Matchers.anySetOf(Download.Status.class))).thenReturn(
-      new PagingResponse<Download>(0L, 0, 0L, emptyDownloads));
-    when(downloadService.listByUser(eq("peter"), any(Pageable.class), Matchers.anySetOf(Download.Status.class))).thenReturn(
-      new PagingResponse<Download>(0L, peterDownloads.size(), new Long(peterDownloads.size()), peterDownloads));
-    when(downloadService.listByUser(eq("karl"), any(Pageable.class), Matchers.anySetOf(Download.Status.class))).thenReturn(
-      new PagingResponse<Download>(0L, peterDownloads.size(), new Long(peterDownloads.size()), karlDownloads));
-    when(downloadService.list(any(Pageable.class), Matchers.anySetOf(Download.Status.class))).thenReturn(
-      new PagingResponse<Download>(0L, allDownloads.size(), new Long(allDownloads.size()), allDownloads));
+    when(downloadService.listByUser(any(String.class), any(Pageable.class), Matchers.anySetOf(Download.Status.class)))
+        .thenReturn(new PagingResponse<Download>(0L, 0, 0L, emptyDownloads));
+    when(downloadService.listByUser(eq("peter"), any(Pageable.class), Matchers.anySetOf(Download.Status.class)))
+        .thenReturn(new PagingResponse<Download>(0L, peterDownloads.size(), new Long(peterDownloads.size()), peterDownloads));
+    when(downloadService.listByUser(eq("karl"), any(Pageable.class), Matchers.anySetOf(Download.Status.class)))
+        .thenReturn(new PagingResponse<Download>(0L, peterDownloads.size(), new Long(peterDownloads.size()), karlDownloads));
+    when(downloadService.list(any(Pageable.class), Matchers.anySetOf(Download.Status.class)))
+        .thenReturn(new PagingResponse<Download>(0L, allDownloads.size(), new Long(allDownloads.size()), allDownloads));
     // mock get details
     when(downloadService.get(eq("1-oozie-oozi-W"))).thenReturn(job1);
     when(downloadService.get(eq("2-oozie-oozi-W"))).thenReturn(job2);
 
     // test
     PagingRequest req = new PagingRequest(0, 2);
-    PagingResponse<Download> x = downloadService.list(req,null);
+    PagingResponse<Download> x = downloadService.list(req, null);
     assertEquals(2, x.getResults().size());
 
     x = downloadService.listByUser("harald", req, null);
@@ -136,7 +139,7 @@ public class DownloadServiceImplTest {
   public void testNotification() throws OozieClientException {
     when(oozieClient.run(any(Properties.class))).thenReturn(JOB_ID);
     DownloadRequest dl =
-      new PredicateDownloadRequest(DEFAULT_TEST_PREDICATE, "markus", Lists.newArrayList(TEST_EMAIL), true, DownloadFormat.DWCA);
+        new PredicateDownloadRequest(DEFAULT_TEST_PREDICATE, "markus", Lists.newArrayList(TEST_EMAIL), true, DownloadFormat.DWCA);
 
     String downloadKey = requestService.create(dl);
     assertThat(downloadKey, equalTo(DOWNLOAD_ID));

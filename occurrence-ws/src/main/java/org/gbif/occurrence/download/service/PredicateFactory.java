@@ -1,5 +1,10 @@
 package org.gbif.occurrence.download.service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.gbif.api.model.occurrence.predicate.ConjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.DisjunctionPredicate;
 import org.gbif.api.model.occurrence.predicate.EqualsPredicate;
@@ -12,21 +17,14 @@ import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.util.SearchTypeValidator;
 import org.gbif.api.util.VocabularyUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 
 /**
- * Utility for dealing with the decoding of the request parameters to the
- * query object to pass into the service.
- * This parses the URL params which should be from something like the following
- * into a predicate suitable for launching a download service.
- * It understands multi valued parameters and interprets the range format *,100
- * {@literal TAXON_KEY=12&ELEVATION=1000,2000
+ * Utility for dealing with the decoding of the request parameters to the query object to pass into
+ * the service. This parses the URL params which should be from something like the following into a
+ * predicate suitable for launching a download service. It understands multi valued parameters and
+ * interprets the range format *,100 {@literal TAXON_KEY=12&ELEVATION=1000,2000
  * (ELEVATION >= 1000 AND ELEVATION <= 1000)}
  */
 public class PredicateFactory {
@@ -37,19 +35,20 @@ public class PredicateFactory {
    * Making constructor private.
    */
   private PredicateFactory() {
-    //empty constructor
+    // empty constructor
   }
 
   /**
-   * Builds a full predicate filter from the parameters.
-   * In case no filters exist still return a predicate that matches anything.
+   * Builds a full predicate filter from the parameters. In case no filters exist still return a
+   * predicate that matches anything.
    *
    * @return always some predicate
    */
   public static Predicate build(Map<String, String[]> params) {
-    // predicates for different parameters. If multiple values for the same parameter exist these are in here already
+    // predicates for different parameters. If multiple values for the same parameter exist these are in
+    // here already
     List<Predicate> groupedByParam = Lists.newArrayList();
-    for (Map.Entry<String,String[]> p : params.entrySet()) {
+    for (Map.Entry<String, String[]> p : params.entrySet()) {
       // recognize valid params by enum name, ignore others
       OccurrenceSearchParameter param = toEnumParam(p.getKey());
       String[] values = p.getValue();
@@ -113,7 +112,8 @@ public class PredicateFactory {
   }
 
   /**
-   * Converts a value with an optional predicate prefix into a real predicate instance, defaulting to EQUALS.
+   * Converts a value with an optional predicate prefix into a real predicate instance, defaulting to
+   * EQUALS.
    */
   private static Predicate parsePredicate(OccurrenceSearchParameter param, String value) {
     // geometry filters are special
@@ -130,14 +130,12 @@ public class PredicateFactory {
         range = SearchTypeValidator.parseIntegerRange(value);
       } else if (Date.class.equals(param.type())) {
         range = SearchTypeValidator.parseDateRange(value);
-        // convert date instances back to strings, but keep the new precision which is now always up to the day!
-        range = SearchTypeValidator.buildRange(
-          range.hasLowerBound() ? toIsoDate((Date) range.lowerEndpoint()) : null,
-          range.hasUpperBound() ? toIsoDate((Date) range.upperEndpoint()) : null
-          );
+        // convert date instances back to strings, but keep the new precision which is now always up to the
+        // day!
+        range = SearchTypeValidator.buildRange(range.hasLowerBound() ? toIsoDate((Date) range.lowerEndpoint()) : null,
+            range.hasUpperBound() ? toIsoDate((Date) range.upperEndpoint()) : null);
       } else {
-        throw new IllegalArgumentException(
-          "Ranges are only supported for numeric or date parameter types but received " + param);
+        throw new IllegalArgumentException("Ranges are only supported for numeric or date parameter types but received " + param);
       }
 
 

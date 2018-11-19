@@ -1,15 +1,14 @@
 package org.gbif.occurrence.persistence.hbase;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.vocabulary.Extension;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.GbifTerm;
-
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -25,7 +24,7 @@ public class ColumnsTest {
     assertEquals("class", Columns.column(DwcTerm.class_));
     assertEquals("order", Columns.column(DwcTerm.order));
     assertEquals("kingdomKey", Columns.column(GbifTerm.kingdomKey));
-    //TODO: is this correct ???
+    // TODO: is this correct ???
     assertEquals("taxonKey", Columns.column(GbifTerm.taxonKey));
     assertEquals("v_occurrenceID", Columns.column(DwcTerm.occurrenceID));
     assertEquals("v_taxonID", Columns.column(DwcTerm.taxonID));

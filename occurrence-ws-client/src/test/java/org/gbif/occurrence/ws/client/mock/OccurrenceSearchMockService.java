@@ -1,16 +1,15 @@
 package org.gbif.occurrence.ws.client.mock;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.common.search.SearchResponse;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchParameter;
 import org.gbif.api.model.occurrence.search.OccurrenceSearchRequest;
 import org.gbif.api.service.occurrence.OccurrenceSearchService;
 import org.gbif.api.service.occurrence.OccurrenceService;
-
-import java.util.List;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.Min;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -33,7 +32,7 @@ public class OccurrenceSearchMockService implements OccurrenceSearchService {
       results.add(occurrenceService.get(i));
     }
     SearchResponse<Occurrence, OccurrenceSearchParameter> response =
-      new SearchResponse<Occurrence, OccurrenceSearchParameter>(0L, NUM_RESULTS, new Long(NUM_RESULTS), results, null);
+        new SearchResponse<Occurrence, OccurrenceSearchParameter>(0L, NUM_RESULTS, new Long(NUM_RESULTS), results, null);
     response.setResults(results);
     return response;
   }

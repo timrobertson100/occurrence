@@ -1,17 +1,17 @@
 package org.gbif.occurrence.download.file.common;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.gbif.common.search.solr.SolrConstants;
 import org.gbif.occurrence.download.file.DownloadFileWork;
 import org.gbif.occurrence.search.solr.OccurrenceSolrField;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
 
 /**
  * Executes a Solr query and applies a predicate to each result.
@@ -22,11 +22,13 @@ public class SolrQueryProcessor {
   private static final int LIMIT = 300;
 
   private static final String KEY_FIELD = OccurrenceSolrField.KEY.getFieldName();
+
   /**
    * Executes a query on the SolrServer parameter and applies the predicate to each result.
    *
-   * @param downloadFileWork it's used to determine how to page through the results and the Solr query to be used
-   * @param resultHandler    predicate that process each result, receives as parameter the occurrence key
+   * @param downloadFileWork it's used to determine how to page through the results and the Solr query
+   *        to be used
+   * @param resultHandler predicate that process each result, receives as parameter the occurrence key
    */
   public static void processQuery(DownloadFileWork downloadFileWork, Consumer<Integer> resultHandler) {
 
@@ -35,7 +37,8 @@ public class SolrQueryProcessor {
 
     // Creates a search request instance using the search request that comes in the fileJob
     SolrQuery solrQuery = createSolrQuery(downloadFileWork.getQuery());
-    //key is required since this runs in a distributed installations where the natural order can't be guaranteed
+    // key is required since this runs in a distributed installations where the natural order can't be
+    // guaranteed
     solrQuery.setSort(KEY_FIELD, SolrQuery.ORDER.desc);
 
     try {
@@ -45,9 +48,7 @@ public class SolrQueryProcessor {
         // Limit can't be greater than the maximum number of records assigned to this job
         solrQuery.setRows(recordCount + LIMIT > nrOfOutputRecords ? nrOfOutputRecords - recordCount : LIMIT);
         QueryResponse response = downloadFileWork.getSolrClient().query(solrQuery);
-        response.getResults().forEach(solrDocument ->
-          resultHandler.accept((Integer) solrDocument.getFieldValue(KEY_FIELD))
-        );
+        response.getResults().forEach(solrDocument -> resultHandler.accept((Integer) solrDocument.getFieldValue(KEY_FIELD)));
         recordCount += response.getResults().size();
       }
     } catch (SolrServerException | IOException e) {
@@ -71,6 +72,6 @@ public class SolrQueryProcessor {
    * Hidden constructor.
    */
   private SolrQueryProcessor() {
-    //empty constructor
+    // empty constructor
   }
 }

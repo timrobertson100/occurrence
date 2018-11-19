@@ -1,5 +1,14 @@
 package org.gbif.occurrence.cli.registry.sync;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.io.NullWritable;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.OrganizationService;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -12,10 +21,6 @@ import org.gbif.registry.ws.client.DatasetWsClient;
 import org.gbif.registry.ws.client.OrganizationWsClient;
 import org.gbif.ws.mixin.Mixins;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.sun.jersey.api.client.Client;
@@ -23,11 +28,6 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.client.apache.ApacheHttpClient;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.io.NullWritable;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.codehaus.jackson.map.DeserializationConfig;
 
 /**
  * Abstract class containing common logic for registry based Occurrence mapper
@@ -75,9 +75,8 @@ public class AbstractOccurrenceRegistryMapper extends TableMapper<ImmutableBytes
     occHBaseConfiguration.occTable = props.getProperty(PROP_OCCURRENCE_TABLE_NAME_KEY);
     occHBaseConfiguration.zkConnectionString = props.getProperty(PROP_ZK_CONNECTION_STRING_KEY);
 
-    Injector injector =
-            Guice.createInjector(new PostalServiceModule("sync", props),
-                    new OccurrencePersistenceModule(occHBaseConfiguration, context.getConfiguration()));
+    Injector injector = Guice.createInjector(new PostalServiceModule("sync", props),
+        new OccurrencePersistenceModule(occHBaseConfiguration, context.getConfiguration()));
     occurrencePersistenceService = injector.getInstance(OccurrencePersistenceService.class);
     messagePublisher = injector.getInstance(MessagePublisher.class);
   }
@@ -85,11 +84,12 @@ public class AbstractOccurrenceRegistryMapper extends TableMapper<ImmutableBytes
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
     if (messagePublisher != null) {
-      // wrapped to ensure we also close the httpClient if messagePublisher throws an exception (including runtime)
+      // wrapped to ensure we also close the httpClient if messagePublisher throws an exception (including
+      // runtime)
       try {
         messagePublisher.close();
+      } catch (Exception ignore) {
       }
-      catch (Exception ignore) {}
     }
 
     if (httpClient != null) {

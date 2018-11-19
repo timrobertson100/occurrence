@@ -1,16 +1,19 @@
 /*
- * Copyright 2012 Global Biodiversity Information Facility (GBIF)
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2012 Global Biodiversity Information Facility (GBIF) Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You
+ * may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ * the License for the specific language governing permissions and limitations under the License.
  */
 package org.gbif.occurrence.download.query;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.gbif.api.model.occurrence.predicate.CompoundPredicate;
 import org.gbif.api.model.occurrence.predicate.ConjunctionPredicate;
@@ -37,34 +40,28 @@ import org.gbif.dwc.terms.GbifInternalTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.common.HiveColumnsUtils;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * This class builds a WHERE clause for a Hive query from a {@link org.gbif.api.model.occurrence.predicate.Predicate}
- * object.
+ * This class builds a WHERE clause for a Hive query from a
+ * {@link org.gbif.api.model.occurrence.predicate.Predicate} object.
  * </p>
- * This is not thread-safe but one instance can be reused. It is package-local and should usually be accessed through
- * {@link org.gbif.api.service.occurrence.DownloadRequestService}. All {@code visit} methods have to be public for the
- * {@link Class#getMethod(String, Class[])} call to work. This is the primary reason for this class being
- * package-local.
+ * This is not thread-safe but one instance can be reused. It is package-local and should usually be
+ * accessed through {@link org.gbif.api.service.occurrence.DownloadRequestService}. All
+ * {@code visit} methods have to be public for the {@link Class#getMethod(String, Class[])} call to
+ * work. This is the primary reason for this class being package-local.
  * </p>
  * The only entry point into this class is the {@code getHiveQuery} method!
  */
-// TODO: We should check somewhere for the length of the string to avoid possible attacks/oom situations (OCC-35)
+// TODO: We should check somewhere for the length of the string to avoid possible attacks/oom
+// situations (OCC-35)
 public class HiveQueryVisitor {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveQueryVisitor.class);
@@ -84,78 +81,53 @@ public class HiveQueryVisitor {
   // where query to execute a select all
   private static final String ALL_QUERY = "true";
 
-  private static final String MEDIATYPE_CONTAINS_FMT = "array_contains(" +
-                                                       HiveColumnsUtils.getHiveColumn(GbifTerm.mediaType) + ",'%s')";
-  private static final String ISSUE_CONTAINS_FMT = "array_contains(" +
-                                                   HiveColumnsUtils.getHiveColumn(GbifTerm.issue) + ",'%s')";
+  private static final String MEDIATYPE_CONTAINS_FMT = "array_contains(" + HiveColumnsUtils.getHiveColumn(GbifTerm.mediaType) + ",'%s')";
+  private static final String ISSUE_CONTAINS_FMT = "array_contains(" + HiveColumnsUtils.getHiveColumn(GbifTerm.issue) + ",'%s')";
 
   private static final String HIVE_ARRAY_PRE = "ARRAY";
 
-  private static final List<GbifTerm> NUB_KEYS = ImmutableList.of(GbifTerm.taxonKey,
-                                                                  GbifTerm.kingdomKey,
-                                                                  GbifTerm.phylumKey,
-                                                                  GbifTerm.classKey,
-                                                                  GbifTerm.orderKey,
-                                                                  GbifTerm.familyKey,
-                                                                  GbifTerm.genusKey,
-                                                                  GbifTerm.subgenusKey,
-                                                                  GbifTerm.speciesKey);
+  private static final List<GbifTerm> NUB_KEYS = ImmutableList.of(GbifTerm.taxonKey, GbifTerm.kingdomKey, GbifTerm.phylumKey,
+      GbifTerm.classKey, GbifTerm.orderKey, GbifTerm.familyKey, GbifTerm.genusKey, GbifTerm.subgenusKey, GbifTerm.speciesKey);
 
   // parameter that map directly to Hive, boundingBox, coordinate and taxonKey are treated special !
-  private static final Map<OccurrenceSearchParameter, ? extends Term> PARAM_TO_TERM =
-    ImmutableMap.<OccurrenceSearchParameter, Term>builder()
-      .put(OccurrenceSearchParameter.DATASET_KEY, GbifTerm.datasetKey)
-      .put(OccurrenceSearchParameter.YEAR, DwcTerm.year)
-      .put(OccurrenceSearchParameter.MONTH, DwcTerm.month)
+  private static final Map<OccurrenceSearchParameter, ? extends Term> PARAM_TO_TERM = ImmutableMap
+      .<OccurrenceSearchParameter, Term>builder().put(OccurrenceSearchParameter.DATASET_KEY, GbifTerm.datasetKey)
+      .put(OccurrenceSearchParameter.YEAR, DwcTerm.year).put(OccurrenceSearchParameter.MONTH, DwcTerm.month)
       .put(OccurrenceSearchParameter.DECIMAL_LATITUDE, DwcTerm.decimalLatitude)
       .put(OccurrenceSearchParameter.DECIMAL_LONGITUDE, DwcTerm.decimalLongitude)
-      .put(OccurrenceSearchParameter.ELEVATION, GbifTerm.elevation)
-      .put(OccurrenceSearchParameter.DEPTH, GbifTerm.depth)
+      .put(OccurrenceSearchParameter.ELEVATION, GbifTerm.elevation).put(OccurrenceSearchParameter.DEPTH, GbifTerm.depth)
       .put(OccurrenceSearchParameter.INSTITUTION_CODE, DwcTerm.institutionCode)
       .put(OccurrenceSearchParameter.COLLECTION_CODE, DwcTerm.collectionCode)
       .put(OccurrenceSearchParameter.CATALOG_NUMBER, DwcTerm.catalogNumber)
       .put(OccurrenceSearchParameter.SCIENTIFIC_NAME, DwcTerm.scientificName)
-      .put(OccurrenceSearchParameter.OCCURRENCE_ID,
-           DwcTerm.occurrenceID).put(OccurrenceSearchParameter.ESTABLISHMENT_MEANS, DwcTerm.establishmentMeans)
+      .put(OccurrenceSearchParameter.OCCURRENCE_ID, DwcTerm.occurrenceID)
+      .put(OccurrenceSearchParameter.ESTABLISHMENT_MEANS, DwcTerm.establishmentMeans)
       // the following need some value transformation
       .put(OccurrenceSearchParameter.EVENT_DATE, DwcTerm.eventDate)
       .put(OccurrenceSearchParameter.LAST_INTERPRETED, GbifTerm.lastInterpreted)
-      .put(OccurrenceSearchParameter.BASIS_OF_RECORD, DwcTerm.basisOfRecord)
-      .put(OccurrenceSearchParameter.COUNTRY, DwcTerm.countryCode)
+      .put(OccurrenceSearchParameter.BASIS_OF_RECORD, DwcTerm.basisOfRecord).put(OccurrenceSearchParameter.COUNTRY, DwcTerm.countryCode)
       .put(OccurrenceSearchParameter.CONTINENT, DwcTerm.continent)
       .put(OccurrenceSearchParameter.PUBLISHING_COUNTRY, GbifTerm.publishingCountry)
-      .put(OccurrenceSearchParameter.RECORDED_BY, DwcTerm.recordedBy)
-      .put(OccurrenceSearchParameter.RECORD_NUMBER, DwcTerm.recordNumber)
-      .put(OccurrenceSearchParameter.TYPE_STATUS, DwcTerm.typeStatus)
-      .put(OccurrenceSearchParameter.HAS_COORDINATE, GbifTerm.hasCoordinate)
+      .put(OccurrenceSearchParameter.RECORDED_BY, DwcTerm.recordedBy).put(OccurrenceSearchParameter.RECORD_NUMBER, DwcTerm.recordNumber)
+      .put(OccurrenceSearchParameter.TYPE_STATUS, DwcTerm.typeStatus).put(OccurrenceSearchParameter.HAS_COORDINATE, GbifTerm.hasCoordinate)
       .put(OccurrenceSearchParameter.HAS_GEOSPATIAL_ISSUE, GbifTerm.hasGeospatialIssues)
-      .put(OccurrenceSearchParameter.MEDIA_TYPE, GbifTerm.mediaType)
-      .put(OccurrenceSearchParameter.ISSUE, GbifTerm.issue)
-      .put(OccurrenceSearchParameter.KINGDOM_KEY, GbifTerm.kingdomKey)
-      .put(OccurrenceSearchParameter.PHYLUM_KEY, GbifTerm.phylumKey)
-      .put(OccurrenceSearchParameter.CLASS_KEY, GbifTerm.classKey)
-      .put(OccurrenceSearchParameter.ORDER_KEY, GbifTerm.orderKey)
-      .put(OccurrenceSearchParameter.FAMILY_KEY, GbifTerm.familyKey)
-      .put(OccurrenceSearchParameter.GENUS_KEY, GbifTerm.genusKey)
-      .put(OccurrenceSearchParameter.SUBGENUS_KEY, GbifTerm.subgenusKey)
-      .put(OccurrenceSearchParameter.SPECIES_KEY, GbifTerm.speciesKey)
+      .put(OccurrenceSearchParameter.MEDIA_TYPE, GbifTerm.mediaType).put(OccurrenceSearchParameter.ISSUE, GbifTerm.issue)
+      .put(OccurrenceSearchParameter.KINGDOM_KEY, GbifTerm.kingdomKey).put(OccurrenceSearchParameter.PHYLUM_KEY, GbifTerm.phylumKey)
+      .put(OccurrenceSearchParameter.CLASS_KEY, GbifTerm.classKey).put(OccurrenceSearchParameter.ORDER_KEY, GbifTerm.orderKey)
+      .put(OccurrenceSearchParameter.FAMILY_KEY, GbifTerm.familyKey).put(OccurrenceSearchParameter.GENUS_KEY, GbifTerm.genusKey)
+      .put(OccurrenceSearchParameter.SUBGENUS_KEY, GbifTerm.subgenusKey).put(OccurrenceSearchParameter.SPECIES_KEY, GbifTerm.speciesKey)
       .put(OccurrenceSearchParameter.ACCEPTED_TAXON_KEY, GbifTerm.acceptedTaxonKey)
       .put(OccurrenceSearchParameter.TAXONOMIC_STATUS, DwcTerm.taxonomicStatus)
-      .put(OccurrenceSearchParameter.REPATRIATED, GbifTerm.repatriated)
-      .put(OccurrenceSearchParameter.ORGANISM_ID, DwcTerm.organismID)
-      .put(OccurrenceSearchParameter.LOCALITY, DwcTerm.locality)
-      .put(OccurrenceSearchParameter.STATE_PROVINCE, DwcTerm.stateProvince)
-      .put(OccurrenceSearchParameter.WATER_BODY, DwcTerm.waterBody)
-      .put(OccurrenceSearchParameter.PROTOCOL, GbifTerm.protocol)
+      .put(OccurrenceSearchParameter.REPATRIATED, GbifTerm.repatriated).put(OccurrenceSearchParameter.ORGANISM_ID, DwcTerm.organismID)
+      .put(OccurrenceSearchParameter.LOCALITY, DwcTerm.locality).put(OccurrenceSearchParameter.STATE_PROVINCE, DwcTerm.stateProvince)
+      .put(OccurrenceSearchParameter.WATER_BODY, DwcTerm.waterBody).put(OccurrenceSearchParameter.PROTOCOL, GbifTerm.protocol)
       .put(OccurrenceSearchParameter.LICENSE, DcTerm.license)
       .put(OccurrenceSearchParameter.PUBLISHING_ORG, GbifInternalTerm.publishingOrgKey)
       .put(OccurrenceSearchParameter.CRAWL_ID, GbifInternalTerm.crawlId)
       .put(OccurrenceSearchParameter.INSTALLATION_KEY, GbifInternalTerm.installationKey)
-      .put(OccurrenceSearchParameter.NETWORK_KEY, GbifInternalTerm.networkKey)
-      .put(OccurrenceSearchParameter.EVENT_ID, DwcTerm.eventID)
+      .put(OccurrenceSearchParameter.NETWORK_KEY, GbifInternalTerm.networkKey).put(OccurrenceSearchParameter.EVENT_ID, DwcTerm.eventID)
       .put(OccurrenceSearchParameter.PARENT_EVENT_ID, DwcTerm.parentEventID)
-      .put(OccurrenceSearchParameter.SAMPLING_PROTOCOL, DwcTerm.samplingProtocol)
-      .build();
+      .put(OccurrenceSearchParameter.SAMPLING_PROTOCOL, DwcTerm.samplingProtocol).build();
 
   private StringBuilder builder;
 
@@ -179,8 +151,9 @@ public class HiveQueryVisitor {
   }
 
   /**
-   * Converts a value to the form expected by Hive/Hbase based on the OccurrenceSearchParameter.
-   * Most values pass by unaltered. Quotes are added for values that need to be quoted, escaping any existing quotes.
+   * Converts a value to the form expected by Hive/Hbase based on the OccurrenceSearchParameter. Most
+   * values pass by unaltered. Quotes are added for values that need to be quoted, escaping any
+   * existing quotes.
    *
    * @param param the type of parameter defining the expected type
    * @param value the original query value
@@ -204,7 +177,7 @@ public class HiveQueryVisitor {
 
     } else {
       // quote value, escape existing quotes
-      String strVal =  '\'' + APOSTROPHE_MATCHER.replaceFrom(value, "\\\'") + '\'';
+      String strVal = '\'' + APOSTROPHE_MATCHER.replaceFrom(value, "\\\'") + '\'';
       if (String.class.isAssignableFrom(param.type()) && OccurrenceSearchParameter.GEOMETRY != param) {
         return toHiveLower(strVal);
       }
@@ -228,7 +201,8 @@ public class HiveQueryVisitor {
       hiveQuery = builder.toString();
     }
 
-    // Set to null to prevent old StringBuilders hanging around in case this class is reused somewhere else
+    // Set to null to prevent old StringBuilders hanging around in case this class is reused somewhere
+    // else
     builder = null;
     return hiveQuery;
   }
@@ -320,9 +294,9 @@ public class HiveQueryVisitor {
   }
 
   /**
-   * Builds a list of predicates joined by 'op' statements.
-   * The final statement will look like this:
+   * Builds a list of predicates joined by 'op' statements. The final statement will look like this:
    * <p/>
+   * 
    * <pre>
    * ((predicate) op (predicate) ... op (predicate))
    * </pre>
@@ -389,26 +363,24 @@ public class HiveQueryVisitor {
   }
 
   /**
-   * Converts a Date query into conjunction predicate.
-   * If the value has the forms 'yyyy'/'yyyy-MM' it's translated to:
-   * field >= firstDateOfYear/Month(value) and field <= lastDateOfYear/Month(value).
-   * If the value is a range it is translated to: field >= range.lower AND field <= range.upper.
+   * Converts a Date query into conjunction predicate. If the value has the forms 'yyyy'/'yyyy-MM'
+   * it's translated to: field >= firstDateOfYear/Month(value) and field <=
+   * lastDateOfYear/Month(value). If the value is a range it is translated to: field >= range.lower
+   * AND field <= range.upper.
    */
-  private static CompoundPredicate toDatePredicateQuery(OccurrenceSearchParameter key, String value,
-                                                 IsoDateFormat dateFormat) {
+  private static CompoundPredicate toDatePredicateQuery(OccurrenceSearchParameter key, String value, IsoDateFormat dateFormat) {
     Date lowerDate = IsoDateParsingUtils.parseDate(value);
     return toDateRangePredicate(Range.closed(lowerDate, IsoDateParsingUtils.toLastDayOf(lowerDate, dateFormat)), key);
   }
 
   /**
-   * Converts date range into a conjunction predicate with the form: field >= range.lower AND field <= range.upper.
+   * Converts date range into a conjunction predicate with the form: field >= range.lower AND field <=
+   * range.upper.
    */
   private static CompoundPredicate toDateRangePredicate(Range<Date> range, OccurrenceSearchParameter key) {
-    ImmutableList<Predicate> predicates = new ImmutableList.Builder<Predicate>().add(new GreaterThanOrEqualsPredicate(
-      key,
-      IsoDateFormat.FULL.getDateFormat().format(range.lowerEndpoint().getTime())))
-      .add(new LessThanOrEqualsPredicate(key, IsoDateFormat.FULL.getDateFormat().format(range.upperEndpoint())))
-      .build();
+    ImmutableList<Predicate> predicates = new ImmutableList.Builder<Predicate>()
+        .add(new GreaterThanOrEqualsPredicate(key, IsoDateFormat.FULL.getDateFormat().format(range.lowerEndpoint().getTime())))
+        .add(new LessThanOrEqualsPredicate(key, IsoDateFormat.FULL.getDateFormat().format(range.upperEndpoint()))).build();
     return new ConjunctionPredicate(predicates);
   }
 

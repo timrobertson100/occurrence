@@ -1,9 +1,10 @@
 package org.gbif.occurrence.persistence.hbase;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.hbase.util.ResultReader;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+
 import javax.annotation.Nullable;
 
 import org.apache.hadoop.hbase.TableName;
@@ -14,9 +15,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.hbase.util.ResultReader;
 
 /**
  * A convenience class that wraps an HBase table and provides typed get and put operations.
@@ -181,7 +181,8 @@ public class HBaseStore<T> {
   }
 
   /**
-   * Do an HBase checkAndPut - a put that will only be attempted if the checkColumn contains the expected checkValue.
+   * Do an HBase checkAndPut - a put that will only be attempted if the checkColumn contains the
+   * expected checkValue.
    *
    * @param key the primary key of the row
    * @param putColumn the column where the new value will be stored
@@ -193,8 +194,7 @@ public class HBaseStore<T> {
    *
    * @throws ServiceUnavailableException if there are errors when communicating with HBase
    */
-  public boolean checkAndPut(T key, String putColumn, byte[] putValue, String checkColumn, @Nullable byte[] checkValue,
-                             @Nullable Long ts) {
+  public boolean checkAndPut(T key, String putColumn, byte[] putValue, String checkColumn, @Nullable byte[] checkValue, @Nullable Long ts) {
     checkNotNull(key, KEY_CANT_BE_NULL_MSG);
     checkNotNull(putColumn, "putColumn can't be null");
     checkNotNull(putValue, "putValue can't be null");

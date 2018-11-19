@@ -1,5 +1,8 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import java.io.Serializable;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.Continent;
@@ -14,19 +17,16 @@ import org.gbif.common.parsers.geospatial.DoubleAccuracy;
 import org.gbif.common.parsers.geospatial.MeterRangeParser;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.occurrence.processor.interpreting.result.CoordinateResult;
-
-import java.io.Serializable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * A wrapper for the interpreting steps required to parse and validate location incl coordinates given as latitude and
- * longitude.
+ * A wrapper for the interpreting steps required to parse and validate location incl coordinates
+ * given as latitude and longitude.
  */
 public class LocationInterpreter implements Serializable {
 
@@ -62,7 +62,7 @@ public class LocationInterpreter implements Serializable {
     interpretDepth(verbatim, occ);
   }
 
-  //TODO: improve this method and put it into parsers!
+  // TODO: improve this method and put it into parsers!
   private static String cleanName(String x) {
     x = StringUtils.normalizeSpace(x).trim();
     // if we get all upper names, Capitalize them
@@ -73,12 +73,12 @@ public class LocationInterpreter implements Serializable {
   }
 
   /**
-   * Attempts to convert given country strings to a single country, verifying the all interpreted countries
-   * do not contradict.
+   * Attempts to convert given country strings to a single country, verifying the all interpreted
+   * countries do not contradict.
    *
    * @param country verbatim country strings, e.g. dwc:country or dwc:countryCode
    */
-  public OccurrenceParseResult<Country> interpretCountry(String ... country) {
+  public OccurrenceParseResult<Country> interpretCountry(String... country) {
     if (country == null) {
       return OccurrenceParseResult.fail();
     }
@@ -140,33 +140,31 @@ public class LocationInterpreter implements Serializable {
   }
 
   private Country interpretCountry(VerbatimOccurrence verbatim, Occurrence occ) {
-    OccurrenceParseResult<Country>
-      inter = interpretCountry(verbatim.getVerbatimField(DwcTerm.countryCode),
-      verbatim.getVerbatimField(DwcTerm.country));
+    OccurrenceParseResult<Country> inter =
+        interpretCountry(verbatim.getVerbatimField(DwcTerm.countryCode), verbatim.getVerbatimField(DwcTerm.country));
     occ.setCountry(inter.getPayload());
     occ.getIssues().addAll(inter.getIssues());
     return occ.getCountry();
   }
 
   private void interpretCoordinates(VerbatimOccurrence verbatim, Occurrence occ, Country country) {
-    OccurrenceParseResult<CoordinateResult> parsedCoord = coordinateInterpreter.interpretCoordinate(
-            verbatim.getVerbatimField(DwcTerm.decimalLatitude), verbatim.getVerbatimField(DwcTerm.decimalLongitude),
-            verbatim.getVerbatimField(DwcTerm.geodeticDatum), country);
+    OccurrenceParseResult<CoordinateResult> parsedCoord =
+        coordinateInterpreter.interpretCoordinate(verbatim.getVerbatimField(DwcTerm.decimalLatitude),
+            verbatim.getVerbatimField(DwcTerm.decimalLongitude), verbatim.getVerbatimField(DwcTerm.geodeticDatum), country);
 
     if (!parsedCoord.isSuccessful() && verbatim.hasVerbatimField(DwcTerm.verbatimLatitude)
         && verbatim.hasVerbatimField(DwcTerm.verbatimLongitude)) {
       LOG.debug("Decimal coord interpretation, trying verbatim lat/lon");
       // try again with verbatim lat/lon
       parsedCoord = coordinateInterpreter.interpretCoordinate(verbatim.getVerbatimField(DwcTerm.verbatimLatitude),
-                                                              verbatim.getVerbatimField(DwcTerm.verbatimLongitude),
-                                                              verbatim.getVerbatimField(DwcTerm.geodeticDatum),country);
+          verbatim.getVerbatimField(DwcTerm.verbatimLongitude), verbatim.getVerbatimField(DwcTerm.geodeticDatum), country);
     }
 
     if (!parsedCoord.isSuccessful() && verbatim.hasVerbatimField(DwcTerm.verbatimCoordinates)) {
       LOG.debug("Verbatim lat/lon interpretation, trying single verbatimCoordinates");
       // try again with verbatim coordinates
       parsedCoord = coordinateInterpreter.interpretCoordinate(verbatim.getVerbatimField(DwcTerm.verbatimCoordinates),
-                                                              verbatim.getVerbatimField(DwcTerm.geodeticDatum),country);
+          verbatim.getVerbatimField(DwcTerm.geodeticDatum), country);
     }
 
     if (parsedCoord.isSuccessful() && parsedCoord.getPayload() != null) {
@@ -190,18 +188,17 @@ public class LocationInterpreter implements Serializable {
 
   /**
    * http://dev.gbif.org/issues/browse/POR-1804
+   * 
    * @param occ
    * @param verbatim
    */
   @VisibleForTesting
   protected void interpretCoordinateUncertaintyAndPrecision(Occurrence occ, VerbatimOccurrence verbatim) {
     if (verbatim.hasVerbatimField(DwcTerm.coordinatePrecision)) {
-      Double coordinatePrecision =
-              NumberParser.parseDouble(verbatim.getVerbatimField(DwcTerm.coordinatePrecision).trim());
+      Double coordinatePrecision = NumberParser.parseDouble(verbatim.getVerbatimField(DwcTerm.coordinatePrecision).trim());
 
-      if (coordinatePrecision != null
-              && coordinatePrecision.doubleValue() >= COORDINATE_PRECISION_LOWER_BOUND
-              && coordinatePrecision.doubleValue() <= COORDINATE_PRECISION_UPPER_BOUND) {
+      if (coordinatePrecision != null && coordinatePrecision.doubleValue() >= COORDINATE_PRECISION_LOWER_BOUND
+          && coordinatePrecision.doubleValue() <= COORDINATE_PRECISION_UPPER_BOUND) {
         occ.setCoordinatePrecision(coordinatePrecision);
       } else {
         occ.getIssues().add(OccurrenceIssue.COORDINATE_PRECISION_INVALID);
@@ -210,12 +207,10 @@ public class LocationInterpreter implements Serializable {
     }
 
     if (verbatim.hasVerbatimField(DwcTerm.coordinateUncertaintyInMeters)) {
-      ParseResult<Double> meters =
-              MeterRangeParser.parseMeters(verbatim.getVerbatimField(DwcTerm.coordinateUncertaintyInMeters).trim());
+      ParseResult<Double> meters = MeterRangeParser.parseMeters(verbatim.getVerbatimField(DwcTerm.coordinateUncertaintyInMeters).trim());
       Double coordinateUncertaintyInMeters = meters.isSuccessful() ? Math.abs(meters.getPayload()) : null;
-      if (coordinateUncertaintyInMeters != null &&
-          coordinateUncertaintyInMeters > COORDINATE_UNCERTAINTY_METERS_LOWER_BOUND &&
-          coordinateUncertaintyInMeters < COORDINATE_UNCERTAINTY_METERS_UPPER_BOUND) {
+      if (coordinateUncertaintyInMeters != null && coordinateUncertaintyInMeters > COORDINATE_UNCERTAINTY_METERS_LOWER_BOUND
+          && coordinateUncertaintyInMeters < COORDINATE_UNCERTAINTY_METERS_UPPER_BOUND) {
         occ.setCoordinateUncertaintyInMeters(coordinateUncertaintyInMeters);
       } else {
         occ.getIssues().add(OccurrenceIssue.COORDINATE_UNCERTAINTY_METERS_INVALID);
@@ -224,8 +219,7 @@ public class LocationInterpreter implements Serializable {
   }
 
   public void interpretDepth(VerbatimOccurrence verbatim, Occurrence occ) {
-    OccurrenceParseResult<DoubleAccuracy> result = MeterRangeParser
-      .parseDepth(verbatim.getVerbatimField(DwcTerm.minimumDepthInMeters),
+    OccurrenceParseResult<DoubleAccuracy> result = MeterRangeParser.parseDepth(verbatim.getVerbatimField(DwcTerm.minimumDepthInMeters),
         verbatim.getVerbatimField(DwcTerm.maximumDepthInMeters), null);
     if (result.isSuccessful() && result.getPayload().getValue() != null) {
       occ.setDepth(result.getPayload().getValue());
@@ -235,16 +229,15 @@ public class LocationInterpreter implements Serializable {
   }
 
   public void interpretElevation(VerbatimOccurrence verbatim, Occurrence occ) {
-    OccurrenceParseResult<DoubleAccuracy> result = MeterRangeParser
-      .parseElevation(verbatim.getVerbatimField(DwcTerm.minimumElevationInMeters),
-        verbatim.getVerbatimField(DwcTerm.maximumElevationInMeters), null);
+    OccurrenceParseResult<DoubleAccuracy> result = MeterRangeParser.parseElevation(
+        verbatim.getVerbatimField(DwcTerm.minimumElevationInMeters), verbatim.getVerbatimField(DwcTerm.maximumElevationInMeters), null);
     if (result.isSuccessful() && result.getPayload().getValue() != null) {
       occ.setElevation(result.getPayload().getValue());
       occ.setElevationAccuracy(result.getPayload().getAccuracy());
       occ.getIssues().addAll(result.getIssues());
     }
 
-    //TODO: use continent information to get finer unlikely values:
+    // TODO: use continent information to get finer unlikely values:
     // http://en.wikipedia.org/wiki/Extremes_on_Earth#Extreme_elevations_and_temperatures_per_continent
   }
 

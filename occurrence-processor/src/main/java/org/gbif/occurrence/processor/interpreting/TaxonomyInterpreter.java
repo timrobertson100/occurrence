@@ -1,5 +1,15 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import javax.ws.rs.core.MultivaluedMap;
+
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.NameUsage;
 import org.gbif.api.model.checklistbank.NameUsageMatch;
@@ -20,14 +30,8 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.nameparser.NameParserGbifV1;
 import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
 import org.gbif.occurrence.processor.interpreting.util.RetryingWebserviceClient;
-
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import javax.ws.rs.core.MultivaluedMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
@@ -35,13 +39,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Takes a VerbatimOccurrence and does nub lookup on its provided taxonomy, then writes the result to the passed in
- * Occurrence.
+ * Takes a VerbatimOccurrence and does nub lookup on its provided taxonomy, then writes the result
+ * to the passed in Occurrence.
  */
 public class TaxonomyInterpreter implements Serializable {
 
@@ -52,17 +53,11 @@ public class TaxonomyInterpreter implements Serializable {
   private static final String MATCH_PATH = "species/match";
 
   // The repetitive nature of our data encourages use of a light cache to reduce WS load
-  private static final LoadingCache<WebResource, NameUsageMatch> MATCH_CACHE =
-    CacheBuilder.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterAccess(120, TimeUnit.MINUTES)
-      .build(RetryingWebserviceClient.newInstance(NameUsageMatch.class, 5, 2000));
+  private static final LoadingCache<WebResource, NameUsageMatch> MATCH_CACHE = CacheBuilder.newBuilder().maximumSize(10_000)
+      .expireAfterAccess(120, TimeUnit.MINUTES).build(RetryingWebserviceClient.newInstance(NameUsageMatch.class, 5, 2000));
 
-  private static final LoadingCache<WebResource, NameUsage> SPECIES_CACHE =
-    CacheBuilder.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterAccess(120, TimeUnit.MINUTES)
-      .build(RetryingWebserviceClient.newInstance(NameUsage.class, 5, 1000));
+  private static final LoadingCache<WebResource, NameUsage> SPECIES_CACHE = CacheBuilder.newBuilder().maximumSize(10_000)
+      .expireAfterAccess(120, TimeUnit.MINUTES).build(RetryingWebserviceClient.newInstance(NameUsage.class, 5, 1000));
 
 
   private final WebResource matchingWs;
@@ -80,6 +75,7 @@ public class TaxonomyInterpreter implements Serializable {
 
   /**
    * Assembles the most complete scientific name based on full and individual name parts.
+   * 
    * @param scientificName the full scientific name
    * @param genericName see GbifTerm.genericName
    * @param genus see DwcTerm.genus
@@ -87,10 +83,11 @@ public class TaxonomyInterpreter implements Serializable {
    * @param infraspecificEpithet see DwcTerm.infraspecificEpithet
    */
   public static String buildScientificName(String scientificName, String authorship, String genericName, String genus,
-                                           String specificEpithet, String infraspecificEpithet) {
+      String specificEpithet, String infraspecificEpithet) {
     String sciname = ClassificationUtils.clean(scientificName);
     if (sciname == null) {
-      // handle case when the scientific name is null and only given as atomized fields: genus & speciesEpitheton
+      // handle case when the scientific name is null and only given as atomized fields: genus &
+      // speciesEpitheton
       ParsedName pn = new ParsedName();
       if (!StringUtils.isBlank(genericName)) {
         pn.setGenusOrAbove(genericName);
@@ -111,25 +108,14 @@ public class TaxonomyInterpreter implements Serializable {
 
   private OccurrenceParseResult<NameUsageMatch> match(Map<Term, String> terms) {
     Rank rank = interpretRank(terms);
-    return match(
-        value(terms, DwcTerm.kingdom),
-        value(terms, DwcTerm.phylum),
-        value(terms, DwcTerm.class_),
-        value(terms, DwcTerm.order),
-        value(terms, DwcTerm.family),
-        value(terms, DwcTerm.genus),
-        value(terms, DwcTerm.scientificName),
-        value(terms, DwcTerm.scientificNameAuthorship),
-        value(terms, GbifTerm.genericName),
-        value(terms, DwcTerm.specificEpithet),
-        value(terms, DwcTerm.infraspecificEpithet),
-        rank);
+    return match(value(terms, DwcTerm.kingdom), value(terms, DwcTerm.phylum), value(terms, DwcTerm.class_), value(terms, DwcTerm.order),
+        value(terms, DwcTerm.family), value(terms, DwcTerm.genus), value(terms, DwcTerm.scientificName),
+        value(terms, DwcTerm.scientificNameAuthorship), value(terms, GbifTerm.genericName), value(terms, DwcTerm.specificEpithet),
+        value(terms, DwcTerm.infraspecificEpithet), rank);
   }
 
-  public OccurrenceParseResult<NameUsageMatch> match(String kingdom, String phylum, String clazz, String order,
-                                                     String family, String genus, String scientificName,
-                                                     String authorship, String genericName, String specificEpithet,
-                                                     String infraspecificEpithet, Rank rank) {
+  public OccurrenceParseResult<NameUsageMatch> match(String kingdom, String phylum, String clazz, String order, String family, String genus,
+      String scientificName, String authorship, String genericName, String specificEpithet, String infraspecificEpithet, Rank rank) {
 
     String cleanGenus = ClassificationUtils.clean(genus);
     String cleanGenericName = ClassificationUtils.clean(genericName);
@@ -137,18 +123,18 @@ public class TaxonomyInterpreter implements Serializable {
     String cleanInfraspecificEpithet = ClassificationUtils.cleanAuthor(infraspecificEpithet);
     String cleanAuthorship = ClassificationUtils.cleanAuthor(authorship);
 
-    String sciname = buildScientificName(scientificName, cleanAuthorship, cleanGenericName, cleanGenus,
-                                               cleanSpecificEpithet, cleanInfraspecificEpithet);
+    String sciname =
+        buildScientificName(scientificName, cleanAuthorship, cleanGenericName, cleanGenus, cleanSpecificEpithet, cleanInfraspecificEpithet);
     OccurrenceParseResult<NameUsageMatch> result;
     MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
     queryParams.add("kingdom", ClassificationUtils.clean(kingdom));
-    queryParams.add("phylum",  ClassificationUtils.clean(phylum));
-    queryParams.add("class",   ClassificationUtils.clean(clazz));
-    queryParams.add("order",   ClassificationUtils.clean(order));
-    queryParams.add("family",  ClassificationUtils.clean(family));
-    queryParams.add("genus",  cleanGenus);
+    queryParams.add("phylum", ClassificationUtils.clean(phylum));
+    queryParams.add("class", ClassificationUtils.clean(clazz));
+    queryParams.add("order", ClassificationUtils.clean(order));
+    queryParams.add("family", ClassificationUtils.clean(family));
+    queryParams.add("genus", cleanGenus);
 
-    queryParams.add("name",   sciname);
+    queryParams.add("name", sciname);
     if (rank != null) {
       queryParams.add("rank", rank.name());
     }
@@ -191,14 +177,14 @@ public class TaxonomyInterpreter implements Serializable {
     // copy issues
     occ.getIssues().addAll(issues);
 
-    //has an AcceptedUsageKey?
-    if(Objects.nonNull(match.getAcceptedUsageKey())) {
-       getNameUsage(match.getAcceptedUsageKey()).ifPresent(acceptedUsage -> {
-         occ.setAcceptedTaxonKey(acceptedUsage.getKey());
-         occ.setAcceptedScientificName(acceptedUsage.getScientificName());
-       });
+    // has an AcceptedUsageKey?
+    if (Objects.nonNull(match.getAcceptedUsageKey())) {
+      getNameUsage(match.getAcceptedUsageKey()).ifPresent(acceptedUsage -> {
+        occ.setAcceptedTaxonKey(acceptedUsage.getKey());
+        occ.setAcceptedScientificName(acceptedUsage.getScientificName());
+      });
     } else {
-      //By default use taxonKey and scientificName as the accepted values
+      // By default use taxonKey and scientificName as the accepted values
       occ.setAcceptedTaxonKey(match.getUsageKey());
       occ.setAcceptedScientificName(match.getScientificName());
     }
@@ -228,7 +214,7 @@ public class TaxonomyInterpreter implements Serializable {
   private Optional<NameUsage> getNameUsage(Integer nubKey) {
     WebResource resource = speciesWs.path(nubKey.toString());
     try {
-      return  Optional.ofNullable(SPECIES_CACHE.get(resource));
+      return Optional.ofNullable(SPECIES_CACHE.get(resource));
     } catch (Exception ex) {
       // Log the error
       LOG.error("Error getting accepted name usage: {}", resource.getURI());
@@ -239,6 +225,7 @@ public class TaxonomyInterpreter implements Serializable {
   private static String value(Map<Term, String> terms, Term term) {
     return terms.get(term);
   }
+
   private static boolean hasTerm(Map<Term, String> terms, Term term) {
     return !Strings.isNullOrEmpty(value(terms, term));
   }
@@ -259,13 +246,13 @@ public class TaxonomyInterpreter implements Serializable {
     }
   }
 
-  private static void applyKingdom(Occurrence occ, Kingdom k){
+  private static void applyKingdom(Occurrence occ, Kingdom k) {
     occ.setTaxonKey(k.nubUsageKey());
     occ.setScientificName(k.scientificName());
     occ.setTaxonRank(Rank.KINGDOM);
   }
 
-  private static Rank interpretRank(Map<Term, String> terms){
+  private static Rank interpretRank(Map<Term, String> terms) {
     Rank rank = null;
     if (hasTerm(terms, DwcTerm.taxonRank)) {
       rank = RANK_PARSER.parse(value(terms, DwcTerm.taxonRank)).getPayload();

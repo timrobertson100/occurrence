@@ -1,23 +1,18 @@
 package org.gbif.occurrence.hive.udf;
 
-import org.gbif.occurrence.common.download.DownloadUtils;
-
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Date;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.Text;
+import org.gbif.occurrence.common.download.DownloadUtils;
 
 /**
- * A simple UDF for Hive to convert a date/long to an string in ISO 8601 format.
- * If the input value is null or can't be parsed, and empty string is returned.
+ * A simple UDF for Hive to convert a date/long to an string in ISO 8601 format. If the input value
+ * is null or can't be parsed, and empty string is returned.
  */
-@Description(
-  name = "toISO8601",
-  value = "_FUNC_(field)")
+@Description(name = "toISO8601", value = "_FUNC_(field)")
 public class ToISO8601UDF extends UDF {
 
   private final Text text = new Text();

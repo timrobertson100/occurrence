@@ -1,5 +1,13 @@
 package org.gbif.occurrence.deleter;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.dwc.terms.DwcTerm;
@@ -8,23 +16,17 @@ import org.gbif.occurrence.common.identifier.PublisherProvidedUniqueIdentifier;
 import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 import org.gbif.occurrence.persistence.api.OccurrenceKeyPersistenceService;
 import org.gbif.occurrence.persistence.api.OccurrencePersistenceService;
-
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Meter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A simple service that can handle the deletion of a single occurrence (including its secondary index entry).
+ * A simple service that can handle the deletion of a single occurrence (including its secondary
+ * index entry).
  */
 public class OccurrenceDeletionService {
 
@@ -33,19 +35,17 @@ public class OccurrenceDeletionService {
   private final OccurrencePersistenceService occurrenceService;
   private final OccurrenceKeyPersistenceService occurrenceKeyService;
 
-  private final Meter occurrencesDeleted =
-    Metrics.newMeter(OccurrenceDeletionService.class, "deletes", "deletes", TimeUnit.SECONDS);
+  private final Meter occurrencesDeleted = Metrics.newMeter(OccurrenceDeletionService.class, "deletes", "deletes", TimeUnit.SECONDS);
 
-  public OccurrenceDeletionService(OccurrencePersistenceService occurrenceService,
-    OccurrenceKeyPersistenceService occurrenceKeyService) {
+  public OccurrenceDeletionService(OccurrencePersistenceService occurrenceService, OccurrenceKeyPersistenceService occurrenceKeyService) {
     this.occurrenceService = checkNotNull(occurrenceService, "occurrenceService can't be null");
     this.occurrenceKeyService = checkNotNull(occurrenceKeyService, "occurrenceKeyService can't be null");
   }
 
   /**
-   * Delete an Occurrence record by key.
-   * Optionally, a crawlId can be provided if the occurrenceKey is asked to be deleted for a specific crawl. It
-   * ensures the occurrence will not be deleted in case a new crawl updated it.
+   * Delete an Occurrence record by key. Optionally, a crawlId can be provided if the occurrenceKey is
+   * asked to be deleted for a specific crawl. It ensures the occurrence will not be deleted in case a
+   * new crawl updated it.
    *
    * @param occurrenceKey
    * @param crawlId
@@ -64,10 +64,11 @@ public class OccurrenceDeletionService {
       return null;
     }
 
-    // ensure that if a crawlId is provided the occurrence is still at that crawlId otherwise ignore the delete request
-    if(crawlId != null && !crawlId.equals(verbatim.getCrawlId())) {
-      LOG.info("crawlId [{}] doesn't match the targeted crawlId [{}], ignoring deletion request for key [{}]",
-              verbatim.getCrawlId(), crawlId, occurrenceKey);
+    // ensure that if a crawlId is provided the occurrence is still at that crawlId otherwise ignore the
+    // delete request
+    if (crawlId != null && !crawlId.equals(verbatim.getCrawlId())) {
+      LOG.info("crawlId [{}] doesn't match the targeted crawlId [{}], ignoring deletion request for key [{}]", verbatim.getCrawlId(),
+          crawlId, occurrenceKey);
       return null;
     }
 
@@ -78,8 +79,8 @@ public class OccurrenceDeletionService {
       if (verbatim.getDatasetKey() != null) {
         final String instCode = verbatim.getVerbatimField(DwcTerm.institutionCode);
         final String collCode = verbatim.getVerbatimField(DwcTerm.collectionCode);
-        final String catNum= verbatim.getVerbatimField(DwcTerm.catalogNumber);
-        //TODO: retrieve it from somewhere via the persistence layer!
+        final String catNum = verbatim.getVerbatimField(DwcTerm.catalogNumber);
+        // TODO: retrieve it from somewhere via the persistence layer!
         final String unitQualifier = null;
         lookupsToDelete.add(new HolyTriplet(verbatim.getDatasetKey(), instCode, collCode, catNum, unitQualifier));
       }

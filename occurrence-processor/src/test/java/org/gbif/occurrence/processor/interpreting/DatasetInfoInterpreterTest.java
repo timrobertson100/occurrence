@@ -1,17 +1,16 @@
 package org.gbif.occurrence.processor.interpreting;
 
-import org.gbif.api.model.registry.Organization;
-import org.gbif.api.vocabulary.Country;
-import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.net.URI;
 import java.util.UUID;
 
+import org.gbif.api.model.registry.Organization;
+import org.gbif.api.vocabulary.Country;
+import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 @Ignore("requires live webservice")
 public class DatasetInfoInterpreterTest {
@@ -26,7 +25,7 @@ public class DatasetInfoInterpreterTest {
   private static final String BOGART_DATASET_KEY = "85697f04-f762-11e1-a439-00145eb45e9a";
 
   @Test
-  public void testOrgLookup(){
+  public void testOrgLookup() {
     Organization org = interpreter.getDatasetData(UUID.fromString(BOGART_DATASET_KEY)).getOrganization();
     assertEquals(BGBM_KEY, org.getKey());
   }

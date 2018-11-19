@@ -1,8 +1,8 @@
 package org.gbif.occurrence.persistence.api;
 
-import org.gbif.occurrence.common.identifier.UniqueIdentifier;
-
 import java.util.Set;
+
+import org.gbif.occurrence.common.identifier.UniqueIdentifier;
 
 /**
  * A service for writing and retrieving Fragments.
@@ -12,11 +12,13 @@ public interface FragmentPersistenceService {
   /**
    * Get the Fragment with the given key.
    *
-   * @param key the key of the fragment (Integer rather than int for use in methods/classes using generic types)
+   * @param key the key of the fragment (Integer rather than int for use in methods/classes using
+   *        generic types)
    *
    * @return the Fragment
    *
-   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection fails
+   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection
+   *         fails
    */
   Fragment get(Integer key);
 
@@ -29,7 +31,8 @@ public interface FragmentPersistenceService {
    * @return the FragmentCreationResult with the Fragment's key set
    *
    * @throws IllegalArgumentException if fragment's key field is not null or uniqueIds is empty
-   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection fails
+   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection
+   *         fails
    */
   FragmentCreationResult insert(Fragment fragment, Set<UniqueIdentifier> uniqueIds);
 
@@ -39,7 +42,8 @@ public interface FragmentPersistenceService {
    * @param fragment the Fragment to update
    *
    * @throws IllegalArgumentException if fragment's key field is null
-   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection fails
+   * @throws org.gbif.api.exception.ServiceUnavailableException if the underlying data connection
+   *         fails
    */
   void update(Fragment fragment);
 }

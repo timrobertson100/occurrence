@@ -1,5 +1,16 @@
 package org.gbif.occurrence.download.file;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.time.StopWatch;
+import org.apache.hadoop.fs.Path;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.gbif.api.model.occurrence.DownloadFormat;
 import org.gbif.common.search.solr.SolrConstants;
 import org.gbif.occurrence.download.file.dwca.DownloadDwcaActor;
@@ -9,11 +20,8 @@ import org.gbif.occurrence.download.inject.DownloadWorkflowModule;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.wrangler.lock.Lock;
 import org.gbif.wrangler.lock.LockFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import akka.actor.Actor;
 import akka.actor.ActorRef;
@@ -21,18 +29,11 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
 import akka.routing.RoundRobinRouter;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.lang3.time.StopWatch;
-import org.apache.hadoop.fs.Path;
-import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Actor that controls the multi-threaded creation of occurrence downloads.
@@ -56,8 +57,7 @@ public class DownloadMaster extends UntypedActor {
    */
   @Inject
   public DownloadMaster(LockFactory lockFactory, Configuration configuration, SolrClient solrClient,
-                        OccurrenceMapReader occurrenceMapReader, DownloadJobConfiguration jobConfiguration,
-                        DownloadAggregator aggregator) {
+      OccurrenceMapReader occurrenceMapReader, DownloadJobConfiguration jobConfiguration, DownloadAggregator aggregator) {
     conf = configuration;
     this.jobConfiguration = jobConfiguration;
     this.lockFactory = lockFactory;
@@ -113,9 +113,9 @@ public class DownloadMaster extends UntypedActor {
   }
 
   /**
-   * Run the list of jobs. The amount of records is assigned evenly among the worker threads.
-   * If the amount of records is not divisible by the calcNrOfWorkers the remaining records are assigned "evenly" among
-   * the first jobs.
+   * Run the list of jobs. The amount of records is assigned evenly among the worker threads. If the
+   * amount of records is not divisible by the calcNrOfWorkers the remaining records are assigned
+   * "evenly" among the first jobs.
    */
   private void runActors() {
     StopWatch stopwatch = new StopWatch();
@@ -129,15 +129,14 @@ public class DownloadMaster extends UntypedActor {
     int recordCount = getSearchCount(jobConfiguration.getSolrQuery()).intValue();
     if (recordCount <= 0) { // no work to do: shutdown the system
       aggregateAndShutdown();
-    } else  {
+    } else {
       int nrOfRecords = Math.min(recordCount, conf.maximumNrOfRecords);
       // Calculates the required workers.
-      calcNrOfWorkers =
-        conf.minNrOfRecords >= nrOfRecords ? 1 : Math.min(conf.nrOfWorkers, nrOfRecords / conf.minNrOfRecords);
+      calcNrOfWorkers = conf.minNrOfRecords >= nrOfRecords ? 1 : Math.min(conf.nrOfWorkers, nrOfRecords / conf.minNrOfRecords);
 
-      ActorRef workerRouter =
-        getContext().actorOf(new Props(new DownloadActorsFactory(jobConfiguration.getDownloadFormat())).withRouter(new RoundRobinRouter(
-          calcNrOfWorkers)), "downloadWorkerRouter");
+      ActorRef workerRouter = getContext().actorOf(
+          new Props(new DownloadActorsFactory(jobConfiguration.getDownloadFormat())).withRouter(new RoundRobinRouter(calcNrOfWorkers)),
+          "downloadWorkerRouter");
 
       // Number of records that will be assigned to each job
       int sizeOfChunks = Math.max(nrOfRecords / calcNrOfWorkers, 1);
@@ -162,18 +161,9 @@ public class DownloadMaster extends UntypedActor {
         }
         // Awaits for an available thread
         Lock lock = getLock();
-        DownloadFileWork work = new DownloadFileWork(from,
-                                                     to,
-                                                     jobConfiguration.getSourceDir()
-                                                     + Path.SEPARATOR
-                                                     + jobConfiguration.getDownloadKey()
-                                                     + Path.SEPARATOR
-                                                     + jobConfiguration.getDownloadTableName(),
-                                                     i,
-                                                     jobConfiguration.getSolrQuery(),
-                                                     lock,
-                                                     solrClient,
-                                                     occurrenceMapReader);
+        DownloadFileWork work = new DownloadFileWork(from, to, jobConfiguration.getSourceDir() + Path.SEPARATOR
+            + jobConfiguration.getDownloadKey() + Path.SEPARATOR + jobConfiguration.getDownloadTableName(), i,
+            jobConfiguration.getSolrQuery(), lock, solrClient, occurrenceMapReader);
 
         LOG.info("Requesting a lock for job {}, detail: {}", i, work.toString());
         lock.lock();
@@ -191,7 +181,8 @@ public class DownloadMaster extends UntypedActor {
   /**
    * Used as a command to start this master actor.
    */
-  public static class Start { }
+  public static class Start {
+  }
 
   /**
    * Creates an instance of the download actor/job to be used.
@@ -218,7 +209,7 @@ public class DownloadMaster extends UntypedActor {
       }
       if (downloadFormat == DownloadFormat.DWCA) {
         return new DownloadDwcaActor();
-      } 
+      }
       if (downloadFormat == DownloadFormat.SPECIES_LIST) {
         return new SpeciesListDownloadActor();
       }
@@ -249,9 +240,9 @@ public class DownloadMaster extends UntypedActor {
      */
     @Inject
     public Configuration(@Named(DownloadWorkflowModule.DefaultSettings.MAX_THREADS_KEY) int nrOfWorkers,
-                         @Named(DownloadWorkflowModule.DefaultSettings.JOB_MIN_RECORDS_KEY) int minNrOfRecords,
-                         @Named(DownloadWorkflowModule.DefaultSettings.MAX_RECORDS_KEY) int maximumNrOfRecords,
-                         @Named(DownloadWorkflowModule.DefaultSettings.ZK_LOCK_NAME_KEY) String lockName) {
+        @Named(DownloadWorkflowModule.DefaultSettings.JOB_MIN_RECORDS_KEY) int minNrOfRecords,
+        @Named(DownloadWorkflowModule.DefaultSettings.MAX_RECORDS_KEY) int maximumNrOfRecords,
+        @Named(DownloadWorkflowModule.DefaultSettings.ZK_LOCK_NAME_KEY) String lockName) {
       this.nrOfWorkers = nrOfWorkers;
       this.minNrOfRecords = minNrOfRecords;
       this.maximumNrOfRecords = maximumNrOfRecords;

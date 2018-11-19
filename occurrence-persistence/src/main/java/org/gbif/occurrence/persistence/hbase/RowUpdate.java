@@ -1,9 +1,5 @@
 package org.gbif.occurrence.persistence.hbase;
 
-import org.gbif.api.vocabulary.Country;
-import org.gbif.api.vocabulary.Extension;
-import org.gbif.dwc.terms.Term;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -11,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.apache.hadoop.hbase.client.Delete;
@@ -18,14 +15,17 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.gbif.api.vocabulary.Country;
+import org.gbif.api.vocabulary.Extension;
+import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Convenient update of a single HBase row wrapping a RowMutations object internally.
- * Type conversions are handled in the many overloaded setField methods.
- * Setting null values will be translated as internal deletes.
- * Use setInterpreted for all internal and gbif terms, there should be no verbatim version!
+ * Convenient update of a single HBase row wrapping a RowMutations object internally. Type
+ * conversions are handled in the many overloaded setField methods. Setting null values will be
+ * translated as internal deletes. Use setInterpreted for all internal and gbif terms, there should
+ * be no verbatim version!
  */
 public class RowUpdate {
 

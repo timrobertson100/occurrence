@@ -1,19 +1,19 @@
 package org.gbif.occurrence.persistence.guice;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.net.URISyntaxException;
+
 import org.gbif.api.service.occurrence.OccurrenceService;
 import org.gbif.occurrence.common.config.OccHBaseConfiguration;
 import org.gbif.occurrence.persistence.api.DatasetDeletionService;
 import org.gbif.occurrence.persistence.api.FragmentPersistenceService;
 import org.gbif.occurrence.persistence.zookeeper.ZookeeperLockManager;
-
-import java.net.URISyntaxException;
+import org.junit.Test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class OccurrencePersistenceModuleTest {
 
@@ -22,8 +22,8 @@ public class OccurrencePersistenceModuleTest {
   public void testModule() throws URISyntaxException {
     OccHBaseConfiguration cfg = new OccHBaseConfiguration();
     cfg.setEnvironment("");
-    cfg.hbasePoolSize=1;
-    cfg.zkConnectionString="localhost:2181";
+    cfg.hbasePoolSize = 1;
+    cfg.zkConnectionString = "localhost:2181";
 
     Injector injector = Guice.createInjector(new OccurrencePersistenceModule(cfg));
     OccurrenceService occService = injector.getInstance(OccurrenceService.class);

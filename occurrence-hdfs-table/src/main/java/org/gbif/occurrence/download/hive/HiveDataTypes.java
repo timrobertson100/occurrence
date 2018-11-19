@@ -1,11 +1,5 @@
 package org.gbif.occurrence.download.hive;
 
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifInternalTerm;
-import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
-
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
@@ -14,14 +8,20 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifInternalTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
+
 import com.google.common.collect.ImmutableSet;
 
 /**
  * Utilities to provide the Hive data type for a given term.
  * <p/>
- * This effectively encapsulated to the logic to provide the Hive data type for any term, which may vary depending on
- * whether it is used in the verbatim or interpreted context.  E.g. dwc:decimalLatitude may be a hive STRING when used
- * in verbatim, but a DOUBLE when interpreted.
+ * This effectively encapsulated to the logic to provide the Hive data type for any term, which may
+ * vary depending on whether it is used in the verbatim or interpreted context. E.g.
+ * dwc:decimalLatitude may be a hive STRING when used in verbatim, but a DOUBLE when interpreted.
  */
 public final class HiveDataTypes {
 
@@ -36,62 +36,38 @@ public final class HiveDataTypes {
   private static final Set<Term> ARRAY_STRING_TERMS = ImmutableSet.of(GbifTerm.mediaType, GbifTerm.issue);
 
   // dates are all stored as BigInt
-  private static final Set<Term> BIGINT_TERMS = ImmutableSet.of(DwcTerm.eventDate,
-    DwcTerm.dateIdentified,
-    GbifTerm.lastInterpreted,
-    GbifTerm.lastParsed,
-    GbifTerm.lastCrawled,
-    DcTerm.modified,
-    GbifInternalTerm.fragmentCreated);
+  private static final Set<Term> BIGINT_TERMS = ImmutableSet.of(DwcTerm.eventDate, DwcTerm.dateIdentified, GbifTerm.lastInterpreted,
+      GbifTerm.lastParsed, GbifTerm.lastCrawled, DcTerm.modified, GbifInternalTerm.fragmentCreated);
 
-  private static final Set<Term> INT_TERMS = ImmutableSet.of(GbifTerm.gbifID,
-    DwcTerm.year,
-    DwcTerm.month,
-    DwcTerm.day,
-    GbifTerm.taxonKey,
-    GbifTerm.kingdomKey,
-    GbifTerm.phylumKey,
-    GbifTerm.classKey,
-    GbifTerm.orderKey,
-    GbifTerm.familyKey,
-    GbifTerm.genusKey,
-    GbifTerm.subgenusKey,
-    GbifTerm.speciesKey,
-    GbifTerm.acceptedTaxonKey,
-    GbifInternalTerm.crawlId,
-    GbifInternalTerm.identifierCount,
-    DwcTerm.individualCount);
+  private static final Set<Term> INT_TERMS =
+      ImmutableSet.of(GbifTerm.gbifID, DwcTerm.year, DwcTerm.month, DwcTerm.day, GbifTerm.taxonKey, GbifTerm.kingdomKey, GbifTerm.phylumKey,
+          GbifTerm.classKey, GbifTerm.orderKey, GbifTerm.familyKey, GbifTerm.genusKey, GbifTerm.subgenusKey, GbifTerm.speciesKey,
+          GbifTerm.acceptedTaxonKey, GbifInternalTerm.crawlId, GbifInternalTerm.identifierCount, DwcTerm.individualCount);
 
-  private static final Set<Term> DOUBLE_TERMS = ImmutableSet.of(DwcTerm.decimalLatitude,
-    DwcTerm.decimalLongitude,
-    DwcTerm.coordinateUncertaintyInMeters,
-    DwcTerm.coordinatePrecision,
-    GbifTerm.elevation,
-    GbifTerm.elevationAccuracy,
-    GbifTerm.depth,
-    GbifTerm.depthAccuracy);
+  private static final Set<Term> DOUBLE_TERMS =
+      ImmutableSet.of(DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, DwcTerm.coordinateUncertaintyInMeters, DwcTerm.coordinatePrecision,
+          GbifTerm.elevation, GbifTerm.elevationAccuracy, GbifTerm.depth, GbifTerm.depthAccuracy);
 
-  private static final Set<Term> BOOLEAN_TERMS = ImmutableSet.of(GbifTerm.hasCoordinate,
-    GbifTerm.hasGeospatialIssues,
-    GbifTerm.repatriated);
+  private static final Set<Term> BOOLEAN_TERMS =
+      ImmutableSet.of(GbifTerm.hasCoordinate, GbifTerm.hasGeospatialIssues, GbifTerm.repatriated);
 
   static {
     // build the term type index of Term -> Type
-    TYPED_TERMS = Stream.of(
-      INT_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_INT)),
-      BIGINT_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_BIGINT)),
-      DOUBLE_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_DOUBLE)),
-      BOOLEAN_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_BOOLEAN)),
-      ARRAY_STRING_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_ARRAY_STRING))
-    ).flatMap(Function.identity())
-     .collect(Collectors.collectingAndThen(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue), Collections::unmodifiableMap));
+    TYPED_TERMS = Stream
+        .of(INT_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_INT)),
+            BIGINT_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_BIGINT)),
+            DOUBLE_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_DOUBLE)),
+            BOOLEAN_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_BOOLEAN)),
+            ARRAY_STRING_TERMS.stream().map(t -> new AbstractMap.SimpleEntry<>(t, TYPE_ARRAY_STRING)))
+        .flatMap(Function.identity())
+        .collect(Collectors.collectingAndThen(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue), Collections::unmodifiableMap));
   }
 
   /**
-   * Provides the Hive data type to use for the given term and context (e.g. verbatim or interpreted) that it is being
-   * used.
+   * Provides the Hive data type to use for the given term and context (e.g. verbatim or interpreted)
+   * that it is being used.
    *
-   * @param term            to retrive the type for
+   * @param term to retrive the type for
    * @param verbatimContext true if the term is being used in the verbatim context, otherwise false
    *
    * @return The correct hive type for the term in the context in which it is being used
@@ -114,6 +90,6 @@ public final class HiveDataTypes {
    * Hidden constructor.
    */
   private HiveDataTypes() {
-    //empty default constructor.
+    // empty default constructor.
   }
 }

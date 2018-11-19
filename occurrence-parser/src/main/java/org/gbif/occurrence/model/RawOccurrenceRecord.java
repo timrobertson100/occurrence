@@ -1,17 +1,15 @@
 /*
  * Copyright 2011 Global Biodiversity Information Facility (GBIF)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.gbif.occurrence.model;
 
@@ -23,9 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is mostly cut and paste from synchronizer-gbif, intended as a place holder until this project is
- * integrated with the main synchronizer process. Differences from sync-gbif are that id and dateIdentified are String,
- * and occurrenceDate is retained as a verbatim string rather than parsed to year, month and day.
+ * This is mostly cut and paste from synchronizer-gbif, intended as a place holder until this
+ * project is integrated with the main synchronizer process. Differences from sync-gbif are that id
+ * and dateIdentified are String, and occurrenceDate is retained as a verbatim string rather than
+ * parsed to year, month and day.
  */
 public class RawOccurrenceRecord implements Serializable {
 
@@ -89,8 +88,7 @@ public class RawOccurrenceRecord implements Serializable {
   /**
    * Default
    */
-  public RawOccurrenceRecord() {
-  }
+  public RawOccurrenceRecord() {}
 
   public String getAltitudePrecision() {
     return altitudePrecision;
@@ -509,21 +507,18 @@ public class RawOccurrenceRecord implements Serializable {
   }
 
   public String debugDump() {
-    return "RawOccurrenceRecord [\n id=" + id + ",\n dataProviderId=" + dataProviderId + ",\n dataResourceId=" +
-           dataResourceId + ",\n resourceAccessPointId=" + resourceAccessPointId + ",\n institutionCode=" +
-           institutionCode + ",\n collectionCode=" + collectionCode + ",\n catalogueNumber=" + catalogueNumber +
-           ",\n scientificName=" + scientificName + ",\n author=" + author + ",\n rank=" + rank + ",\n kingdom=" +
-           kingdom + ",\n phylum=" + phylum + ",\n klass=" + klass + ",\n order=" + order + ",\n family=" + family +
-           ",\n genus=" + genus + ",\n species=" + species + ",\n subspecies=" + subspecies + ",\n latitude=" +
-           latitude + ",\n longitude=" + longitude + ",\n latLongPrecision=" + latLongPrecision + ",\n geodeticDatum="
-           + geodeticDatum + ",\n minAltitude=" +
-           minAltitude + ",\n maxAltitude=" + maxAltitude + ",\n altitudePrecision=" + altitudePrecision +
-           ",\n minDepth=" + minDepth + ",\n maxDepth=" + maxDepth + ",\n depthPrecision=" + depthPrecision +
-           ",\n continentOrOcean=" + continentOrOcean + ",\n country=" + country + ",\n stateOrProvince=" +
-           stateOrProvince + ",\n county=" + county + ",\n collectorName=" + collectorName
-           + ",\n collectorsFieldNumber=" + collectorsFieldNumber + ",\n locality=" +  locality + ",\n occurrenceDate="
-           + occurrenceDate + ",\n basisOfRecord=" + basisOfRecord + ",\n identifierName=" + identifierName
-           + ",\n dateIdentified=" + dateIdentified + ",\n unitQualifier=" + unitQualifier + "]";
+    return "RawOccurrenceRecord [\n id=" + id + ",\n dataProviderId=" + dataProviderId + ",\n dataResourceId=" + dataResourceId
+        + ",\n resourceAccessPointId=" + resourceAccessPointId + ",\n institutionCode=" + institutionCode + ",\n collectionCode="
+        + collectionCode + ",\n catalogueNumber=" + catalogueNumber + ",\n scientificName=" + scientificName + ",\n author=" + author
+        + ",\n rank=" + rank + ",\n kingdom=" + kingdom + ",\n phylum=" + phylum + ",\n klass=" + klass + ",\n order=" + order
+        + ",\n family=" + family + ",\n genus=" + genus + ",\n species=" + species + ",\n subspecies=" + subspecies + ",\n latitude="
+        + latitude + ",\n longitude=" + longitude + ",\n latLongPrecision=" + latLongPrecision + ",\n geodeticDatum=" + geodeticDatum
+        + ",\n minAltitude=" + minAltitude + ",\n maxAltitude=" + maxAltitude + ",\n altitudePrecision=" + altitudePrecision
+        + ",\n minDepth=" + minDepth + ",\n maxDepth=" + maxDepth + ",\n depthPrecision=" + depthPrecision + ",\n continentOrOcean="
+        + continentOrOcean + ",\n country=" + country + ",\n stateOrProvince=" + stateOrProvince + ",\n county=" + county
+        + ",\n collectorName=" + collectorName + ",\n collectorsFieldNumber=" + collectorsFieldNumber + ",\n locality=" + locality
+        + ",\n occurrenceDate=" + occurrenceDate + ",\n basisOfRecord=" + basisOfRecord + ",\n identifierName=" + identifierName
+        + ",\n dateIdentified=" + dateIdentified + ",\n unitQualifier=" + unitQualifier + "]";
   }
 
 }

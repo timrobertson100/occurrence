@@ -1,26 +1,26 @@
 package org.gbif.occurrence.cli.registry.sync;
 
+import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Organization;
 import org.gbif.common.messaging.api.messages.DeleteDatasetOccurrencesMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceDeletionReason;
 import org.gbif.common.messaging.api.messages.OccurrenceMutatedMessage;
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A MapReduce Mapper that synchronizes all occurrences (called with this mapper) with the registry.
@@ -43,23 +43,17 @@ public class OccurrenceRegistryMapper extends AbstractOccurrenceRegistryMapper {
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
 
-    datasetCache = CacheBuilder.newBuilder()
-            .maximumSize(MAX_DATASET_CACHE)
-            .build(
-                    new CacheLoader<UUID, Dataset>() {
-                      public Dataset load(UUID datasetKey) {
-                        return datasetService.get(datasetKey);
-                      }
-                    });
+    datasetCache = CacheBuilder.newBuilder().maximumSize(MAX_DATASET_CACHE).build(new CacheLoader<UUID, Dataset>() {
+      public Dataset load(UUID datasetKey) {
+        return datasetService.get(datasetKey);
+      }
+    });
 
-    organizationCache = CacheBuilder.newBuilder()
-            .maximumSize(MAX_ORGANIZATION_CACHE)
-            .build(
-                    new CacheLoader<UUID, Organization>() {
-                      public Organization load(UUID key) {
-                        return orgService.get(key);
-                      }
-                    });
+    organizationCache = CacheBuilder.newBuilder().maximumSize(MAX_ORGANIZATION_CACHE).build(new CacheLoader<UUID, Organization>() {
+      public Organization load(UUID key) {
+        return orgService.get(key);
+      }
+    });
   }
 
   @Override
@@ -93,14 +87,12 @@ public class OccurrenceRegistryMapper extends AbstractOccurrenceRegistryMapper {
         occurrencePersistenceService.update(updatedOcc);
 
         int crawlId = Bytes.toInt(values.getValue(SyncCommon.OCC_CF, SyncCommon.CI_COL));
-        OccurrenceMutatedMessage msg =
-                OccurrenceMutatedMessage.buildUpdateMessage(datasetKey, origOcc, updatedOcc, crawlId);
+        OccurrenceMutatedMessage msg = OccurrenceMutatedMessage.buildUpdateMessage(datasetKey, origOcc, updatedOcc, crawlId);
         try {
-          //TODO use generateUpdateMessage
-          LOG.debug(
-                  "Sending update for key [{}], publishing org changed from [{}] to [{}] and host country from [{}] to [{}]",
-                  datasetKey, origOcc.getPublishingOrgKey(), updatedOcc.getPublishingOrgKey(), origOcc.getPublishingCountry(),
-                  updatedOcc.getPublishingCountry());
+          // TODO use generateUpdateMessage
+          LOG.debug("Sending update for key [{}], publishing org changed from [{}] to [{}] and host country from [{}] to [{}]", datasetKey,
+              origOcc.getPublishingOrgKey(), updatedOcc.getPublishingOrgKey(), origOcc.getPublishingCountry(),
+              updatedOcc.getPublishingCountry());
           messagePublisher.send(msg);
         } catch (IOException e) {
           LOG.warn("Failed to send update message", e);

@@ -1,9 +1,13 @@
 package org.gbif.occurrence.persistence;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
@@ -29,17 +33,15 @@ import org.gbif.occurrence.persistence.util.OccurrenceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 
 /**
- * An implementation of OccurrenceService and OccurrenceWriter for persisting and retrieving Occurrence objects in
- * HBase.
+ * An implementation of OccurrenceService and OccurrenceWriter for persisting and retrieving
+ * Occurrence objects in HBase.
  */
 @Singleton
 public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceService {
@@ -56,8 +58,8 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   }
 
   /**
-   * Note that the returned fragment here is a String that holds the actual xml or json snippet for this occurrence,
-   * and not the Fragment object that is used elsewhere.
+   * Note that the returned fragment here is a String that holds the actual xml or json snippet for
+   * this occurrence, and not the Fragment object that is used elsewhere.
    *
    * @param key that identifies an occurrence
    * @return a String holding the original xml or json snippet for this occurrence
@@ -89,7 +91,7 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
       return null;
     }
     VerbatimOccurrence verb = null;
-    try (Table table = connection.getTable(TableName.valueOf(occurrenceTableName)))  {
+    try (Table table = connection.getTable(TableName.valueOf(occurrenceTableName))) {
       Get get = new Get(Bytes.toBytes(key));
       Result result = table.get(get);
       if (result == null || result.isEmpty()) {
@@ -163,7 +165,7 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   public void delete(List<Integer> occurrenceKeys) {
     checkNotNull(occurrenceKeys, "occurrenceKeys can't be null");
 
-    try (Table table = connection.getTable(TableName.valueOf(occurrenceTableName)))  {
+    try (Table table = connection.getTable(TableName.valueOf(occurrenceTableName))) {
       List<Delete> deletes = Lists.newArrayListWithExpectedSize(occurrenceKeys.size());
       for (Integer occurrenceKey : occurrenceKeys) {
         if (occurrenceKey != null) {
@@ -212,25 +214,29 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   /**
    * Populates the put and delete for a verbatim record.
    *
-   * @param deleteInterpretedVerbatimColumns if true deletes also the verbatim columns removed during interpretation
-   *        (typically true when updating an Occurrence and false for
+   * @param deleteInterpretedVerbatimColumns if true deletes also the verbatim columns removed during
+   *        interpretation (typically true when updating an Occurrence and false for
    *        VerbatimOccurrence)
    */
-  private void populateVerbatimPutDelete(RowUpdate upd, VerbatimOccurrence occ,
-                                         boolean deleteInterpretedVerbatimColumns) throws IOException {
+  private void populateVerbatimPutDelete(RowUpdate upd, VerbatimOccurrence occ, boolean deleteInterpretedVerbatimColumns)
+      throws IOException {
 
     // adding the mutations to the HTable is quite expensive, hence worth all these comparisons
     VerbatimOccurrence oldVerb = getVerbatim(occ.getKey());
 
-    // schedule delete of any fields that are on the oldVerb but not on the updated verb, but only if we've been
-    // explicitly asked to delete empty term columns (deleteInterpretedVerbatimColumns) or if the column is one that is
-    // used equally by the verbatim and interp occurrences (e.g. changes to catalogNumber on either of verb or interp
-    // should be reflected here (it is not an InterpretedSourceTerm), but not something like verbatimLatitude
+    // schedule delete of any fields that are on the oldVerb but not on the updated verb, but only if
+    // we've been
+    // explicitly asked to delete empty term columns (deleteInterpretedVerbatimColumns) or if the column
+    // is one that is
+    // used equally by the verbatim and interp occurrences (e.g. changes to catalogNumber on either of
+    // verb or interp
+    // should be reflected here (it is not an InterpretedSourceTerm), but not something like
+    // verbatimLatitude
     // (which is an InterpretedSourceTerm)).
     //
     for (Term term : oldVerb.getVerbatimFields().keySet()) {
       if ((!occ.hasVerbatimField(term) || occ.getVerbatimField(term) == null)
-        && (deleteInterpretedVerbatimColumns || !TermUtils.isInterpretedSourceTerm(term))) {
+          && (deleteInterpretedVerbatimColumns || !TermUtils.isInterpretedSourceTerm(term))) {
         upd.deleteVerbatimField(term);
       }
     }
@@ -257,9 +263,8 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
       upd.setInterpretedField(GbifInternalTerm.installationKey, occ.getInstallationKey());
     }
     if (!Objects.equals(oldVerb.getNetworkKeys(), occ.getNetworkKeys())) {
-      upd.setInterpretedField(GbifInternalTerm.networkKey, occ.getNetworkKeys() == null ? null :
-              occ.getNetworkKeys().stream().map(UUID::toString).sorted()
-                      .collect(Collectors.joining(OccurrenceBuilder.LIST_SEPARATOR)));
+      upd.setInterpretedField(GbifInternalTerm.networkKey, occ.getNetworkKeys() == null ? null
+          : occ.getNetworkKeys().stream().map(UUID::toString).sorted().collect(Collectors.joining(OccurrenceBuilder.LIST_SEPARATOR)));
     }
     if (!Objects.equals(oldVerb.getProtocol(), occ.getProtocol())) {
       upd.setInterpretedField(GbifTerm.protocol, occ.getProtocol());
@@ -276,8 +281,7 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   /**
    * Updates the extensions map of the newOcc object into the upd object.
    */
-  private void updateExtensions(VerbatimOccurrence oldOcc, VerbatimOccurrence newOcc, RowUpdate upd)
-    throws IOException {
+  private void updateExtensions(VerbatimOccurrence oldOcc, VerbatimOccurrence newOcc, RowUpdate upd) throws IOException {
     for (Extension extension : Extension.values()) {
       String newExtensions = getExtensionAsJson(newOcc, extension);
       if (!Objects.equals(getExtensionAsJson(oldOcc, extension), newExtensions)) {
@@ -287,8 +291,8 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   }
 
   /**
-   * Returns the JSON object of verbatimOccurrence.getExtensions().get(extension).
-   * If verbatimOccurrence is null or the requested extension doesn't exist returns null.
+   * Returns the JSON object of verbatimOccurrence.getExtensions().get(extension). If
+   * verbatimOccurrence is null or the requested extension doesn't exist returns null.
    */
   private String getExtensionAsJson(VerbatimOccurrence verbatimOccurrence, Extension extension) {
     String jsonExtensions = null;
@@ -299,8 +303,9 @@ public class OccurrencePersistenceServiceImpl implements OccurrencePersistenceSe
   }
 
   /**
-   * Populates put and delete for the occurrence specific interpreted columns, leaving any verbatim columns untouched.
-   * TODO: use reflection to get values from the java properties now that we have corresponding terms?
+   * Populates put and delete for the occurrence specific interpreted columns, leaving any verbatim
+   * columns untouched. TODO: use reflection to get values from the java properties now that we have
+   * corresponding terms?
    */
   private void populateInterpretedPutDelete(RowUpdate upd, Occurrence occ) throws IOException {
 

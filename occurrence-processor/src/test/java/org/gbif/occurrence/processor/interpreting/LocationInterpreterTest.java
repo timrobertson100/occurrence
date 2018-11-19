@@ -1,5 +1,13 @@
 package org.gbif.occurrence.processor.interpreting;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.UUID;
+
 import org.gbif.api.model.occurrence.Occurrence;
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.Country;
@@ -7,18 +15,8 @@ import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.common.parsers.core.ParseResult;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.occurrence.processor.guice.ApiClientConfiguration;
-
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.UUID;
-
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 @Ignore("Requires live webservices")
 public class LocationInterpreterTest {
@@ -76,7 +74,7 @@ public class LocationInterpreterTest {
     assertNotNull(occ);
     assertEquals(33.333, occ.getDecimalLatitude(), 0.0001);
     assertEquals(66.666, occ.getDecimalLongitude(), 0.0001);
-    //assertEquals(1.2345, occ.getCoordinateAccuracy(), 0.0001);
+    // assertEquals(1.2345, occ.getCoordinateAccuracy(), 0.0001);
     assertEquals(new Double(500.0), occ.getCoordinateUncertaintyInMeters());
     assertEquals("0.2345", occ.getCoordinatePrecision().toString());
     assertTrue(occ.getIssues().contains(OccurrenceIssue.COUNTRY_COORDINATE_MISMATCH));
@@ -85,7 +83,7 @@ public class LocationInterpreterTest {
   }
 
   @Test
-  public void testInterpretCoordinateUncertaintyAndPrecision(){
+  public void testInterpretCoordinateUncertaintyAndPrecision() {
     verb = new VerbatimOccurrence();
     verb.setKey(1);
 
@@ -100,7 +98,7 @@ public class LocationInterpreterTest {
     assertNull(occ.getCoordinatePrecision());
     assertEquals(1, occ.getIssues().size());
 
-    //test -1 (see https://github.com/gbif/occurrence/issues/9)
+    // test -1 (see https://github.com/gbif/occurrence/issues/9)
     verb.setVerbatimField(DwcTerm.coordinatePrecision, "-1");
     occ = new Occurrence(verb);
     interpreter.interpretCoordinateUncertaintyAndPrecision(occ, verb);

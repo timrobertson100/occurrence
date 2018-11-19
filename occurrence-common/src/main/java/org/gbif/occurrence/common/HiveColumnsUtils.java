@@ -13,8 +13,8 @@ import com.google.common.collect.ImmutableSet;
 public class HiveColumnsUtils {
 
   // reserved hive words
-  public static final ImmutableSet<String> HIVE_RESERVED_WORDS = new ImmutableSet.Builder<String>().add("date",
-    "order", "format", "group").build();
+  public static final ImmutableSet<String> HIVE_RESERVED_WORDS =
+      new ImmutableSet.Builder<String>().add("date", "order", "format", "group").build();
 
   // prefix for extension columns
   private static final String EXTENSION_PRE = "ext_";
