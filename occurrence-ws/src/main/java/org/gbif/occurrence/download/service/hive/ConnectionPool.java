@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ConnectionPool {
 
+  private static final String HIVE_VALIDATION_QUERY = "select 1";
   private static final String JDBC_URL = "occurrence.hive.jdbc.url";
   private static final String JDBC_USER = "occurrence.hive.jdbc.username";
   private static final String JDBC_PASS = "occurrence.hive.jdbc.password";
@@ -60,7 +61,8 @@ public class ConnectionPool {
     int poolSize = Integer.parseInt(Objects.requireNonNull(jdbcProperties.getProperty(JDBC_POOL_SIZE)));
 
     NifiConfigurationContext context = NifiConfigurationContext.from(jdbcURL).withUsername(username)
-      .withPassword(password).withMaxConnections(poolSize).withMaxWaitTime(maxWaitTime);
+      .withPassword(password).withMaxConnections(poolSize).withMaxWaitTime(maxWaitTime)
+      .withProperty(HiveConnectionPool.VALIDATION_QUERY, HIVE_VALIDATION_QUERY);
     cp.initialize(new MockControllerServiceInitializationContext());
     cp.onConfigured(context);
     LOG.info("Creating connection pool for Hive JDBC connections, using jdbc properties {}, {}",jdbcProperties, cp);
@@ -101,6 +103,11 @@ public class ConnectionPool {
     
     public NifiConfigurationContext withMaxWaitTime(String timeInMillis) {
       properties.put(HiveConnectionPool.MAX_WAIT_TIME, timeInMillis);
+      return this;
+    }
+    
+    public NifiConfigurationContext withProperty(PropertyDescriptor descriptor, String value) {
+      properties.put(descriptor, value);
       return this;
     }
     
