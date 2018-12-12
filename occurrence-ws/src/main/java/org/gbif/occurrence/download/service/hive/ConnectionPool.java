@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -33,6 +34,8 @@ public class ConnectionPool {
   private static final String APP_CONF_FILE = "occurrence.properties";
   private static final String JDBC_POOL_SIZE = "occurrence.hive.jdbc.poolsize";
   private static final String JDBC_WAIT_TIME = "occurrence.hive.jdbc.maxWaitTime";
+  private static final String JDBC_VALIDATION_QUERY = "occurrence.hive.jdbc.validationQuery";
+  
   private static final Logger LOG = LoggerFactory.getLogger(ConnectionPool.class);
   
   private ConnectionPool() {}
@@ -59,10 +62,11 @@ public class ConnectionPool {
     String password = Objects.requireNonNull(jdbcProperties.getProperty(JDBC_PASS));
     String maxWaitTime = Objects.requireNonNull(jdbcProperties.getProperty(JDBC_WAIT_TIME));
     int poolSize = Integer.parseInt(Objects.requireNonNull(jdbcProperties.getProperty(JDBC_POOL_SIZE)));
-
+    String validationQuery = Optional.ofNullable(jdbcProperties.getProperty(JDBC_VALIDATION_QUERY)).map( query -> query.isEmpty() ? HIVE_VALIDATION_QUERY : query).orElse(HIVE_VALIDATION_QUERY);
+    
     NifiConfigurationContext context = NifiConfigurationContext.from(jdbcURL).withUsername(username)
       .withPassword(password).withMaxConnections(poolSize).withMaxWaitTime(maxWaitTime)
-      .withProperty(HiveConnectionPool.VALIDATION_QUERY, HIVE_VALIDATION_QUERY);
+      .withProperty(HiveConnectionPool.VALIDATION_QUERY, validationQuery);
     cp.initialize(new MockControllerServiceInitializationContext());
     cp.onConfigured(context);
     LOG.info("Creating connection pool for Hive JDBC connections, using jdbc properties {}, {}",jdbcProperties, cp);
