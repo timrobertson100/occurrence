@@ -46,11 +46,11 @@ public class SpeciesListCollector {
     distinctSpeciesRecord.put(taxonKey, distinctSpeciesRecord.compute(taxonKey, (k, v) -> {
       //if the values are already there increment
       if (v != null) {
-        long count = Long.parseLong(v.get(GbifTerm.numOfOccurrences.simpleName())) + Long.parseLong(occurrenceRecord.getOrDefault(GbifTerm.numOfOccurrences.simpleName(), "1"));
-        v.put(GbifTerm.numOfOccurrences.simpleName(), Long.toString(count));
+        long count = Long.parseLong(v.get(GbifTerm.numberOfOccurrences.simpleName())) + Long.parseLong(occurrenceRecord.getOrDefault(GbifTerm.numberOfOccurrences.simpleName(), "1"));
+        v.put(GbifTerm.numberOfOccurrences.simpleName(), Long.toString(count));
         return v;
       } else {
-        occurrenceRecord.putIfAbsent(GbifTerm.numOfOccurrences.simpleName(),  Long.toString(1L));
+        occurrenceRecord.putIfAbsent(GbifTerm.numberOfOccurrences.simpleName(),  Long.toString(1L));
         // order the results according to download
         return new LinkedHashMap<>(DownloadTerms.SPECIES_LIST_DOWNLOAD_TERMS.stream()
             .collect(LinkedHashMap::new, (m,val) -> {
