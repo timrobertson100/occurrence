@@ -1,16 +1,17 @@
 package org.gbif.occurrence.download.file.common;
 
+import org.gbif.common.search.solr.SolrConstants;
+import org.gbif.occurrence.download.file.DownloadFileWork;
+import org.gbif.occurrence.search.solr.OccurrenceSolrField;
+
+import java.io.IOException;
+import java.util.function.Consumer;
+
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
-import org.gbif.common.search.solr.SolrConstants;
-import org.gbif.occurrence.download.file.DownloadFileWork;
-
-import java.io.IOException;
-import java.util.function.Consumer;
 
 /**
  * Executes a Solr query and applies a predicate to each result.
@@ -20,7 +21,7 @@ public class SolrQueryProcessor {
   // Default page size for Solr queries.
   private static final int LIMIT = 300;
 
-  private static final String KEY_FIELD = "";//OccurrenceSolrField.KEY.getFieldName();
+  private static final String KEY_FIELD = OccurrenceSolrField.KEY.getFieldName();
   /**
    * Executes a query on the SolrServer parameter and applies the predicate to each result.
    *
@@ -44,9 +45,9 @@ public class SolrQueryProcessor {
         // Limit can't be greater than the maximum number of records assigned to this job
         solrQuery.setRows(recordCount + LIMIT > nrOfOutputRecords ? nrOfOutputRecords - recordCount : LIMIT);
         QueryResponse response = downloadFileWork.getSolrClient().query(solrQuery);
-        for (SolrDocument solrDocument : response.getResults()) {
-          resultHandler.accept((Integer) solrDocument.getFieldValue(KEY_FIELD));
-        }
+        response.getResults().forEach(solrDocument ->
+          resultHandler.accept((Integer) solrDocument.getFieldValue(KEY_FIELD))
+        );
         recordCount += response.getResults().size();
       }
     } catch (SolrServerException | IOException e) {
