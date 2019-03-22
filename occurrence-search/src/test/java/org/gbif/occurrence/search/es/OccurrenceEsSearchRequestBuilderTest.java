@@ -273,7 +273,7 @@ public class OccurrenceEsSearchRequestBuilderTest {
   }
 
   @Test
-  public void linearringQueryTest() throws IOException {
+  public void linearRingQueryTest() throws IOException {
     final String linearring = "LINEARRING (12 12, 14 10, 13 14, 12 12)";
     OccurrenceSearchRequest searchRequest = new OccurrenceSearchRequest();
     searchRequest.addGeometryFilter(linearring);

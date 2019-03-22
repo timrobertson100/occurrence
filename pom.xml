@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.occurrence</groupId>
   <artifactId>occurrence-motherpom</artifactId>
-  <version>0.94-SNAPSHOT</version>
+  <version>0.94-ES-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Occurrence</name>
@@ -36,7 +36,6 @@
     <module>occurrence-registry-sync</module>
     <module>occurrence-common</module>
     <module>occurrence-deleter</module>
-    <module>occurrence-index-builder-workflow</module>
     <module>occurrence-persistence</module>
     <module>occurrence-parser</module>
     <module>occurrence-processor</module>
@@ -47,7 +46,6 @@
     <module>occurrence-download</module>
     <module>occurrence-hdfs-table</module>
     <module>occurrence-heatmaps</module>
-    <module>occurrence-beam-hbase-solr</module>
   </modules>
 
   <properties>
@@ -158,7 +156,11 @@
     <name-parser.version>3.1.6</name-parser.version>
 
     <!-- es versions -->
-    <elasticsearch.version>5.6.3</elasticsearch.version>
+    <elasticsearch.version>6.5.4</elasticsearch.version>
+    <jts-core.version>1.15.1</jts-core.version>
+    <spatial4j.version>0.7</spatial4j.version>
+    <jackson-core-es.version>2.8.6</jackson-core-es.version>
+    <log4j-api.version>2.8</log4j-api.version>
   </properties>
 
   <repositories>

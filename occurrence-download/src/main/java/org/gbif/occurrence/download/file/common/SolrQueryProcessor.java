@@ -1,17 +1,12 @@
 package org.gbif.occurrence.download.file.common;
 
-import org.gbif.common.search.solr.SolrConstants;
 import org.gbif.occurrence.download.file.DownloadFileWork;
-import org.gbif.occurrence.search.solr.OccurrenceSolrField;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import org.apache.solr.client.solrj.SolrQuery;
+/*import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.QueryResponse;*/
 
 /**
  * Executes a Solr query and applies a predicate to each result.
@@ -21,7 +16,7 @@ public class SolrQueryProcessor {
   // Default page size for Solr queries.
   private static final int LIMIT = 300;
 
-  private static final String KEY_FIELD = OccurrenceSolrField.KEY.getFieldName();
+  private static final String KEY_FIELD = "";//OccurrenceSolrField.KEY.getFieldName();
   /**
    * Executes a query on the SolrServer parameter and applies the predicate to each result.
    *
@@ -29,7 +24,7 @@ public class SolrQueryProcessor {
    * @param resultHandler    predicate that process each result, receives as parameter the occurrence key
    */
   public static void processQuery(DownloadFileWork downloadFileWork, Consumer<Integer> resultHandler) {
-
+/*
     // Calculates the amount of output records
     int nrOfOutputRecords = downloadFileWork.getTo() - downloadFileWork.getFrom();
 
@@ -53,11 +48,12 @@ public class SolrQueryProcessor {
     } catch (SolrServerException | IOException e) {
       throw Throwables.propagate(e);
     }
+    */
   }
 
   /**
    * Creates a SolrQuery that contains the query parameter as the filter query value.
-   */
+
   private static SolrQuery createSolrQuery(String query) {
     SolrQuery solrQuery = new SolrQuery();
     solrQuery.setQuery(SolrConstants.DEFAULT_QUERY);
@@ -66,6 +62,7 @@ public class SolrQueryProcessor {
     }
     return solrQuery;
   }
+   */
 
   /**
    * Hidden constructor.
