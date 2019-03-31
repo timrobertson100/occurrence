@@ -27,34 +27,34 @@ CREATE TEMPORARY FUNCTION toISO8601 AS 'org.gbif.occurrence.hive.udf.ToISO8601UD
 CREATE TEMPORARY FUNCTION from_json AS 'brickhouse.udf.json.FromJsonUDF';
 
 -- re-create the HDFS view of the HBase table
-CREATE TABLE IF NOT EXISTS occurrence_hdfs (
+CREATE TABLE IF NOT EXISTS occurrence_hdfs_g (
 <#list fields as field>
   ${field.hiveField} ${field.hiveDataType}<#if field_has_next>,</#if>
 </#list>
 ) STORED AS ORC TBLPROPERTIES ("serialization.null.format"="","orc.compress.size"="65536","orc.compress"="ZLIB");
 
 -- populate the HDFS view
-INSERT OVERWRITE TABLE occurrence_hdfs
+INSERT OVERWRITE TABLE occurrence_hdfs_g
 SELECT
 <#list fields as field>
   ${field.initializer}<#if field_has_next>,</#if>
 </#list>
-FROM occurrence_hbase;
+FROM occurrence_hbase_g;
 --Vectorized disable to avoid ArrayStoreException: org.joda.time.format.DateTimeFormatterBuilder$PaddedNumber
 SET hive.vectorized.execution.reduce.enabled=false;
 --this flag is turn OFF to avoid memory exhaustion errors http://hortonworks.com/community/forums/topic/mapjoinmemoryexhaustionexception-on-local-job/
 SET hive.auto.convert.join=false;
 
-DROP TABLE IF EXISTS occurrence_multimedia;
-CREATE TABLE IF NOT EXISTS occurrence_multimedia
+DROP TABLE IF EXISTS occurrence_multimedia_g;
+CREATE TABLE IF NOT EXISTS occurrence_multimedia_g
 (gbifid BIGINT,type STRING,format STRING,identifier STRING,references STRING,title STRING,description STRING,
 source STRING,audience STRING,created STRING,creator STRING,contributor STRING,
 publisher STRING,license STRING,rightsHolder STRING)
 STORED AS PARQUET;
 
-INSERT OVERWRITE TABLE occurrence_multimedia
+INSERT OVERWRITE TABLE occurrence_multimedia_g
 SELECT gbifid,cleanDelimiters(mm_record['type']),cleanDelimiters(mm_record['format']),cleanDelimiters(mm_record['identifier']),cleanDelimiters(mm_record['references']),cleanDelimiters(mm_record['title']),cleanDelimiters(mm_record['description']),cleanDelimiters(mm_record['source']),cleanDelimiters(mm_record['audience']),toISO8601(mm_record['created']),cleanDelimiters(mm_record['creator']),cleanDelimiters(mm_record['contributor']),cleanDelimiters(mm_record['publisher']),cleanDelimiters(mm_record['license']),cleanDelimiters(mm_record['rightsHolder'])
-FROM (SELECT occ.gbifid, occ.ext_multimedia  FROM occurrence_hdfs occ)
+FROM (SELECT occ.gbifid, occ.ext_multimedia  FROM occurrence_hdfs_g occ)
 occ_mm LATERAL VIEW explode(from_json(occ_mm.ext_multimedia, 'array<map<string,string>>')) x AS mm_record;
 
 SET hive.auto.convert.join=true;
