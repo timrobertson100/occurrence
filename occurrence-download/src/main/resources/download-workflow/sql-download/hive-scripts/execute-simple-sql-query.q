@@ -16,8 +16,7 @@ CREATE TEMPORARY FUNCTION joinArray AS 'brickhouse.udf.collect.JoinArrayUDF';
 DROP TABLE IF EXISTS ${occurrenceTable};
 
 -- pre-create verbatim table so it can be used in the multi-insert
-CREATE TABLE ${occurrenceTable} ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-TBLPROPERTIES ("serialization.null.format"="")
+CREATE TABLE sql_${occurrenceTable} ${export_template}
 AS ${sql};
 
 SET mapred.output.compress=false;
@@ -25,4 +24,4 @@ SET hive.exec.compress.output=false;
 SET mapred.reduce.tasks=1;
 SET hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat;
 
-CREATE TABLE ${occurrenceTable}_count AS SELECT count(*) FROM ${occurrenceTable};
+CREATE TABLE ${occurrenceTable}_count AS SELECT count(*) FROM sql_${occurrenceTable};

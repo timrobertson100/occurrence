@@ -1,20 +1,19 @@
 package org.gbif.occurrence.download.service.hive.validation;
 
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-import org.gbif.occurrence.download.service.hive.validation.Query.Issue;
+import org.gbif.api.model.occurrence.sql.Query.Issue;
 
 /**
- * 
- * Rule checks if the query has only one rule. If rule is violated an {@linkplain Query.Issue} is
- * raised.
- *
+ * Rule to validate that the provided query has only one select clause.
  */
 public class OnlyOneSelectAllowedRule implements Rule {
+
+  private static final String TOK_SELECT = "TOK_SELECT";
+  private static final String TOK_SELECT_DISTINCT = "TOK_SELECTDI";
+
   @Override
-  public RuleContext apply(QueryContext context) {
-    Stream<String> sqlStream1 = Pattern.compile(" ").splitAsStream(context.sql());
-    return sqlStream1.filter(x -> x.equalsIgnoreCase("select")).count() == 1 ? Rule.preserved()
-        : Rule.violated(Issue.ONLY_ONE_SELECT_ALLOWED);
+  public Context apply(Hive.QueryContext queryContext) {
+    int count = Hive.QueryContext.searchMulti(queryContext.queryNode(), TOK_SELECT_DISTINCT).size();
+    count += Hive.QueryContext.searchMulti(queryContext.queryNode(), TOK_SELECT).size();
+    return count == 1 ? Rule.preserved() : Rule.violated(Issue.ONLY_ONE_SELECT_ALLOWED);
   }
 }

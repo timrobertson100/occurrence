@@ -129,6 +129,14 @@
           <name>hive_db</name>
           <value>${wf:actionData('download_prepare')['hive_db']}</value>
         </property>
+        <property>
+          <name>export_template</name>
+          <value>${sql_export_template}</value>
+        </property>
+        <property>
+          <name>export_format</name>
+          <value>${sql_export_format}</value>
+        </property>
       </configuration>
     </sub-workflow>
     <ok to="end"/>

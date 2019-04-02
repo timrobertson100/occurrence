@@ -8,6 +8,7 @@ Note: This feature is in beta, and deployed for testing, feedbacks and issues ca
     1. [API Endpoints](#api-endpoints)
     2. [SQL Functions supported](#sql-functions-supported)
     3. [Citation and Licenses for Downloads](#citation-and-licenses-for-downloads)
+    4. [Exporting Download with desired file format](#exporting-download-with-desired-file-format)
 4. [Getting Started](#getting-started)
 5. [Future Works](#future-works)
 6. [Open Questions](#open-questions)
@@ -23,7 +24,7 @@ SQL queries are one of the most popular ways to query the data. It enables vario
 The SQL download is supported by 3 different types of services: 
 1. _SQL Describe service_: This service describe all the queryable fields, there types and description. 
 2. _SQL Validation service_: Validate the SQL query before executing the query for download. This helps user to create a proper SQL query before performing download on gbif infrastructure. 
-3. _SQL Download service_: This service helps to create the SQL download at gbif infrastructure and returns the downloadkey which can be used to see the progress of gbif downloads.  
+3. _SQL Download service_: This service helps to create the SQL download at gbif infrastructure and returns the downloadkey which can be used to see the progress of gbif downloads. SQL Download Service supports different file formats for the downloads. Currently it supports TSV and AVRO.
 
 ### API Endpoints
 
@@ -118,7 +119,7 @@ cache-control: no-cache
         "        ListSink",
         ""
     ],
-    "isOk": true
+    "success": true,
 } 
 ```
 
@@ -153,17 +154,12 @@ cache-control: no-cache
 
 SQL query supported by GBIF API need to follow some rules, they are :
 1. Sql query supported format: <br/>
-   SELECT `<field1>`,`<field2>`,`<field3>`,`<field4>` FROM occurrence WHERE `<condition1>` AND `<condition2>` OR `<condition3>` …  GROUP BY … .
-2. All the identifier in query should be quoted by \` (back quotes). It is not hard requirement but there are conflicts with SQL keywords and DWCA fields. So it is important that these fields are back quoted to be parsed correctly. The reserved keywords for SQL are mentioned [here](#sql-keywords).  
-3. ORDER BY, DML queries, SET queries (UNION, INTERSECT), Subqueries (AS), JOINS not allowed.
-4. Table name should always be “occurrence”.	
-5. ‘*’ can’t be used, provide fields for selection explicitly.
-6. HAVING clause not supported.
+   SELECT `<field1>`,`<field2>`,`<field3>`,`<field4>` FROM occurrence WHERE `<condition1>` AND `<condition2>` OR `<condition3>` …  GROUP BY … EXPORT AS `<format>`.  
+2. ORDER BY, DML queries, SET queries (UNION, INTERSECT), Subqueries (AS), JOINS not allowed.
+3. Table name should always be “occurrence”.	
+4. ‘*’ can’t be used, provide fields for selection explicitly.
+5. HAVING clause not supported.
 
-**Note**:
-For example : A query using month and year for Downloads will not work as MONTH and YEAR are keywords in SQL and fields in GBIF schema. 
-  ~~``` SELECT gbifid, countrycode, datasetkey, license, month, year FROM occurrence WHERE month=3 AND year = 2018 ```~~ to   quote month and year will solve the problem 
-  ```SELECT gbifid, countrycode, datasetkey, license, `month`, `year` FROM occurrence WHERE `month`=3 AND `year`= 2018```.
 
 ### SQL Functions supported
 
@@ -172,6 +168,13 @@ For example : A query using month and year for Downloads will not work as MONTH 
 ### Citation and Licenses for Downloads
 
 License for the query which produces new data from old ones, i.e those which has functions and aggregations from entire datasets in gbif are licensed as CC by 4.0 and cites gbif. All other queries has restrictive download license based on the datasets used, and cites them as usual.
+
+### Exporting Download with desired file format
+The SQL Download service supports export file format for SQL Downloads. Currently it supports TSV and AVRO.
+To specify the file format the query should be suffixed by optional EXPORT AS clause. By default when EXPORT AS is not specified the export file format is TSV.
+
+eg. 
+`SELECT decimallatitude/10 lat, decimallongitude/10 lon, count(species) AS speciesRichness FROM occurrence GROUP BY decimallatitude/10, decimallongitude/10 EXPORT AS AVRO`
 
 ## Getting started
 
@@ -201,15 +204,19 @@ GROUP BY
   decimallatitude/10, 
   decimallongitude/10
 ```
+
 Validate the query with SQL validation service
 
 ```
-curl -G -i https://api.gbif-uat.org/v1/occurrence/download/request/sql/validate --data-urlencode \
+  curl -G -i https://api.gbif-uat.org/v1/occurrence/download/request/sql/validate --data-urlencode \
 "sql=SELECT 
-  DISTINCT(countrycode) 
-FROM occurrence
-WHERE
-taxonKey=6"
+  decimallatitude/10 AS lat, 
+  decimallongitude/10 AS lon, 
+  count(species) AS speciesRichness 
+FROM occurrence 
+GROUP BY 
+  decimallatitude/10, 
+  decimallongitude/10"
 ```
 
 You get a json response, and check for -> "issues": []. If you have issues they will be highlighted and described here.
@@ -238,8 +245,7 @@ For example to track the download for downloadkey= 0000015-181121175518854, open
 
 ## Future Works
 
-1. Removing back quotes(`) from identifiers.
-2. Supporting HAVING clause
+1. Supporting HAVING clause
 
 ## Open Questions
 
